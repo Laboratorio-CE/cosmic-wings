@@ -1,2 +1,34 @@
 @import "tailwindcss";
 
+:root {
+  --primary-dark: #1a1a2e;
+  --cosmic-darkest: #0a0011;
+  --cosmic-dark: #150025;
+  --cosmic-medium: #2d0052;
+  --cosmic-light: #5a1ca7;
+}
+
+.cosmic-gradient {
+  background: linear-gradient(to right top, var(--primary-dark), var(--cosmic-dark), var(--cosmic-darkest));
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.star-twinkle {
+  animation: twinkle var(--duration) ease-in-out infinite;
+  opacity: var(--min-opacity);
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: var(--min-opacity);
+  }
+  50% {
+    opacity: var(--max-opacity);
+  }
+}
