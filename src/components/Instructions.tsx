@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from 'react'
+import { Component } from 'react'
 
 type Props = {}
 
@@ -10,7 +10,7 @@ export default class Instructions extends Component<Props, State> {
 
   render() {
     return (
-      <div className="max-w-2xl mx-auto p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 z-50">
+      <div>
         <h2 className="text-center text-cyan-400 text-3xl mb-8 font-bold tracking-widest">
           Como Jogar - Cosmic Wings
         </h2>
