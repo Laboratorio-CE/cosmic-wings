@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import { Component } from 'react'
+import React, { Component } from "react";
 import imagemPlayer from '../assets/images/player/player-frame-1.png'
 import imagemDisparo from '../assets/images/effects/player-fire.png'
 import imagemInimigo from '../assets/images/enemy/enemy-C-frame-1.png'
