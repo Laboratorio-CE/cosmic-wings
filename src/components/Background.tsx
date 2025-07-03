@@ -1,99 +1,98 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import React from "react";
 
 interface BackgroundProps {
   starCount?: number;
 }
 
+interface StarData {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  opacity: number;
+  duration: number;
+  delay: number;
+  shouldTwinkle: boolean;
+}
+
+// Componente Star otimizado e memorizado
+const Star = React.memo(({ star }: { star: StarData }) => {
+  const style = useMemo(() => ({
+    transform: `translate(${star.x}px, ${star.y}px)`,
+    width: `${star.size}px`,
+    height: `${star.size}px`,
+    opacity: star.opacity,
+    animationDuration: star.shouldTwinkle ? `${star.duration}s` : undefined,
+    animationDelay: star.shouldTwinkle ? `${star.delay}s` : undefined,
+  }), [star]);
+
+  return (
+    <div
+      className={`absolute bg-white rounded-full ${star.shouldTwinkle ? 'animate-pulse' : ''}`}
+      style={style}
+    />
+  );
+});
+
+Star.displayName = 'Star';
+
 const Background = ({ starCount = 150 }: BackgroundProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    height: typeof window !== 'undefined' ? window.innerHeight : 1080,
+  });
+
+  // Debounced resize handler
+  const handleResize = useCallback(() => {
+    const timeoutId = setTimeout(() => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const container = containerRef.current;
-    const containerWidth = window.innerWidth;
-    const containerHeight = window.innerHeight;
-
-    // Clear any existing stars
-    container.innerHTML = "";
-
-    // Create stars
-    for (let i = 0; i < starCount; i++) {
-      const star = document.createElement("div");
-      star.className = "star star-twinkle";
-
-      // Random position
-      const x = Math.random() * containerWidth;
-      const y = Math.random() * containerHeight;
-
-      // Random size (1-3px)
-      const size = Math.random() * 2 + 1;
-
-      // Random opacity range
-      const minOpacity = Math.random() * 0.2;
-      const maxOpacity = minOpacity + Math.random() * 0.5 + 0.2;
-
-      // Random animation duration (3-8s for more subtle effect)
-      const duration = Math.random() * 5 + 3;
-
-      // Random animation delay
-      const delay = Math.random() * 10;
-
-      // Apply styles
-      star.style.left = `${x}px`;
-      star.style.top = `${y}px`;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-      star.style.setProperty("--min-opacity", minOpacity.toString());
-      star.style.setProperty("--max-opacity", maxOpacity.toString());
-      star.style.setProperty("--duration", `${duration}s`);
-      star.style.animationDelay = `${delay}s`;
-
-      container.appendChild(star);
-    }
-
-    // Handle window resize
-    const handleResize = () => {
-      if (!containerRef.current) return;
-      container.innerHTML = "";
-
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
-
-      for (let i = 0; i < starCount; i++) {
-        const star = document.createElement("div");
-        star.className = "star star-twinkle";
-
-        const x = Math.random() * newWidth;
-        const y = Math.random() * newHeight;
-        const size = Math.random() * 2 + 1;
-        const minOpacity = Math.random() * 0.2;
-        const maxOpacity = minOpacity + Math.random() * 0.5 + 0.2;
-        const duration = Math.random() * 5 + 3;
-        const delay = Math.random() * 10;
-
-        star.style.left = `${x}px`;
-        star.style.top = `${y}px`;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.setProperty("--min-opacity", minOpacity.toString());
-        star.style.setProperty("--max-opacity", maxOpacity.toString());
-        star.style.setProperty("--duration", `${duration}s`);
-        star.style.animationDelay = `${delay}s`;
-
-        container.appendChild(star);
-      }
-    };
-
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [starCount]);
+  }, [handleResize]);
+
+  // Gerar estrelas otimizadas com memo
+  const stars = useMemo(() => {
+    const starArray: StarData[] = [];
+    
+    // Limitar animações para melhor performance
+    const maxAnimatedStars = Math.min(starCount * 0.3, 100);
+    
+    for (let i = 0; i < starCount; i++) {
+      const star: StarData = {
+        id: i,
+        x: Math.random() * dimensions.width,
+        y: Math.random() * dimensions.height,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.7 + 0.3,
+        duration: Math.random() * 4 + 2,
+        delay: Math.random() * 5,
+        shouldTwinkle: i < maxAnimatedStars, // Apenas algumas estrelas piscam
+      };
+      
+      starArray.push(star);
+    }
+    
+    return starArray;
+  }, [starCount, dimensions.width, dimensions.height]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-0" />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {stars.map((star) => (
+        <Star key={star.id} star={star} />
+      ))}
+    </div>
   );
 };
 
