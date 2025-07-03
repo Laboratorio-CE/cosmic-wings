@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import { Component } from 'react'
+import React, { Component } from "react";
 import { FaMusic } from "react-icons/fa";
 import { AiFillSound } from "react-icons/ai";
 

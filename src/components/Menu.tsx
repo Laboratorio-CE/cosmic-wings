@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from 'react'
+import React, { Component } from "react";
 
 // Props para receber função de navegação do componente pai
 type Props = {
