@@ -12,23 +12,9 @@
   background: linear-gradient(to right top, var(--primary-dark), var(--cosmic-dark), var(--cosmic-darkest));
 }
 
-.star {
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-  z-index: 1;
-}
-
-.star-twinkle {
-  animation: twinkle var(--duration) ease-in-out infinite;
-  opacity: var(--min-opacity);
-}
-
-@keyframes twinkle {
-  0%, 100% {
-    opacity: var(--min-opacity);
-  }
-  50% {
-    opacity: var(--max-opacity);
-  }
+@keyframes randomMove {
+  0%, 100% { transform: translate(0px, 0px); }
+  25% { transform: translate(10px, -8px); }
+  50% { transform: translate(-6px, 10px); }
+  75% { transform: translate(8px, 5px); }
 }
