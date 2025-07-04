@@ -9,8 +9,9 @@
 }
 
 .cosmic-gradient {
-  background: linear-gradient(to right top, var(--primary-dark), var(--cosmic-dark), var(--cosmic-darkest));
+  background: linear-gradient(to right top, var(--cosmic-dark), var(--cosmic-darkest));
 }
+
 
 @keyframes randomMove {
   0%, 100% { transform: translate(0px, 0px); }
