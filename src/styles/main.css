@@ -18,3 +18,15 @@
   50% { transform: translate(-6px, 10px); }
   75% { transform: translate(8px, 5px); }
 }
+
+/* Ocultar scrollbar */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari e Chrome */
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
