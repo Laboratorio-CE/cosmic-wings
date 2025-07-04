@@ -14,6 +14,8 @@ type State = {}
 
 export default class GameCanvas extends Component<Props, State> {
   state = {}
+  lives = 4;
+  score = 0;
   wave = 1;
   gameState: 'preparing' | 'playing' | 'paused' | 'gameOver' = 'preparing';
 
