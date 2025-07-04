@@ -36,11 +36,7 @@ export default class Path extends Component<Props, State> {
         return <GameCanvas onNavigate={this.handleNavigate} />;
       
       case '/instructions':
-        return (
-          <div className="max-w-2xl mx-auto p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20">
-            <Instructions onNavigate={this.handleNavigate} />
-          </div>
-        );
+        return <Instructions onNavigate={this.handleNavigate} />;
       
       case '/leaderboards':
         return <Leaderboards onNavigate={this.handleNavigate} />;
