@@ -1,20 +1,28 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 import React, { Component } from 'react'
+import GameUI from './GameUI';
 
 type Props = {
   onNavigate: (route: string) => void;
+  lives: number;
+  score: number;
+  wave: number;
+  gameState: 'preparing' | 'playing' | 'paused' | 'gameOver';
 }
 
 type State = {}
 
 export default class GameCanvas extends Component<Props, State> {
   state = {}
+  wave = 1;
+  gameState: 'preparing' | 'playing' | 'paused' | 'gameOver' = 'preparing';
 
   render() {
     const { onNavigate } = this.props;
 
     return (
       <div className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20">
+        <GameUI  lives={this.lives} score={this.score} wave={this.wave} gameState={this.gameState}/>
         <h1 className="text-center text-cyan-400 text-3xl mb-8 font-bold tracking-widest">
           COSMIC WINGS
         </h1>
