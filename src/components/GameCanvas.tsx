@@ -16,7 +16,7 @@ export default class GameCanvas extends Component<Props, State> {
     return (
       <div className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20">
         <h1 className="text-center text-cyan-400 text-3xl mb-8 font-bold tracking-widest">
-          🚀 COSMIC WINGS - JOGO
+          COSMIC WINGS
         </h1>
         
         <div className="text-center mb-8">

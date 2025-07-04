@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from "react";
+import { Component } from "react";
 import imagemPlayer from '../assets/images/player/player-frame-1.png'
 import imagemDisparo from '../assets/images/effects/player-fire.png'
 import imagemInimigo from '../assets/images/enemy/enemy-C-frame-1.png'
@@ -9,26 +8,73 @@ type Props = {
   onNavigate?: (route: string) => void;
 }
 
-type State = {}
+type State = {
+  isPressed: boolean; 
+}
 
 export default class Instructions extends Component<Props, State> {
-  state = {}
+  state: State = {
+    isPressed: true 
+  }
+
+  componentDidMount() {
+    if (this.props.onNavigate) {
+      document.addEventListener('keydown', this.handleKeyDown);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.props.onNavigate) {
+      document.removeEventListener('keydown', this.handleKeyDown);
+    }
+  }
+
+  handleKeyDown = (event: KeyboardEvent) => {
+    if (!this.props.onNavigate) return;
+
+    switch (event.key) {
+      case 'Enter':
+      case 'f':
+      case 'F':
+      case '5':
+      case ' ':
+      case 'Escape': 
+        event.preventDefault();
+        this.animatePress();
+        break;
+      default:
+        break;
+    }
+  }
+
+  animatePress = () => {
+    this.setState({ isPressed: false });
+    
+    setTimeout(() => {
+      this.setState({ isPressed: true });
+      this.props.onNavigate!('/menu');
+    }, 150);
+  }
 
   render() {
     return (
-      <div>
-        <h2 className="text-center text-cyan-400 text-3xl mb-8 font-bold tracking-widest cursor-default">
-          Como Jogar - Cosmic Wings
+      <div className="max-w-lg mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20">
+        <h2 className="text-center text-cyan-400 text-xl mb-4 font-bold tracking-widest cursor-default">
+          COMO JOGAR
         </h2>
 
-        <div className="mb-6 p-4 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
-          <div className="flex items-center mb-4 gap-5">
-            <img src={ imagemPlayer } alt="Imagem da nave do jogador" className='w-10 h-10'/>
-            <h3 className="text-orange-400 text-xl font-semibold">
+        <div className="mb-4 p-3 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
+          <div className="flex items-center mb-3 gap-4">
+            <img
+              src={imagemPlayer}
+              alt="Imagem da nave do jogador"
+              className="w-8 h-8"
+            />
+            <h3 className="text-orange-400 text-lg font-semibold">
               Movimentação
             </h3>
           </div>
-          <p className="leading-relaxed">
+          <p className="text-sm leading-relaxed">
             Utilize as teclas{" "}
             <strong className="text-green-400 px-1 py-0.5 bg-green-400/10 rounded">
               W
@@ -65,14 +111,16 @@ export default class Instructions extends Component<Props, State> {
           </p>
         </div>
 
-        <div className="mb-6 p-4 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
-          <div className="flex items-center mb-4 gap-5">
-            <img src={ imagemDisparo } alt="Imagem do disparo do jogador" className='w-4 h-10'/>
-            <h3 className="text-orange-400 text-xl font-semibold">
-              Disparos
-            </h3>
-            </div>
-          <p className="leading-relaxed">
+        <div className="mb-4 p-3 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
+          <div className="flex items-center mb-3 gap-4">
+            <img
+              src={imagemDisparo}
+              alt="Imagem do disparo do jogador"
+              className="w-3 h-8"
+            />
+            <h3 className="text-orange-400 text-lg font-semibold">Disparos</h3>
+          </div>
+          <p className="text-sm leading-relaxed">
             Atire com a{" "}
             <strong className="text-green-400 px-1 py-0.5 bg-green-400/10 rounded">
               barra de espaço
@@ -89,50 +137,65 @@ export default class Instructions extends Component<Props, State> {
           </p>
         </div>
 
-        <div className="mb-6 p-4 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
-          <div className="flex items-center mb-4 gap-5">
-            <img src={ imagemInimigo } alt="Imagem de uma nave inimiga" className='w-10 h-10'/>
-            <h3 className="text-orange-400 text-xl font-semibold">
-              Inimigos
-            </h3>
+        <div className="mb-4 p-3 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
+          <div className="flex items-center mb-3 gap-4">
+            <img
+              src={imagemInimigo}
+              alt="Imagem de uma nave inimiga"
+              className="w-8 h-8"
+            />
+            <h3 className="text-orange-400 text-lg font-semibold">Inimigos</h3>
           </div>
-          <p className="leading-relaxed">
+          <p className="text-sm leading-relaxed">
             Desvie dos disparos inimigos e derrote as naves inimigas
           </p>
         </div>
 
-        <div className="mb-6 p-4 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
-          <div className="flex items-center mb-4 gap-5">
-            <img src={ imagemBoss } alt="Imagem de um chefe inimigo" className='w-10 h-10'/>
-            <h3 className="text-orange-400 text-xl font-semibold">
-              Chefes
-            </h3>
+        <div className="mb-4 p-3 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
+          <div className="flex items-center mb-3 gap-4">
+            <img
+              src={imagemBoss}
+              alt="Imagem de um chefe inimigo"
+              className="w-8 h-8"
+            />
+            <h3 className="text-orange-400 text-lg font-semibold">Chefes</h3>
           </div>
-          <p className="leading-relaxed">
+          <p className="text-sm leading-relaxed">
             Após derrotar inimigos suficientes, um chefe desafiará você
           </p>
         </div>
 
-        <div className="mb-6 p-4 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
-          <div className="flex items-center mb-4 gap-5">
-            <img src={ imagemPlayer } alt="Imagem da nave do jogador" className='w-10 h-10'/>
-            <h3 className="text-orange-400 text-xl font-semibold">
-              Pontuação
-            </h3>
+        <div className="mb-4 p-3 bg-white/5 border-l-4 border-cyan-400 rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-2 hover:shadow-lg hover:shadow-cyan-400/20 cursor-default">
+          <div className="flex items-center mb-3 gap-4">
+            <img
+              src={imagemPlayer}
+              alt="Imagem da nave do jogador"
+              className="w-8 h-8"
+            />
+            <h3 className="text-orange-400 text-lg font-semibold">Pontuação</h3>
           </div>
-          <p className="leading-relaxed">
+          <p className="text-sm leading-relaxed">
             Alcance a maior pontuação que conseguir
           </p>
         </div>
 
-        {/* Botão de voltar se onNavigate foi fornecido */}
         {this.props.onNavigate && (
           <div className="text-center mt-6">
             <button
-              onClick={() => this.props.onNavigate!("/menu")}
-              className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 border-2 border-cyan-400 rounded-lg text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-400/20 cursor-pointer"
+              onClick={() => this.animatePress()}
+              className={`
+                relative flex items-center justify-center w-56 p-2 font-bold text-base transition-all duration-200 cursor-pointer mx-auto text-yellow-300
+                ${this.state.isPressed ? "scale-105" : "scale-100"}
+                active:scale-100
+              `}
             >
-              ← VOLTAR AO MENU
+              <img
+                src={imagemPlayer}
+                alt="Nave selecionada"
+                className="absolute left-0 w-7 h-7 rotate-90"
+              />
+
+              <span className="text-left w-full pl-10">VOLTAR AO MENU</span>
             </button>
           </div>
         )}
