@@ -460,7 +460,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Encontrar posição livre
         const gameScene = this.scene as GameScene;
-        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY);
         
         this.targetX = freePosition.x;
         this.targetY = freePosition.y;
@@ -478,7 +478,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Encontrar posição livre
         const gameScene = this.scene as GameScene;
-        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY);
         
         this.targetX = freePosition.x;
         this.targetY = freePosition.y;
@@ -768,8 +768,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Encontrar posições livres para cada posição planejada
         const gameScene = this.scene as GameScene;
-        this.positions = basePositions.map((pos, index) => 
-          gameScene.findFreePosition(pos.x, pos.y, this.id + '_planning_' + index)
+        this.positions = basePositions.map((pos) => 
+          gameScene.findFreePosition(pos.x, pos.y)
         );
       }
       
@@ -814,7 +814,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           
           // Verificar se a posição ainda está livre, senão buscar uma posição próxima livre
           const gameScene = this.scene as GameScene;
-          const freePosition = gameScene.findFreePosition(targetPosition.x, targetPosition.y, this.id);
+          const freePosition = gameScene.findFreePosition(targetPosition.x, targetPosition.y);
           
           this.targetX = freePosition.x;
           this.targetY = freePosition.y;
@@ -1067,7 +1067,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Encontrar posição livre
         const gameScene = this.scene as GameScene;
-        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY);
         
         this.targetX = freePosition.x;
         this.targetY = freePosition.y;
@@ -2434,7 +2434,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
 
       // Encontra uma posição livre próxima de (x, y) que não esteja ocupada
-      findFreePosition(x: number, y: number, enemyId: string): { x: number; y: number } {
+      findFreePosition(x: number, y: number): { x: number; y: number } {
         const radius = this.positionRadius;
         let tryCount = 0;
         let found = false;
@@ -2829,15 +2829,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           console.log(`${enemiesThatLeft} inimigo(s) saíram da tela (não contabilizados como derrotados)`);
         }
         
-        // Verificar se deve spawnar boss
-        if (this.enemiesDefeated >= this.maxEnemiesInWave && !this.currentBoss && !this.shouldSpawnBoss) {
+        // Verificar se deve spawnar boss (apenas se não estivermos em transição de onda)
+        if (this.enemiesDefeated >= this.maxEnemiesInWave && !this.currentBoss && !this.shouldSpawnBoss && !this.isInWaveTransition) {
           console.log('Todos os inimigos da onda foram derrotados. Boss spawnará em 5 segundos...');
           this.shouldSpawnBoss = true;
           this.bossSpawnTimer = this.time.now;
         }
         
-        // Spawnar boss após delay
-        if (this.shouldSpawnBoss && this.time.now - this.bossSpawnTimer > this.bossSpawnDelay) {
+        // Spawnar boss após delay (apenas se não estivermos em transição de onda)
+        if (this.shouldSpawnBoss && this.time.now - this.bossSpawnTimer > this.bossSpawnDelay && !this.isInWaveTransition) {
           this.spawnBoss();
           this.shouldSpawnBoss = false;
         }
@@ -2855,6 +2855,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
       
       spawnSubWave(subWave: number) {
+        console.log(`DEBUG - spawnSubWave chamada com subWave=${subWave}, currentWave=${this.currentWave}`);
         console.log(`Spawning sub-onda ${subWave} da onda ${this.currentWave}`);
         
         // Primeiras 5 sub-ondas da onda 1 são fixas
@@ -2994,7 +2995,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         const bossX = 400; // Centro da tela
         const bossY = -100; // Fora da tela, no topo
         
-        this.currentBoss = new BossTypeC(this, bossX, bossY);
+        this.currentBoss = new BossTypeA(this, bossX, bossY);
         this.currentBoss.adjustForWave(this.currentWave);
         
         console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
@@ -3076,8 +3077,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         // Incrementar pontuação usando o setter do React
         setScore(prevScore => prevScore + points);
         
-        // Atualizar onda no estado do React
-        setWave(this.currentWave);
+        // Atualizar onda no estado do React (comentado temporariamente para debug)
+        // setWave(this.currentWave);
         
         // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
         this.lastEnemyKilledTime = this.time.now;
@@ -3145,17 +3146,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           // Incrementar número da onda
           this.currentWave++;
           console.log(`Avançando para onda ${this.currentWave}`);
+          console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
           
-          // Atualizar onda no estado React
-          setWave(this.currentWave);
+          // Atualizar onda no estado React (comentado temporariamente para debug)
+          // setWave(this.currentWave);
           
           // Mostrar mensagem da nova onda
           window.dispatchEvent(new CustomEvent('showWaveMessage', { 
             detail: { message: `ONDA ${this.currentWave}` } 
           }));
-          
-          // Preparar nova onda
-          this.resetWaveData();
           
           // Aguardar mais 2 segundos para mostrar a mensagem da nova onda
           this.time.delayedCall(2000, () => {
@@ -3173,15 +3172,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         console.log(`Transição de onda completa. Iniciando onda ${this.currentWave}`);
         
-        // Começar nova onda
+        // Preparar nova onda - resetar dados DEPOIS de confirmar a onda
+        this.resetWaveData();
+        console.log(`Dados da nova onda - maxEnemies: ${this.maxEnemiesInWave}, enemiesDefeated: ${this.enemiesDefeated}`);
+        
+        // Começar nova onda - definir sub-onda 1 e spawnar
         this.currentSubWave = 1;
-        this.spawnSubWave(1);
+        console.log(`Spawnando primeira sub-onda da onda ${this.currentWave}`);
+        this.spawnSubWave(this.currentSubWave);
       }
       
       // Resetar dados da onda
       resetWaveData() {
         this.enemiesDefeated = 0;
-        this.currentSubWave = 0;
         this.shouldSpawnBoss = false;
         this.bossSpawnTimer = 0;
         this.lastEnemyKilledTime = this.time.now;
@@ -3233,7 +3236,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         gameRef.current = null;
       }
     };
-  }, [wave, setWave]); // Adicionar setWave como dependência
+  }, []); // Remover dependências que causam reexecução
 
   const handleMobileControl = (direction: 'up' | 'down' | 'left' | 'right') => {
     // Implementar controles móveis posteriormente
