@@ -2995,10 +2995,43 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         const bossX = 400; // Centro da tela
         const bossY = -100; // Fora da tela, no topo
         
-        this.currentBoss = new BossTypeA(this, bossX, bossY);
-        this.currentBoss.adjustForWave(this.currentWave);
         
-        console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+        if (this.currentWave === 1) {
+          // Boss tipo A fixo para onda 1
+          this.currentBoss = new BossTypeA(this, bossX, bossY);
+          this.currentBoss.adjustForWave(this.currentWave);
+          console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+        } else if (this.currentWave === 2) {
+          // Boss tipo B fixo para onda 2
+          this.currentBoss = new BossTypeB(this, bossX, bossY);
+          this.currentBoss.adjustForWave(this.currentWave);
+          console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+        } else if (this.currentWave === 3) {
+          // Boss tipo C fixo para onda 3
+          this.currentBoss = new BossTypeC(this, bossX, bossY);
+          this.currentBoss.adjustForWave(this.currentWave);
+          console.log(
+            `Boss Type C spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+          );
+        } else {
+          // Da onda 4 em diante: spawnar boss aleatório
+          const randomBossType = Phaser.Math.Between(1, 3);
+          
+          if (randomBossType === 1) {
+            this.currentBoss = new BossTypeA(this, bossX, bossY);
+            this.currentBoss.adjustForWave(this.currentWave);
+            console.log(`Boss Type A aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+          } else if (randomBossType === 2) {
+            this.currentBoss = new BossTypeB(this, bossX, bossY);
+            this.currentBoss.adjustForWave(this.currentWave);
+            console.log(`Boss Type B aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+          } else {
+            this.currentBoss = new BossTypeC(this, bossX, bossY);
+            this.currentBoss.adjustForWave(this.currentWave);
+            console.log(`Boss Type C aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+          }
+        }
+        
       }
       
       checkCollisions() {
