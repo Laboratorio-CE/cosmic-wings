@@ -847,17 +847,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       private shotsPerBurstC = 5; // 5 tiros por rajada
       
       // Sistema de movimento
-      private moveSpeed = 120;
+      private moveSpeed = 180; // Aumentado de 120 para 180
       private targetX = 0;
       private targetY = 0;
       private movementCountC = 0;
       private maxMovementsPerCycle = 3; // 3 movimentos por ciclo
       private cycleCount = 0;
       private maxCycles = 3; // 3 ciclos antes de sair
-      
-      // Posições predefinidas para movimentação
-      private positions: { x: number; y: number }[] = [];
-      private currentPositionIndex = 0;
       
       constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'enemy-C-frame-1');
@@ -880,42 +876,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.sprite.setData('enemyType', 'C');
         this.sprite.setData('hp', this.hp);
         
-        // Definir posições para movimentação (distribuídas pela tela)
-        this.positions = [
-          { x: 150, y: 180 },
-          { x: 400, y: 120 },
-          { x: 650, y: 180 },
-          { x: 300, y: 220 },
-          { x: 500, y: 160 },
-          { x: 200, y: 140 },
-          { x: 600, y: 200 },
-          { x: 350, y: 180 },
-          { x: 550, y: 140 }
-        ];
-        
-        // Definir primeira posição
+        // Definir primeira posição aleatória
         this.setNextPosition();
       }
       
       private setNextPosition() {
-        if (this.currentPositionIndex < this.positions.length) {
-          const position = this.positions[this.currentPositionIndex];
-          this.targetX = position.x;
-          this.targetY = position.y;
-          this.currentPositionIndex++;
-        } else {
-          // Se acabaram as posições, embaralhar e recomeçar
-          this.currentPositionIndex = 0;
-          this.shufflePositions();
-          this.setNextPosition();
-        }
-      }
-      
-      private shufflePositions() {
-        // Embaralhar as posições para variar o movimento
-        for (let i = this.positions.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [this.positions[i], this.positions[j]] = [this.positions[j], this.positions[i]];
+        // Gerar posição aleatória na área de jogo
+        // X: entre 150 e 650 (com margem das bordas)
+        // Y: entre 120 e 250 (área superior/média da tela)
+        this.targetX = Phaser.Math.Between(150, 650);
+        this.targetY = Phaser.Math.Between(120, 250);
+        
+        // Garantir que a nova posição não seja muito próxima da atual
+        const currentDistance = Phaser.Math.Distance.Between(
+          this.sprite.x, this.sprite.y, this.targetX, this.targetY
+        );
+        
+        // Se a posição for muito próxima, gerar nova
+        if (currentDistance < 80) {
+          // Tentar nova posição mais distante
+          const angle = Phaser.Math.Between(0, 359) * (Math.PI / 180);
+          const distance = Phaser.Math.Between(100, 200);
+          
+          this.targetX = this.sprite.x + Math.cos(angle) * distance;
+          this.targetY = this.sprite.y + Math.sin(angle) * distance;
+          
+          // Manter dentro dos limites da tela
+          this.targetX = Phaser.Math.Clamp(this.targetX, 150, 650);
+          this.targetY = Phaser.Math.Clamp(this.targetY, 120, 250);
         }
       }
       
