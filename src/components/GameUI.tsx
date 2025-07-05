@@ -13,6 +13,8 @@ interface GameUIProps {
   score: number;
   wave: number;
   gameState: 'preparing' | 'playing' | 'paused' | 'gameOver';
+  showWaveMessage?: boolean;
+  waveMessageText?: string;
   onMobileControl?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onMobileAction?: () => void;
 }
@@ -22,6 +24,8 @@ const GameUI: React.FC<GameUIProps> = ({
   score,
   wave,
   gameState,
+  showWaveMessage = false,
+  waveMessageText = '',
   onMobileControl,
   onMobileAction
 }) => {
@@ -31,6 +35,13 @@ const GameUI: React.FC<GameUIProps> = ({
 
   // Efeito para controlar as mensagens de preparação e onda
   useEffect(() => {
+    // Se há uma mensagem de onda externa, usá-la
+    if (showWaveMessage && waveMessageText) {
+      setMessageText(waveMessageText);
+      setShowMessage(true);
+      return;
+    }
+
     if (gameState === 'preparing') {
       // Primeiro mostra "PREPARAR" por 2 segundos
       setMessageText('PREPARAR');
@@ -52,7 +63,7 @@ const GameUI: React.FC<GameUIProps> = ({
     } else {
       setShowMessage(false);
     }
-  }, [gameState, wave]);
+  }, [gameState, wave, showWaveMessage, waveMessageText]);
   // Detecta se é um dispositivo móvel/touch
   const isMobileDevice = () => {
     return window.innerWidth <= 768 || 'ontouchstart' in window;
