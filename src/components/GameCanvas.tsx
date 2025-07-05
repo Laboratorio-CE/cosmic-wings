@@ -531,6 +531,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           bullet.setScale(0.7);
           bullet.setData('speed', 300); // Velocidade do projétil para baixo
           bullet.setData('damage', 1);
+          bullet.setData("velocityX", 0);
+          bullet.setData("velocityY", 0);
+          bullet.setData("isAngled", false);
+          bullet.setData("isDirected", false);
+          bullet.setData("isBossBullet", false);
           bullet.setData('isEnemyBullet', true);
         }
         
@@ -1364,10 +1369,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         console.log('Boss piscando!'); // Debug temporário
         
         // Mudar para cor branca (flash) - usando tint mais intenso
-        this.sprite.setTint(0xffffff);
+        this.sprite.setTintFill(0xffffff);
         
         // Voltar à cor normal após 250ms (aumentado ainda mais para melhor visibilidade)
-        this.scene.time.delayedCall(250, () => {
+        this.scene.time.delayedCall(50, () => {
           if (this.sprite && !this.isDestroyed) {
             this.sprite.clearTint();
             console.log('Flash do boss terminado'); // Debug temporário
