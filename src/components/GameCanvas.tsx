@@ -32,6 +32,11 @@ import enemyBFrame1 from '../assets/images/enemy/enemy-B-frame-1.png';
 import enemyBFrame2 from '../assets/images/enemy/enemy-B-frame-2.png';
 import enemyBFrame3 from '../assets/images/enemy/enemy-B-frame-3.png';
 
+// Importar sprites do inimigo tipo C
+import enemyCFrame1 from '../assets/images/enemy/enemy-C-frame-1.png';
+import enemyCFrame2 from '../assets/images/enemy/enemy-C-frame-2.png';
+import enemyCFrame3 from '../assets/images/enemy/enemy-C-frame-3.png';
+
 interface GameCanvasProps {
   backgroundSpeed?: number;
 }
@@ -478,7 +483,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (bullet) {
           bullet.setActive(true);
           bullet.setVisible(true);
-          bullet.setScale(0.5);
+          bullet.setScale(0.7);
           bullet.setData('speed', 300); // Velocidade do projétil para baixo
           bullet.setData('damage', 1);
           bullet.setData('isEnemyBullet', true);
@@ -828,6 +833,272 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
     }
 
+    // =============================================
+    // ENEMY TYPE C
+    // =============================================
+    class EnemyTypeC extends Enemy {
+      // Estados do inimigo
+      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
+      
+      // Sistema de disparo
+      private fireTimer = 0;
+      private fireRate = 800; // 800ms entre tiros
+      private currentShots = 0;
+      private shotsPerBurstC = 5; // 5 tiros por rajada
+      
+      // Sistema de movimento
+      private moveSpeed = 120;
+      private targetX = 0;
+      private targetY = 0;
+      private movementCountC = 0;
+      private maxMovementsPerCycle = 3; // 3 movimentos por ciclo
+      private cycleCount = 0;
+      private maxCycles = 3; // 3 ciclos antes de sair
+      
+      // Posições predefinidas para movimentação
+      private positions: { x: number; y: number }[] = [];
+      private currentPositionIndex = 0;
+      
+      constructor(scene: Phaser.Scene, x: number, y: number) {
+        super(scene, x, y, 'enemy-C-frame-1');
+        
+        // Stats específicos do Enemy Type C
+        this.hp = 1;
+        this.maxHp = 1;
+        this.speed = 120;
+        this.maxSpeed = 200;
+        this.shotsPerBurst = 5; // 5 tiros por rajada
+        this.maxShotsPerBurst = 8;
+        this.totalShots = 15; // Total de 15 tiros (3 ciclos * 5 tiros)
+        this.maxTotalShots = 25;
+        this.movementsBeforeLeaving = 3;
+        this.maxMovements = 5;
+        this.points = 500; // Inimigo tipo C dá 500 pontos
+        
+        // Configurar sprite
+        this.sprite.setScale(1);
+        this.sprite.setData('enemyType', 'C');
+        this.sprite.setData('hp', this.hp);
+        
+        // Definir posições para movimentação (distribuídas pela tela)
+        this.positions = [
+          { x: 150, y: 180 },
+          { x: 400, y: 120 },
+          { x: 650, y: 180 },
+          { x: 300, y: 220 },
+          { x: 500, y: 160 },
+          { x: 200, y: 140 },
+          { x: 600, y: 200 },
+          { x: 350, y: 180 },
+          { x: 550, y: 140 }
+        ];
+        
+        // Definir primeira posição
+        this.setNextPosition();
+      }
+      
+      private setNextPosition() {
+        if (this.currentPositionIndex < this.positions.length) {
+          const position = this.positions[this.currentPositionIndex];
+          this.targetX = position.x;
+          this.targetY = position.y;
+          this.currentPositionIndex++;
+        } else {
+          // Se acabaram as posições, embaralhar e recomeçar
+          this.currentPositionIndex = 0;
+          this.shufflePositions();
+          this.setNextPosition();
+        }
+      }
+      
+      private shufflePositions() {
+        // Embaralhar as posições para variar o movimento
+        for (let i = this.positions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [this.positions[i], this.positions[j]] = [this.positions[j], this.positions[i]];
+        }
+      }
+      
+      private setExitTarget() {
+        // Sair pela parte superior da tela
+        this.targetX = this.sprite.x;
+        this.targetY = -100; // Sair pelo topo
+      }
+      
+      move() {
+        const deltaTime = this.scene.game.loop.delta / 1000;
+        
+        // Calcular direção para o alvo
+        const directionX = this.targetX - this.sprite.x;
+        const directionY = this.targetY - this.sprite.y;
+        const distance = Math.sqrt(directionX * directionX + directionY * directionY);
+        
+        // Se chegou perto o suficiente do alvo
+        if (distance < 10) {
+          this.onReachedTarget();
+          return;
+        }
+        
+        // Normalizar direção e aplicar velocidade
+        const normalizedX = directionX / distance;
+        const normalizedY = directionY / distance;
+        
+        this.sprite.x += normalizedX * this.moveSpeed * deltaTime;
+        this.sprite.y += normalizedY * this.moveSpeed * deltaTime;
+        
+        // Atualizar animação de movimento
+        this.updateMovementAnimation(normalizedX);
+      }
+      
+      private onReachedTarget() {
+        switch (this.state) {
+          case 'moving_to_position':
+            // Chegou na posição inicial, começar a atirar
+            this.state = 'shooting';
+            this.resetShooting();
+            break;
+            
+          case 'moving':
+            // Chegou em uma posição de movimento
+            this.movementCountC++;
+            
+            if (this.movementCountC >= this.maxMovementsPerCycle) {
+              // Completou os movimentos deste ciclo, atirar novamente
+              this.state = 'shooting';
+              this.resetShooting();
+              this.movementCountC = 0;
+            } else {
+              // Continuar se movendo
+              this.setNextPosition();
+            }
+            break;
+            
+          case 'leaving':
+            // Saiu da tela
+            this.isDestroyed = true;
+            break;
+        }
+      }
+      
+      private resetShooting() {
+        this.currentShots = 0;
+        this.fireTimer = this.scene.time.now;
+        this.sprite.setTexture('enemy-C-frame-1'); // Frame de repouso
+      }
+      
+      shoot() {
+        // Obter referência ao jogador e ao grupo de projéteis
+        const gameScene = this.scene as GameScene;
+        if (!gameScene.enemyBullets || !gameScene.player) return;
+        
+        // Capturar posição atual do jogador no momento do disparo
+        const playerX = gameScene.player.x;
+        const playerY = gameScene.player.y;
+        
+        // Calcular direção para o jogador
+        const directionX = playerX - this.sprite.x;
+        const directionY = playerY - this.sprite.y;
+        const distance = Math.sqrt(directionX * directionX + directionY * directionY);
+        
+        // Normalizar direção
+        const normalizedX = directionX / distance;
+        const normalizedY = directionY / distance;
+        
+        // Criar projétil
+        const bullet = gameScene.enemyBullets.get(this.sprite.x, this.sprite.y + 20, 'enemy-fire');
+        
+        if (bullet) {
+          bullet.setActive(true);
+          bullet.setVisible(true);
+          bullet.setScale(0.8);
+          
+          // Velocidade do projétil direcionado
+          const speed = 280;
+          const velocityX = normalizedX * speed;
+          const velocityY = normalizedY * speed;
+          
+          bullet.setData('velocityX', velocityX);
+          bullet.setData('velocityY', velocityY);
+          bullet.setData('damage', 1);
+          bullet.setData('isEnemyBullet', true);
+          bullet.setData('isDirected', true); // Marcar como projétil direcionado
+        }
+        
+        this.currentShots++;
+        this.shotsFired++;
+      }
+      
+      private updateMovementAnimation(directionX: number) {
+        // Atualizar frame baseado na direção do movimento
+        if (Math.abs(directionX) > 0.1) {
+          // Está se movendo horizontalmente - alternar entre frames 2 e 3
+          const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
+          this.sprite.setTexture(`enemy-C-frame-${frame}`);
+          
+          // Espelhar sprite baseado na direção
+          this.sprite.setFlipX(directionX > 0);
+        } else {
+          // Movimento apenas vertical ou parado - usar frame 1
+          this.sprite.setTexture('enemy-C-frame-1');
+          this.sprite.setFlipX(false);
+        }
+      }
+      
+      update() {
+        super.update();
+        if (this.isDestroyed) return;
+        
+        const currentTime = this.scene.time.now;
+        
+        // Máquina de estados
+        switch (this.state) {
+          case 'entering':
+            // Verificar se entrou na tela
+            if (this.sprite.y > 30) {
+              this.state = 'moving_to_position';
+            } else {
+              // Continuar entrando (movimento para baixo)
+              this.sprite.y += this.moveSpeed * (this.scene.game.loop.delta / 1000);
+            }
+            break;
+            
+          case 'moving_to_position':
+          case 'moving':
+          case 'leaving':
+            this.move();
+            break;
+            
+          case 'shooting':
+            // Executar rajada de tiros
+            if (this.currentShots < this.shotsPerBurstC) {
+              if (currentTime - this.fireTimer > this.fireRate) {
+                this.shoot();
+                this.fireTimer = currentTime;
+              }
+            } else {
+              // Completou a rajada
+              this.onCompletedShooting();
+            }
+            break;
+        }
+      }
+      
+      private onCompletedShooting() {
+        this.cycleCount++;
+        
+        if (this.cycleCount >= this.maxCycles) {
+          // Completou todos os ciclos, sair da tela
+          this.setExitTarget();
+          this.state = 'leaving';
+        } else {
+          // Começar próximo ciclo de movimento
+          this.setNextPosition();
+          this.state = 'moving';
+          this.movementCountC = 0;
+        }
+      }
+    }
+
     // Classe da cena do jogo
     class GameScene extends Phaser.Scene {
       player: Phaser.GameObjects.Sprite | null = null;
@@ -839,15 +1110,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Sistema de projéteis
       playerBullets: Phaser.GameObjects.Group | null = null;
       enemyBullets: Phaser.GameObjects.Group | null = null;
-      enemies: (EnemyTypeA | EnemyTypeB)[] = [];
-      bulletSpeed = 500;
-      fireRate = 200; // Milissegundos entre tiros
+      enemies: (EnemyTypeA | EnemyTypeB | EnemyTypeC)[] = [];
+      bulletSpeed = 650;
+      fireRate = 150; // Milissegundos entre tiros
       lastFireTime = 0;
       fireKeys: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
       
       // Sistema de sub-ondas
       currentSubWave = 1;
-      maxSubWaves = 2;
+      maxSubWaves = 3;
       subWaveDelay = 2000; // 2 segundos entre sub-ondas
       lastEnemyKilledTime = 0;
 
@@ -883,6 +1154,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.load.image('enemy-B-frame-1', enemyBFrame1);
         this.load.image('enemy-B-frame-2', enemyBFrame2);
         this.load.image('enemy-B-frame-3', enemyBFrame3);
+        
+        // Carregar sprites do inimigo tipo C
+        this.load.image('enemy-C-frame-1', enemyCFrame1);
+        this.load.image('enemy-C-frame-2', enemyCFrame2);
+        this.load.image('enemy-C-frame-3', enemyCFrame3);
       }
 
       create() {
@@ -1044,7 +1320,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (bullet) {
           bullet.setActive(true);
           bullet.setVisible(true);
-          bullet.setScale(0.6); // Ajustar tamanho do projétil
+          bullet.setScale(1); // Ajustar tamanho do projétil
           
           // Configurar dados do projétil
           bullet.setData('speed', -this.bulletSpeed); // Negativo para ir para cima
@@ -1077,8 +1353,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           if (sprite.active) {
             const deltaTime = this.game.loop.delta / 1000;
             
-            // Verificar se é projétil angular (inimigo tipo B)
-            if (sprite.getData('isAngled')) {
+            // Verificar se é projétil angular (inimigo tipo B) ou direcionado (inimigo tipo C)
+            if (sprite.getData('isAngled') || sprite.getData('isDirected')) {
               // Movimento baseado em velocidade X e Y
               sprite.x += sprite.getData('velocityX') * deltaTime;
               sprite.y += sprite.getData('velocityY') * deltaTime;
@@ -1130,6 +1406,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           case 2:
             this.spawnEnemyB();
             break;
+          case 3:
+            this.spawnEnemyC();
+            break;
           default:
             // Completou todas as sub-ondas da onda atual
             console.log('Onda completa!');
@@ -1153,6 +1432,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         const y = -50; // Fora da tela, no topo
         
         const enemy = new EnemyTypeB(this, x, y);
+        enemy.adjustForWave(wave); // Usar a onda atual
+        this.enemies.push(enemy);
+      }
+      
+      spawnEnemyC() {
+        // Spawnar inimigo do tipo C no topo da tela, posição aleatória
+        const x = Phaser.Math.Between(250, 550); // Posição centralizada
+        const y = -50; // Fora da tela, no topo
+        
+        const enemy = new EnemyTypeC(this, x, y);
         enemy.adjustForWave(wave); // Usar a onda atual
         this.enemies.push(enemy);
       }
