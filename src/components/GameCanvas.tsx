@@ -1412,13 +1412,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (this.currentWave === 1 && subWave <= 3) {
           switch (subWave) {
             case 1:
-              this.spawnMultipleEnemiesTypeA(3);
+              this.spawnMultipleEnemiesTypeA(5);
               break;
             case 2:
               this.spawnMultipleEnemiesTypeB(3);
               break;
             case 3:
-              this.spawnMultipleEnemiesTypeC(3);
+              this.spawnMultipleEnemiesTypeC(1);
               break;
           }
         } else {
