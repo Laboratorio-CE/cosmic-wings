@@ -27,6 +27,11 @@ import enemyAFrame1 from '../assets/images/enemy/enemy-A-frame-1.png';
 import enemyAFrame2 from '../assets/images/enemy/enemy-A-frame-2.png';
 import enemyAFrame3 from '../assets/images/enemy/enemy-A-frame-3.png';
 
+// Importar sprites do inimigo tipo B
+import enemyBFrame1 from '../assets/images/enemy/enemy-B-frame-1.png';
+import enemyBFrame2 from '../assets/images/enemy/enemy-B-frame-2.png';
+import enemyBFrame3 from '../assets/images/enemy/enemy-B-frame-3.png';
+
 interface GameCanvasProps {
   backgroundSpeed?: number;
 }
@@ -171,7 +176,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
   const [lives, setLives] = useState(3); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [score, setScore] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [score, setScore] = useState(0);
   const [wave, setWave] = useState(1); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   useEffect(() => {
@@ -249,6 +254,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       lastMoveDirection = { x: 0, y: 0 };
       isDestroyed = false;
       
+      // Sistema de pontuação
+      points: number;
+      
       constructor(scene: Phaser.Scene, x: number, y: number, textureKey: string) {
         this.scene = scene;
         this.sprite = scene.add.sprite(x, y, textureKey);
@@ -264,6 +272,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.maxTotalShots = 10;
         this.movementsBeforeLeaving = 1;
         this.maxMovements = 5;
+        this.points = 50; // Pontuação padrão
       }
       
       // Método para ajustar stats baseado na onda
@@ -303,7 +312,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Criar animação de destruição na posição atual
         new DeathAnimation(this.scene, this.sprite.x, this.sprite.y, () => {
-          // Callback após animação - aqui pode incrementar score, etc.
+          // Callback após animação - incrementar pontuação
+          const gameScene = this.scene as GameScene;
+          gameScene.addScore(this.points);
         });
         
         // Remover sprite do inimigo
@@ -357,15 +368,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.maxHp = 1;
         this.speed = 200;
         this.maxSpeed = 400;
-        this.shotsPerBurst = 3; // 3 tiros por rajada
+        this.shotsPerBurst = 1; // 3 tiros por rajada
         this.maxShotsPerBurst = 5;
         this.totalShots = 6; // Total de 6 tiros (2 rajadas de 3)
         this.maxTotalShots = 12;
         this.movementsBeforeLeaving = 2; // 2 posições de tiro
         this.maxMovements = 3;
+        this.points = 100; // Inimigo tipo A dá 100 pontos
         
         // Configurar sprite
-        this.sprite.setScale(0.7);
+        this.sprite.setScale(0.8);
         this.sprite.setData('enemyType', 'A');
         this.sprite.setData('hp', this.hp);
         
@@ -374,19 +386,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
       
       private setRandomTargetInUpperHalf() {
-        // Posição aleatória na metade superior da tela (y entre 50 e 300)
-        this.targetX = Phaser.Math.Between(100, 700);
-        this.targetY = Phaser.Math.Between(50, 300);
+        // Posição aleatória na metade superior da tela com área reduzida (y entre 100 e 250)
+        this.targetX = Phaser.Math.Between(200, 600);
+        this.targetY = Phaser.Math.Between(100, 250);
       }
       
       private setRandomTargetForSecondPosition() {
         // Segunda posição também na metade superior, mas diferente da primeira
-        const minDistance = 100; // Distância mínima da posição anterior
+        const minDistance = 80; // Distância mínima reduzida da posição anterior
         let newX, newY;
         
         do {
-          newX = Phaser.Math.Between(100, 700);
-          newY = Phaser.Math.Between(50, 300);
+          newX = Phaser.Math.Between(200, 600);
+          newY = Phaser.Math.Between(100, 250);
         } while (Phaser.Math.Distance.Between(this.targetX, this.targetY, newX, newY) < minDistance);
         
         this.targetX = newX;
@@ -560,6 +572,262 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
     }
 
+    // =============================================
+    // ENEMY TYPE B
+    // =============================================
+    class EnemyTypeB extends Enemy {
+      // Estados do inimigo
+      private state: 'entering' | 'initial_shooting' | 'moving_to_position' | 'position_shooting' | 'leaving' = 'entering';
+      
+      // Sistema de disparo
+      private fireTimer = 0;
+      private fireRate = 1500; // 1.5 segundos entre rajadas
+      private burstTimer = 0;
+      private burstRate = 400; // 400ms entre tiros da mesma rajada
+      private currentBurstShots = 0;
+      private isInBurst = false;
+      private burstCount = 0;
+      private maxBursts = 1; // 1 rajada por posição
+      
+      // Sistema de movimento
+      private moveSpeed = 150;
+      private targetX = 0;
+      private targetY = 0;
+      public maxMovements = 3; // Mover 3 vezes
+      private hasCompletedInitialShooting = false;
+      private positions: { x: number; y: number }[] = [];
+      
+      constructor(scene: Phaser.Scene, x: number, y: number) {
+        super(scene, x, y, 'enemy-B-frame-1');
+        
+        // Stats específicos do Enemy Type B
+        this.hp = 1;
+        this.maxHp = 1;
+        this.speed = 150;
+        this.maxSpeed = 300;
+        this.shotsPerBurst = 2; // 2 tiros por rajada (um para cada lado)
+        this.maxShotsPerBurst = 5;
+        this.totalShots = 8; // Total de 8 tiros (4 rajadas de 2)
+        this.maxTotalShots = 15;
+        this.movementsBeforeLeaving = 1;
+        this.maxMovements = 2;
+        this.points = 300; // Inimigo tipo B dá 300 pontos
+        
+        // Configurar sprite
+        this.sprite.setScale(0.7);
+        this.sprite.setData('enemyType', 'B');
+        this.sprite.setData('hp', this.hp);
+        
+        // Definir as 3 posições que o inimigo visitará
+        this.positions = [
+          { x: 200, y: 150 }, // Primeira posição
+          { x: 600, y: 200 }, // Segunda posição
+          { x: 400, y: 250 }  // Terceira posição
+        ];
+        
+        // Começar no estado de entrada (não atirando ainda)
+        this.state = 'entering';
+      }
+      
+      move() {
+        const deltaTime = this.scene.game.loop.delta / 1000;
+        
+        // Calcular direção para o alvo
+        const directionX = this.targetX - this.sprite.x;
+        const directionY = this.targetY - this.sprite.y;
+        const distance = Math.sqrt(directionX * directionX + directionY * directionY);
+        
+        // Se chegou perto o suficiente do alvo
+        if (distance < 10) {
+          this.onReachedTarget();
+          return;
+        }
+        
+        // Normalizar direção e aplicar velocidade
+        const normalizedX = directionX / distance;
+        const normalizedY = directionY / distance;
+        
+        this.sprite.x += normalizedX * this.moveSpeed * deltaTime;
+        this.sprite.y += normalizedY * this.moveSpeed * deltaTime;
+        
+        // Atualizar animação de movimento
+        this.updateMovementAnimation(normalizedX);
+      }
+      
+      private onReachedTarget() {
+        // Chegou na posição, mudar para modo de tiro
+        this.state = 'position_shooting';
+        this.resetShooting();
+      }
+      
+      private setNextTarget() {
+        if (this.movementCount < this.maxMovements && this.movementCount < this.positions.length) {
+          // Definir próxima posição
+          const nextPosition = this.positions[this.movementCount];
+          this.targetX = nextPosition.x;
+          this.targetY = nextPosition.y;
+          this.movementCount++;
+        } else {
+          // Completou todos os movimentos, sair da tela
+          this.targetX = this.sprite.x;
+          this.targetY = 700; // Sair pela parte inferior
+        }
+      }
+      
+      shoot() {
+        // Obter referência ao grupo de projéteis inimigos da scene
+        const gameScene = this.scene as GameScene;
+        if (!gameScene.enemyBullets) return;
+        
+        // Disparar dois projéteis: um a 45° esquerda, outro a 45° direita
+        this.shootAngled(-45); // Esquerda
+        this.shootAngled(45);  // Direita
+        
+        this.shotsFired++;
+      }
+      
+      private shootAngled(angleDegrees: number) {
+        const gameScene = this.scene as GameScene;
+        if (!gameScene.enemyBullets) return;
+        
+        // Converter ângulo para radianos
+        const angleRadians = (angleDegrees * Math.PI) / 180;
+        
+        // Criar projétil
+        const bullet = gameScene.enemyBullets.get(this.sprite.x, this.sprite.y + 20, 'enemy-fire');
+        
+        if (bullet) {
+          bullet.setActive(true);
+          bullet.setVisible(true);
+          bullet.setScale(0.4);
+          
+          // Calcular velocidade baseada no ângulo
+          const speed = 250;
+          const velocityX = Math.sin(angleRadians) * speed;
+          const velocityY = Math.cos(angleRadians) * speed;
+          
+          bullet.setData('velocityX', velocityX);
+          bullet.setData('velocityY', velocityY);
+          bullet.setData('damage', 1);
+          bullet.setData('isEnemyBullet', true);
+          bullet.setData('isAngled', true); // Marcar como projétil angular
+        }
+      }
+      
+      private updateMovementAnimation(directionX: number) {
+        // Atualizar frame baseado na direção do movimento
+        if (Math.abs(directionX) > 0.1) {
+          // Está se movendo horizontalmente - alternar entre frames 2 e 3
+          const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
+          this.sprite.setTexture(`enemy-B-frame-${frame}`);
+          
+          // Espelhar sprite baseado na direção
+          // Frames 2 e 3 são para movimento à esquerda (padrão)
+          // Para movimento à direita, espelhar
+          this.sprite.setFlipX(directionX > 0);
+        } else {
+          // Movimento apenas vertical ou parado - usar frame 1
+          this.sprite.setTexture('enemy-B-frame-1');
+          this.sprite.setFlipX(false);
+        }
+      }
+      
+      private resetShooting() {
+        this.burstCount = 0;
+        this.shotsFired = 0;
+        this.fireTimer = this.scene.time.now;
+        this.sprite.setTexture('enemy-B-frame-1'); // Frame de repouso
+      }
+      
+      update() {
+        super.update();
+        if (this.isDestroyed) return;
+        
+        const currentTime = this.scene.time.now;
+        
+        // Máquina de estados
+        switch (this.state) {
+          case 'entering':
+            // Verificar se entrou na tela
+            if (this.sprite.y > 50) {
+              this.state = 'initial_shooting';
+              this.resetShooting();
+            } else {
+              // Continuar entrando (movimento para baixo)
+              this.sprite.y += 100 * (this.scene.game.loop.delta / 1000);
+            }
+            break;
+            
+          case 'initial_shooting':
+            // Executar rajada inicial
+            this.executeShootingBehavior(currentTime);
+            
+            // Verificar se completou o tiro inicial
+            if (this.burstCount >= this.maxBursts && !this.hasCompletedInitialShooting) {
+              this.hasCompletedInitialShooting = true;
+              this.setNextTarget();
+              this.state = 'moving_to_position';
+            }
+            break;
+            
+          case 'moving_to_position':
+            this.move();
+            break;
+            
+          case 'position_shooting':
+            // Executar rajada na posição
+            this.executeShootingBehavior(currentTime);
+            
+            // Verificar se completou o tiro na posição
+            if (this.burstCount >= this.maxBursts) {
+              if (this.movementCount >= this.maxMovements) {
+                // Completou todos os movimentos, sair
+                this.setNextTarget(); // Define ponto de saída
+                this.state = 'leaving';
+              } else {
+                // Ir para próxima posição
+                this.setNextTarget();
+                this.state = 'moving_to_position';
+              }
+            }
+            break;
+            
+          case 'leaving':
+            this.move();
+            // Verificar se saiu da tela
+            if (this.sprite.y > 650) {
+              this.isDestroyed = true;
+            }
+            break;
+        }
+      }
+      
+      private executeShootingBehavior(currentTime: number) {
+        if (!this.isInBurst) {
+          // Verificar se é hora de iniciar uma nova rajada
+          if (currentTime - this.fireTimer > this.fireRate && this.burstCount < this.maxBursts) {
+            this.isInBurst = true;
+            this.currentBurstShots = 0;
+            this.burstTimer = currentTime;
+          }
+        } else {
+          // Executando rajada
+          if (currentTime - this.burstTimer > this.burstRate && this.currentBurstShots < this.shotsPerBurst) {
+            this.shoot();
+            this.currentBurstShots++;
+            this.burstTimer = currentTime;
+            
+            // Verificar se rajada terminou
+            if (this.currentBurstShots >= this.shotsPerBurst) {
+              this.isInBurst = false;
+              this.burstCount++;
+              this.fireTimer = currentTime;
+            }
+          }
+        }
+      }
+    }
+
     // Classe da cena do jogo
     class GameScene extends Phaser.Scene {
       player: Phaser.GameObjects.Sprite | null = null;
@@ -571,11 +839,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Sistema de projéteis
       playerBullets: Phaser.GameObjects.Group | null = null;
       enemyBullets: Phaser.GameObjects.Group | null = null;
-      enemies: EnemyTypeA[] = [];
+      enemies: (EnemyTypeA | EnemyTypeB)[] = [];
       bulletSpeed = 500;
       fireRate = 200; // Milissegundos entre tiros
       lastFireTime = 0;
       fireKeys: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
+      
+      // Sistema de sub-ondas
+      currentSubWave = 1;
+      maxSubWaves = 2;
+      subWaveDelay = 2000; // 2 segundos entre sub-ondas
+      lastEnemyKilledTime = 0;
 
       preload() {
         // Carregar imagens do player
@@ -604,6 +878,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.load.image('enemy-A-frame-1', enemyAFrame1);
         this.load.image('enemy-A-frame-2', enemyAFrame2);
         this.load.image('enemy-A-frame-3', enemyAFrame3);
+        
+        // Carregar sprites do inimigo tipo B
+        this.load.image('enemy-B-frame-1', enemyBFrame1);
+        this.load.image('enemy-B-frame-2', enemyBFrame2);
+        this.load.image('enemy-B-frame-3', enemyBFrame3);
       }
 
       create() {
@@ -642,8 +921,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
 
         setGameState('playing');
         
-        // Para teste: criar um inimigo do tipo A
-        this.spawnEnemyA();
+        // Iniciar com sub-onda 1 (inimigo tipo A)
+        this.spawnSubWave(1);
       }
 
       update() {
@@ -796,12 +1075,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.enemyBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
           if (sprite.active) {
-            // Mover projétil para baixo
             const deltaTime = this.game.loop.delta / 1000;
-            sprite.y += sprite.getData('speed') * deltaTime;
+            
+            // Verificar se é projétil angular (inimigo tipo B)
+            if (sprite.getData('isAngled')) {
+              // Movimento baseado em velocidade X e Y
+              sprite.x += sprite.getData('velocityX') * deltaTime;
+              sprite.y += sprite.getData('velocityY') * deltaTime;
+            } else {
+              // Movimento padrão para baixo (inimigo tipo A)
+              sprite.y += sprite.getData('speed') * deltaTime;
+            }
             
             // Remover projétil se sair da tela
-            if (sprite.y > 610) {
+            if (sprite.y > 610 || sprite.x < -10 || sprite.x > 810) {
               sprite.setActive(false);
               sprite.setVisible(false);
             }
@@ -811,6 +1098,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       updateEnemies() {
         // Atualizar todos os inimigos e remover os destruídos
+        const previousEnemyCount = this.enemies.length;
         this.enemies = this.enemies.filter(enemy => {
           if (!enemy.isDestroyed) {
             enemy.update();
@@ -818,6 +1106,35 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           }
           return false;
         });
+        
+        // Verificar se inimigos foram destruídos
+        if (this.enemies.length < previousEnemyCount) {
+          this.lastEnemyKilledTime = this.time.now;
+        }
+        
+        // Sistema de sub-ondas
+        if (this.enemies.length === 0 && this.currentSubWave < this.maxSubWaves) {
+          // Verificar se passou tempo suficiente desde o último inimigo morto
+          if (this.time.now - this.lastEnemyKilledTime > this.subWaveDelay) {
+            this.currentSubWave++;
+            this.spawnSubWave(this.currentSubWave);
+          }
+        }
+      }
+      
+      spawnSubWave(subWave: number) {
+        switch (subWave) {
+          case 1:
+            this.spawnEnemyA();
+            break;
+          case 2:
+            this.spawnEnemyB();
+            break;
+          default:
+            // Completou todas as sub-ondas da onda atual
+            console.log('Onda completa!');
+            break;
+        }
       }
       
       spawnEnemyA() {
@@ -826,6 +1143,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         const y = -50; // Fora da tela, no topo
         
         const enemy = new EnemyTypeA(this, x, y);
+        enemy.adjustForWave(wave); // Usar a onda atual
+        this.enemies.push(enemy);
+      }
+      
+      spawnEnemyB() {
+        // Spawnar inimigo do tipo B no topo da tela, posição aleatória
+        const x = Phaser.Math.Between(200, 600); // Posição mais centralizada para a curva
+        const y = -50; // Fora da tela, no topo
+        
+        const enemy = new EnemyTypeB(this, x, y);
         enemy.adjustForWave(wave); // Usar a onda atual
         this.enemies.push(enemy);
       }
@@ -880,28 +1207,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         });
       }
       
-      // Método para quando o projétil colidir com inimigo
-      hitEnemy(bullet: Phaser.GameObjects.Sprite, enemy: Phaser.GameObjects.Sprite) {
-        // Desativar o projétil
-        bullet.setActive(false);
-        bullet.setVisible(false);
+      addScore(points: number) {
+        // Incrementar pontuação usando o setter do React
+        setScore(prevScore => prevScore + points);
         
-        // Reduzir HP do inimigo
-        const currentHP = enemy.getData('hp') || 1;
-        const bulletDamage = bullet.getData('damage') || 1;
-        const newHP = currentHP - bulletDamage;
-        
-        enemy.setData('hp', newHP);
-        
-        // Se HP chegou a 0, destruir inimigo
-        if (newHP <= 0) {
-          // Aqui você pode adicionar efeitos visuais de destruição
-          enemy.setActive(false);
-          enemy.setVisible(false);
-          
-          // Incrementar pontuação (se necessário)
-          // setScore(prevScore => prevScore + enemy.getData('points') || 10);
-        }
+        // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
+        this.lastEnemyKilledTime = this.time.now;
       }
     }
 
