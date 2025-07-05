@@ -1981,11 +1981,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
     // =============================================
     class BossTypeC extends Enemy {
       // Estados do chefe (baseado no Enemy Type C)
-      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
+      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' = 'entering';
       
       // Sistema de disparo
       private fireTimer = 0;
-      private fireRate = 800; // 800ms entre tiros
+      private fireRate = 300; // 800ms entre tiros
       private currentShots = 0;
       private shotsPerBurstC = 5; // 5 tiros por rajada
       
@@ -2094,14 +2094,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       private onReachedTarget() {
         switch (this.state) {
           case 'moving_to_position':
+          case 'moving':
             // Chegou na posição, começar a atirar
             this.state = 'shooting';
             this.resetShooting();
-            break;
-            
-          case 'leaving':
-            // Saiu da tela, destruir boss
-            this.destroy();
             break;
         }
       }
@@ -2294,7 +2290,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             
           case 'moving_to_position':
           case 'moving':
-          case 'leaving':
             this.move();
             break;
             
@@ -2316,16 +2311,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       private onCompletedShooting() {
         this.cycleCount++;
         
+        // Boss nunca vai embora, sempre continua em ciclos infinitos
+        // Reiniciar contador de ciclos quando atingir o máximo
         if (this.cycleCount >= this.maxCycles) {
-          // Completou todos os ciclos, sair da tela
-          this.setExitTarget();
-          this.state = 'leaving';
-        } else {
-          // Começar próximo ciclo de movimento
-          this.setNextPosition();
-          this.state = 'moving';
-          this.movementCountC = 0;
+          this.cycleCount = 0; // Reiniciar ciclos
         }
+        
+        // Sempre começar próximo ciclo de movimento
+        this.setNextPosition();
+        this.state = 'moving';
+        this.movementCountC = 0;
       }
     }
 
@@ -2632,9 +2627,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             
             // Verificar se é projétil do boss
             if (sprite.getData('isBossBullet')) {
-              // Verificar se é projétil angular do boss (Boss Type B)
-              if (sprite.getData('isAngled')) {
-                // Movimento baseado em velocidade X e Y para projéteis angulares do boss
+              // Verificar se é projétil angular do boss (Boss Type B) ou direcionado (Boss Type C)
+              if (sprite.getData('isAngled') || sprite.getData('isDirected')) {
+                // Movimento baseado em velocidade X e Y para projéteis angulares/direcionados do boss
                 sprite.x += sprite.getData('velocityX') * deltaTime;
                 sprite.y += sprite.getData('velocityY') * deltaTime;
               } else {
