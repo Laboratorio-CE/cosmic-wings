@@ -180,9 +180,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
-  const [lives, setLives] = useState(3); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [lives] = useState(3);
   const [score, setScore] = useState(0);
-  const [wave, setWave] = useState(1); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [wave, setWave] = useState(1);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -1121,6 +1121,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       maxSubWaves = 3;
       subWaveDelay = 2000; // 2 segundos entre sub-ondas
       lastEnemyKilledTime = 0;
+      
+      // Sistema de contagem de inimigos
+      enemiesDefeated = 0; // Contador de inimigos derrotados
+      maxEnemiesInWave = 15; // Máximo de inimigos por onda
+      currentWave = 1;
 
       preload() {
         // Carregar imagens do player
@@ -1196,6 +1201,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         }
 
         setGameState('playing');
+        
+        // Inicializar sistema de ondas
+        this.currentWave = 1;
+        this.calculateMaxEnemiesForWave(this.currentWave);
         
         // Iniciar com sub-onda 1 (inimigo tipo A)
         this.spawnSubWave(1);
@@ -1383,67 +1392,157 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           return false;
         });
         
-        // Verificar se inimigos foram destruídos
-        if (this.enemies.length < previousEnemyCount) {
+        // Verificar se inimigos foram destruídos (incrementar contador de derrotados)
+        const enemiesDestroyed = previousEnemyCount - this.enemies.length;
+        if (enemiesDestroyed > 0) {
+          this.enemiesDefeated += enemiesDestroyed;
+          console.log(`${enemiesDestroyed} inimigo(s) derrotado(s). Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
           this.lastEnemyKilledTime = this.time.now;
         }
         
         // Sistema de sub-ondas
-        if (this.enemies.length === 0 && this.currentSubWave < this.maxSubWaves) {
+        if (this.enemies.length === 0 && this.canSpawnMoreEnemies()) {
           // Verificar se passou tempo suficiente desde o último inimigo morto
           if (this.time.now - this.lastEnemyKilledTime > this.subWaveDelay) {
             this.currentSubWave++;
             this.spawnSubWave(this.currentSubWave);
           }
+        } else if (this.enemies.length === 0 && !this.canSpawnMoreEnemies()) {
+          // Onda completa - por enquanto apenas fica com o jogador na tela
+          console.log(`Onda ${this.currentWave} completa! Total de ${this.enemiesDefeated} inimigos derrotados.`);
+          console.log('Aguardando implementação do sistema de próxima onda...');
+          
+          // TODO: Implementar transição para próxima onda ou tela de vitória
+          // Por enquanto, o jogo fica apenas com o jogador na tela
         }
       }
       
       spawnSubWave(subWave: number) {
-        switch (subWave) {
-          case 1:
-            this.spawnEnemyA();
-            break;
-          case 2:
-            this.spawnEnemyB();
-            break;
-          case 3:
-            this.spawnEnemyC();
-            break;
-          default:
-            // Completou todas as sub-ondas da onda atual
-            console.log('Onda completa!');
-            break;
+        console.log(`Spawning sub-onda ${subWave} da onda ${this.currentWave}`);
+        
+        // Primeiras 3 sub-ondas da onda 1 são fixas
+        if (this.currentWave === 1 && subWave <= 3) {
+          switch (subWave) {
+            case 1:
+              this.spawnMultipleEnemiesTypeA(3);
+              break;
+            case 2:
+              this.spawnMultipleEnemiesTypeB(3);
+              break;
+            case 3:
+              this.spawnMultipleEnemiesTypeC(3);
+              break;
+          }
+        } else {
+          // A partir da 4ª sub-onda da onda 1 ou qualquer sub-onda das ondas seguintes
+          this.spawnRandomEnemies();
+        }
+      }
+      
+      calculateMaxEnemiesForWave(wave: number) {
+        if (wave === 1) {
+          this.maxEnemiesInWave = 15;
+        } else if (wave <= 3) {
+          this.maxEnemiesInWave = 15 + (5 * (wave - 1));
+        } else {
+          // A partir da onda 4, incremento aleatório entre 5 e 10
+          const previousMax = wave === 4 ? 25 : this.maxEnemiesInWave;
+          const increment = Phaser.Math.Between(5, 10);
+          this.maxEnemiesInWave = previousMax + increment;
+        }
+        console.log(`Onda ${wave}: Máximo de ${this.maxEnemiesInWave} inimigos`);
+      }
+      
+      canSpawnMoreEnemies(): boolean {
+        return this.enemiesDefeated < this.maxEnemiesInWave;
+      }
+      
+      spawnMultipleEnemiesTypeA(count: number) {
+        for (let i = 0; i < count && this.canSpawnMoreEnemies(); i++) {
+          this.spawnEnemyA();
+        }
+      }
+      
+      spawnMultipleEnemiesTypeB(count: number) {
+        for (let i = 0; i < count && this.canSpawnMoreEnemies(); i++) {
+          this.spawnEnemyB();
+        }
+      }
+      
+      spawnMultipleEnemiesTypeC(count: number) {
+        for (let i = 0; i < count && this.canSpawnMoreEnemies(); i++) {
+          this.spawnEnemyC();
+        }
+      }
+      
+      spawnRandomEnemies() {
+        // Calcular quantos inimigos spawnar baseado na onda
+        let enemiesToSpawn = 5 + Math.floor((this.currentWave - 1) / 2);
+        enemiesToSpawn = Math.min(enemiesToSpawn, 15); // Máximo de 15 inimigos por spawn
+        
+        // Não exceder o máximo de inimigos da onda (considerando os já derrotados)
+        const remainingSlots = this.maxEnemiesInWave - this.enemiesDefeated;
+        enemiesToSpawn = Math.min(enemiesToSpawn, remainingSlots);
+        
+        console.log(`Spawning ${enemiesToSpawn} inimigos aleatórios (derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave})`);
+        
+        for (let i = 0; i < enemiesToSpawn; i++) {
+          const enemyType = Phaser.Math.Between(1, 3);
+          
+          switch (enemyType) {
+            case 1:
+              this.spawnEnemyA();
+              break;
+            case 2:
+              this.spawnEnemyB();
+              break;
+            case 3:
+              this.spawnEnemyC();
+              break;
+          }
         }
       }
       
       spawnEnemyA() {
+        if (!this.canSpawnMoreEnemies()) return;
+        
         // Spawnar inimigo do tipo A no topo da tela, posição aleatória
         const x = Phaser.Math.Between(100, 700);
         const y = -50; // Fora da tela, no topo
         
         const enemy = new EnemyTypeA(this, x, y);
-        enemy.adjustForWave(wave); // Usar a onda atual
+        enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
+        
+        console.log(`Enemy A spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
       }
       
       spawnEnemyB() {
+        if (!this.canSpawnMoreEnemies()) return;
+        
         // Spawnar inimigo do tipo B no topo da tela, posição aleatória
         const x = Phaser.Math.Between(200, 600); // Posição mais centralizada para a curva
         const y = -50; // Fora da tela, no topo
         
         const enemy = new EnemyTypeB(this, x, y);
-        enemy.adjustForWave(wave); // Usar a onda atual
+        enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
+        
+        console.log(`Enemy B spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
       }
       
       spawnEnemyC() {
+        if (!this.canSpawnMoreEnemies()) return;
+        
         // Spawnar inimigo do tipo C no topo da tela, posição aleatória
         const x = Phaser.Math.Between(250, 550); // Posição centralizada
         const y = -50; // Fora da tela, no topo
         
         const enemy = new EnemyTypeC(this, x, y);
-        enemy.adjustForWave(wave); // Usar a onda atual
+        enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
+        
+        console.log(`Enemy C spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
       }
       
       checkCollisions() {
@@ -1500,6 +1599,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         // Incrementar pontuação usando o setter do React
         setScore(prevScore => prevScore + points);
         
+        // Atualizar onda no estado do React
+        setWave(this.currentWave);
+        
         // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
         this.lastEnemyKilledTime = this.time.now;
       }
@@ -1544,7 +1646,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         gameRef.current = null;
       }
     };
-  }, [wave]); // Adicionar wave como dependência
+  }, [wave, setWave]); // Adicionar setWave como dependência
 
   const handleMobileControl = (direction: 'up' | 'down' | 'left' | 'right') => {
     // Implementar controles móveis posteriormente
