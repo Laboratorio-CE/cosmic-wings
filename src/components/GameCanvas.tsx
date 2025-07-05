@@ -237,6 +237,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       scene: Phaser.Scene;
       sprite: Phaser.GameObjects.Sprite;
       
+      // Identificação única
+      id: string;
+      
       // Propriedades base
       hp: number;
       maxHp: number;
@@ -265,6 +268,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       constructor(scene: Phaser.Scene, x: number, y: number, textureKey: string) {
         this.scene = scene;
         this.sprite = scene.add.sprite(x, y, textureKey);
+        
+        // Gerar ID único para o inimigo
+        this.id = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         // Valores padrão - serão sobrescritos pelas subclasses
         this.hp = 1;
@@ -315,6 +321,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         this.isDestroyed = true;
         
+        // Liberar posição ocupada
+        const gameScene = this.scene as GameScene;
+        gameScene.releasePosition(this.id);
+        
         // Criar animação de destruição na posição atual
         new DeathAnimation(this.scene, this.sprite.x, this.sprite.y, () => {
           // Callback após animação - incrementar pontuação
@@ -332,6 +342,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Verificar se saiu da tela (sair pela parte inferior ou superior)
         if (this.sprite.y > 650 || this.sprite.y < -100) {
+          // Liberar posição antes de destruir
+          const gameScene = this.scene as GameScene;
+          gameScene.releasePosition(this.id);
+          
           this.sprite.destroy();
           this.isDestroyed = true;
           return;
@@ -391,23 +405,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
       
       private setRandomTargetInUpperHalf() {
-        // Posição aleatória na metade superior da tela com área reduzida (y entre 100 e 250)
-        this.targetX = Phaser.Math.Between(200, 600);
-        this.targetY = Phaser.Math.Between(100, 250);
+        // Posição aleatória inicial na metade superior da tela
+        const preferredX = Phaser.Math.Between(200, 600);
+        const preferredY = Phaser.Math.Between(100, 250);
+        
+        // Encontrar posição livre
+        const gameScene = this.scene as GameScene;
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
+        
+        this.targetX = freePosition.x;
+        this.targetY = freePosition.y;
       }
       
       private setRandomTargetForSecondPosition() {
         // Segunda posição também na metade superior, mas diferente da primeira
-        const minDistance = 80; // Distância mínima reduzida da posição anterior
-        let newX, newY;
+        const minDistance = 80;
+        let preferredX, preferredY;
         
         do {
-          newX = Phaser.Math.Between(200, 600);
-          newY = Phaser.Math.Between(100, 250);
-        } while (Phaser.Math.Distance.Between(this.targetX, this.targetY, newX, newY) < minDistance);
+          preferredX = Phaser.Math.Between(200, 600);
+          preferredY = Phaser.Math.Between(100, 250);
+        } while (Phaser.Math.Distance.Between(this.targetX, this.targetY, preferredX, preferredY) < minDistance);
         
-        this.targetX = newX;
-        this.targetY = newY;
+        // Encontrar posição livre
+        const gameScene = this.scene as GameScene;
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
+        
+        this.targetX = freePosition.x;
+        this.targetY = freePosition.y;
       }
       
       private setExitTarget() {
@@ -443,20 +468,28 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       private onReachedTarget() {
         switch (this.state) {
-          case 'moving_to_position':
+          case 'moving_to_position': {
             if (!this.hasReachedFirstPosition) {
-              // Chegou na primeira posição
+              // Chegou na primeira posição - reservar posição
               this.hasReachedFirstPosition = true;
               this.state = 'shooting';
               this.resetShooting();
+              
+              const gameScene = this.scene as GameScene;
+              gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
             }
             break;
+          }
             
-          case 'moving_to_next':
-            // Chegou na segunda posição
+          case 'moving_to_next': {
+            // Chegou na segunda posição - reservar nova posição
             this.state = 'shooting';
             this.resetShooting();
+            
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
             break;
+          }
             
           case 'leaving':
             // Saiu da tela
@@ -623,12 +656,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.sprite.setData('enemyType', 'B');
         this.sprite.setData('hp', this.hp);
         
-        // Definir as 3 posições que o inimigo visitará
-        this.positions = [
-          { x: 200, y: 150 }, // Primeira posição
-          { x: 600, y: 200 }, // Segunda posição
-          { x: 400, y: 250 }  // Terceira posição
+        // Definir as 3 posições que o inimigo visitará usando posições livres
+        const positions = [
+          { x: 200, y: 150 },
+          { x: 600, y: 200 },
+          { x: 400, y: 250 }
         ];
+        
+        // Encontrar posições livres para cada posição planejada
+        const gameScene = this.scene as GameScene;
+        this.positions = positions.map(pos => 
+          gameScene.findFreePosition(pos.x, pos.y, this.id + '_planning')
+        );
         
         // Começar no estado de entrada (não atirando ainda)
         this.state = 'entering';
@@ -660,17 +699,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
       
       private onReachedTarget() {
-        // Chegou na posição, mudar para modo de tiro
+        // Chegou na posição, mudar para modo de tiro e reservar posição
         this.state = 'position_shooting';
         this.resetShooting();
+        
+        const gameScene = this.scene as GameScene;
+        gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
       }
       
       private setNextTarget() {
         if (this.movementCount < this.maxMovements && this.movementCount < this.positions.length) {
-          // Definir próxima posição
-          const nextPosition = this.positions[this.movementCount];
-          this.targetX = nextPosition.x;
-          this.targetY = nextPosition.y;
+          // Definir próxima posição usando posição livre
+          const plannedPosition = this.positions[this.movementCount];
+          const gameScene = this.scene as GameScene;
+          const freePosition = gameScene.findFreePosition(plannedPosition.x, plannedPosition.y, this.id);
+          
+          this.targetX = freePosition.x;
+          this.targetY = freePosition.y;
           this.movementCount++;
         } else {
           // Completou todos os movimentos, sair da tela
@@ -881,30 +926,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       }
       
       private setNextPosition() {
-        // Gerar posição aleatória na área de jogo
-        // X: entre 150 e 650 (com margem das bordas)
-        // Y: entre 120 e 250 (área superior/média da tela)
-        this.targetX = Phaser.Math.Between(150, 650);
-        this.targetY = Phaser.Math.Between(120, 250);
+        // Gerar posição aleatória inicial na área de jogo
+        const preferredX = Phaser.Math.Between(150, 650);
+        const preferredY = Phaser.Math.Between(120, 250);
         
-        // Garantir que a nova posição não seja muito próxima da atual
-        const currentDistance = Phaser.Math.Distance.Between(
-          this.sprite.x, this.sprite.y, this.targetX, this.targetY
-        );
+        // Encontrar posição livre
+        const gameScene = this.scene as GameScene;
+        const freePosition = gameScene.findFreePosition(preferredX, preferredY, this.id);
         
-        // Se a posição for muito próxima, gerar nova
-        if (currentDistance < 80) {
-          // Tentar nova posição mais distante
-          const angle = Phaser.Math.Between(0, 359) * (Math.PI / 180);
-          const distance = Phaser.Math.Between(100, 200);
-          
-          this.targetX = this.sprite.x + Math.cos(angle) * distance;
-          this.targetY = this.sprite.y + Math.sin(angle) * distance;
-          
-          // Manter dentro dos limites da tela
-          this.targetX = Phaser.Math.Clamp(this.targetX, 150, 650);
-          this.targetY = Phaser.Math.Clamp(this.targetY, 120, 250);
-        }
+        this.targetX = freePosition.x;
+        this.targetY = freePosition.y;
       }
       
       private setExitTarget() {
@@ -940,15 +971,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       private onReachedTarget() {
         switch (this.state) {
-          case 'moving_to_position':
-            // Chegou na posição inicial, começar a atirar
+          case 'moving_to_position': {
+            // Chegou na posição inicial, começar a atirar e reservar posição
             this.state = 'shooting';
             this.resetShooting();
-            break;
             
-          case 'moving':
-            // Chegou em uma posição de movimento
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
+            break;
+          }
+            
+          case 'moving': {
+            // Chegou em uma posição de movimento e reservar posição
             this.movementCountC++;
+            
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
             
             if (this.movementCountC >= this.maxMovementsPerCycle) {
               // Completou os movimentos deste ciclo, atirar novamente
@@ -960,6 +998,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
               this.setNextPosition();
             }
             break;
+          }
             
           case 'leaving':
             // Saiu da tela
@@ -1114,6 +1153,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       enemiesDefeated = 0; // Contador de inimigos derrotados
       maxEnemiesInWave = 15; // Máximo de inimigos por onda
       currentWave = 1;
+
+      // Sistema de controle de posições ocupadas
+      occupiedPositions: { x: number; y: number; enemyId: string }[] = [];
+      positionRadius = 60; // Raio mínimo entre inimigos parados
 
       preload() {
         // Carregar imagens do player
@@ -1372,12 +1415,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       updateEnemies() {
         // Atualizar todos os inimigos e remover os destruídos
         const previousEnemyCount = this.enemies.length;
+        
         this.enemies = this.enemies.filter(enemy => {
           if (!enemy.isDestroyed) {
             enemy.update();
             return true;
+          } else {
+            // Garantir que a posição seja liberada quando o inimigo for removido
+            this.releasePosition(enemy.id);
+            return false;
           }
-          return false;
         });
         
         // Verificar se inimigos foram destruídos (incrementar contador de derrotados)
@@ -1578,6 +1625,71 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
         this.lastEnemyKilledTime = this.time.now;
+      }
+
+      // Sistema de controle de posições ocupadas
+      isPositionOccupied(x: number, y: number, excludeEnemyId?: string): boolean {
+        return this.occupiedPositions.some(pos => {
+          if (excludeEnemyId && pos.enemyId === excludeEnemyId) return false;
+          const distance = Phaser.Math.Distance.Between(x, y, pos.x, pos.y);
+          return distance < this.positionRadius;
+        });
+      }
+
+      findFreePosition(preferredX: number, preferredY: number, enemyId: string, attempts: number = 10): { x: number; y: number } {
+        // Primeiro tentar a posição preferida
+        if (!this.isPositionOccupied(preferredX, preferredY, enemyId)) {
+          return { x: preferredX, y: preferredY };
+        }
+
+        // Se a posição preferida está ocupada, tentar posições próximas
+        for (let i = 0; i < attempts; i++) {
+          const angle = (i * 45) % 360; // Tentar em ângulos de 45 graus
+          const distance = this.positionRadius + 20 + (i * 10); // Aumentar distância gradualmente
+          
+          const newX = preferredX + Math.cos(angle * Math.PI / 180) * distance;
+          const newY = preferredY + Math.sin(angle * Math.PI / 180) * distance;
+          
+          // Verificar se a nova posição está dentro dos limites da tela
+          if (newX >= 150 && newX <= 650 && newY >= 100 && newY <= 300) {
+            if (!this.isPositionOccupied(newX, newY, enemyId)) {
+              return { x: newX, y: newY };
+            }
+          }
+        }
+
+        // Se não encontrou posição livre, usar uma posição aleatória válida
+        for (let i = 0; i < 20; i++) {
+          const randomX = Phaser.Math.Between(150, 650);
+          const randomY = Phaser.Math.Between(100, 300);
+          
+          if (!this.isPositionOccupied(randomX, randomY, enemyId)) {
+            return { x: randomX, y: randomY };
+          }
+        }
+
+        // Último recurso: retornar posição original (pode sobrepor)
+        return { x: preferredX, y: preferredY };
+      }
+
+      reservePosition(x: number, y: number, enemyId: string) {
+        // Remover posição anterior deste inimigo
+        this.releasePosition(enemyId);
+        
+        // Adicionar nova posição
+        this.occupiedPositions.push({ x, y, enemyId });
+      }
+
+      releasePosition(enemyId: string) {
+        this.occupiedPositions = this.occupiedPositions.filter(pos => pos.enemyId !== enemyId);
+      }
+
+      updateEnemyPosition(enemyId: string, x: number, y: number) {
+        const posIndex = this.occupiedPositions.findIndex(pos => pos.enemyId === enemyId);
+        if (posIndex !== -1) {
+          this.occupiedPositions[posIndex].x = x;
+          this.occupiedPositions[posIndex].y = y;
+        }
       }
     }
 
