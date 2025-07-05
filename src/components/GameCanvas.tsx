@@ -660,21 +660,50 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.sprite.setData('enemyType', 'B');
         this.sprite.setData('hp', this.hp);
         
-        // Definir as 3 posições que o inimigo visitará usando posições livres
-        const positions = [
-          { x: 200, y: 150 },
-          { x: 600, y: 200 },
-          { x: 400, y: 250 }
-        ];
-        
-        // Encontrar posições livres para cada posição planejada
-        const gameScene = this.scene as GameScene;
-        this.positions = positions.map(pos => 
-          gameScene.findFreePosition(pos.x, pos.y, this.id + '_planning')
-        );
+        // Gerar 3 posições aleatórias que o inimigo visitará
+        this.generateRandomPositions();
         
         // Começar no estado de entrada (não atirando ainda)
         this.state = 'entering';
+      }
+      
+      private generateRandomPositions() {
+        // Gerar 3 posições aleatórias na metade superior da tela
+        const basePositions = [];
+        
+        for (let i = 0; i < 3; i++) {
+          // Gerar posições em diferentes regiões da tela para variedade
+          let x: number, y: number;
+          
+          switch (i) {
+            case 0:
+              // Primeira posição: lado esquerdo a centro-esquerdo
+              x = Phaser.Math.Between(150, 350);
+              y = Phaser.Math.Between(120, 200);
+              break;
+            case 1:
+              // Segunda posição: centro-direita a direita
+              x = Phaser.Math.Between(450, 650);
+              y = Phaser.Math.Between(140, 220);
+              break;
+            case 2:
+              // Terceira posição: centro da tela
+              x = Phaser.Math.Between(300, 500);
+              y = Phaser.Math.Between(180, 260);
+              break;
+            default:
+              x = Phaser.Math.Between(200, 600);
+              y = Phaser.Math.Between(120, 250);
+          }
+          
+          basePositions.push({ x, y });
+        }
+        
+        // Encontrar posições livres para cada posição planejada
+        const gameScene = this.scene as GameScene;
+        this.positions = basePositions.map((pos, index) => 
+          gameScene.findFreePosition(pos.x, pos.y, this.id + '_planning_' + index)
+        );
       }
       
       move() {
@@ -713,10 +742,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       private setNextTarget() {
         if (this.movementCount < this.maxMovements && this.movementCount < this.positions.length) {
-          // Definir próxima posição usando posição livre
-          const plannedPosition = this.positions[this.movementCount];
+          // Usar próxima posição aleatória gerada
+          const targetPosition = this.positions[this.movementCount];
+          
+          // Verificar se a posição ainda está livre, senão buscar uma posição próxima livre
           const gameScene = this.scene as GameScene;
-          const freePosition = gameScene.findFreePosition(plannedPosition.x, plannedPosition.y, this.id);
+          const freePosition = gameScene.findFreePosition(targetPosition.x, targetPosition.y, this.id);
           
           this.targetX = freePosition.x;
           this.targetY = freePosition.y;
