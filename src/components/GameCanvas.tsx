@@ -1288,7 +1288,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.burstCount = 0;
         this.shotsFired = 0;
         this.fireTimer = this.scene.time.now;
-        this.sprite.setTexture('boss-A-frame-1'); // Frame de repouso
+        
+        // Só mudar textura se não estiver em flash E se a textura for diferente
+        if (!this.isFlashing && this.sprite.texture.key !== 'boss-A-frame-1') {
+          this.sprite.setTexture('boss-A-frame-1'); // Frame de repouso
+        }
       }
       
       shoot() {
@@ -1322,13 +1326,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (Math.abs(directionX) > 0.1) {
           // Está se movendo horizontalmente
           const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
-          this.sprite.setTexture(`boss-A-frame-${frame}`);
+          const newTexture = `boss-A-frame-${frame}`;
+          
+          // Só mudar textura se for diferente da atual
+          if (this.sprite.texture.key !== newTexture) {
+            this.sprite.setTexture(newTexture);
+          }
           
           // Espelhar sprite baseado na direção
           this.sprite.setFlipX(directionX > 0);
         } else {
           // Movimento apenas vertical ou parado
-          this.sprite.setTexture('boss-A-frame-1');
+          if (this.sprite.texture.key !== 'boss-A-frame-1') {
+            this.sprite.setTexture('boss-A-frame-1');
+          }
           this.sprite.setFlipX(false);
         }
       }
@@ -1350,13 +1361,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (this.isFlashing) return; // Evitar múltiplos flashes simultâneos
         
         this.isFlashing = true;
+        console.log('Boss piscando!'); // Debug temporário
         
-        // Mudar para cor branca (flash)
+        // Mudar para cor branca (flash) - usando tint mais intenso
         this.sprite.setTint(0xffffff);
         
-        // Voltar à cor normal após 150ms
-        this.scene.time.delayedCall(150, () => {
-          this.sprite.clearTint();
+        // Voltar à cor normal após 250ms (aumentado ainda mais para melhor visibilidade)
+        this.scene.time.delayedCall(250, () => {
+          if (this.sprite && !this.isDestroyed) {
+            this.sprite.clearTint();
+            console.log('Flash do boss terminado'); // Debug temporário
+          }
           this.isFlashing = false;
         });
       }
