@@ -2757,27 +2757,46 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       spawnSubWave(subWave: number) {
         console.log(`Spawning sub-onda ${subWave} da onda ${this.currentWave}`);
         
-        // Primeiras 3 sub-ondas da onda 1 são fixas
-        if (this.currentWave === 1 && subWave <= 3) {
+        // Primeiras 5 sub-ondas da onda 1 são fixas
+        if (this.currentWave === 1 && subWave <= 5) {
           switch (subWave) {
+            // =============================================
+            // TUTORIAL SILENCIOSO
+            // =============================================
+            
+            // Onda 1: 1 inimigo tipo A
             case 1:
-              this.spawnMultipleEnemiesTypeA(5);
+              this.spawnMultipleEnemiesTypeA(1);
               break;
+            // Onda 2: 1 inimigo tipo B
             case 2:
-              this.spawnMultipleEnemiesTypeB(3);
+              this.spawnMultipleEnemiesTypeB(1);
               break;
+            // Onda 3: 1 inimigo tipo C
             case 3:
+              this.spawnMultipleEnemiesTypeC(1);
+              break;
+            case 4:
+              // 1 inimigo tipo A + 1 inimigos tipo B
+              this.spawnMultipleEnemiesTypeA(1);
+              this.spawnMultipleEnemiesTypeB(1);
+              break;
+            case 5:
+              // 1 inimigo tipo A + 3 inimigos tipo B + 1 inimigo tipo C
+              this.spawnMultipleEnemiesTypeA(1);
+              this.spawnMultipleEnemiesTypeB(3);
               this.spawnMultipleEnemiesTypeC(1);
               break;
           }
         } else {
-          // A partir da 4ª sub-onda da onda 1 ou qualquer sub-onda das ondas seguintes
+          // A partir da 6ª sub-onda da onda 1 ou qualquer sub-onda das ondas seguintes
           this.spawnRandomEnemies();
         }
       }
       
       calculateMaxEnemiesForWave(wave: number) {
         if (wave === 1) {
+          // Onda 1: Sub-onda 1 (5A) + Sub-onda 2 (3B) + Sub-onda 3 (1C) + Sub-onda 4 (3A+2B) + Sub-onda 5 (1A+3B+1C) = 19 inimigos
           this.maxEnemiesInWave = 15;
         } else if (wave <= 3) {
           this.maxEnemiesInWave = 15 + (5 * (wave - 1));
