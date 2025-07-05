@@ -261,6 +261,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Estado
       lastMoveDirection = { x: 0, y: 0 };
       isDestroyed = false;
+      isKilledByPlayer = false; // Distinguir se foi morto pelo jogador ou saiu da tela
       
       // Sistema de pontuação
       points: number;
@@ -320,6 +321,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         if (this.isDestroyed) return;
         
         this.isDestroyed = true;
+        this.isKilledByPlayer = true; // Marcar como morto pelo jogador
         
         // Liberar posição ocupada
         const gameScene = this.scene as GameScene;
@@ -348,6 +350,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           
           this.sprite.destroy();
           this.isDestroyed = true;
+          // Não marcar isKilledByPlayer como true - inimigo saiu da tela
           return;
         }
         
@@ -494,6 +497,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           case 'leaving':
             // Saiu da tela
             this.isDestroyed = true;
+            // Não marcar isKilledByPlayer como true - inimigo saiu da tela
             break;
         }
       }
@@ -847,6 +851,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             // Verificar se saiu da tela
             if (this.sprite.y > 650) {
               this.isDestroyed = true;
+              // Não marcar isKilledByPlayer como true - inimigo saiu da tela
             }
             break;
         }
@@ -1003,6 +1008,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           case 'leaving':
             // Saiu da tela
             this.isDestroyed = true;
+            // Não marcar isKilledByPlayer como true - inimigo saiu da tela
             break;
         }
       }
@@ -1415,6 +1421,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       updateEnemies() {
         // Atualizar todos os inimigos e remover os destruídos
         const previousEnemyCount = this.enemies.length;
+        let enemiesKilledByPlayer = 0;
         
         this.enemies = this.enemies.filter(enemy => {
           if (!enemy.isDestroyed) {
@@ -1423,16 +1430,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           } else {
             // Garantir que a posição seja liberada quando o inimigo for removido
             this.releasePosition(enemy.id);
+            
+            // Contar apenas inimigos mortos pelo jogador
+            if (enemy.isKilledByPlayer) {
+              enemiesKilledByPlayer++;
+            }
+            
             return false;
           }
         });
         
-        // Verificar se inimigos foram destruídos (incrementar contador de derrotados)
-        const enemiesDestroyed = previousEnemyCount - this.enemies.length;
-        if (enemiesDestroyed > 0) {
-          this.enemiesDefeated += enemiesDestroyed;
-          console.log(`${enemiesDestroyed} inimigo(s) derrotado(s). Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
+        // Atualizar contador de inimigos derrotados apenas com os que foram mortos pelo jogador
+        if (enemiesKilledByPlayer > 0) {
+          this.enemiesDefeated += enemiesKilledByPlayer;
+          console.log(`${enemiesKilledByPlayer} inimigo(s) derrotado(s) pelo jogador. Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
           this.lastEnemyKilledTime = this.time.now;
+        }
+        
+        // Log de inimigos que saíram da tela
+        const enemiesThatLeft = (previousEnemyCount - this.enemies.length) - enemiesKilledByPlayer;
+        if (enemiesThatLeft > 0) {
+          console.log(`${enemiesThatLeft} inimigo(s) saíram da tela (não contabilizados como derrotados)`);
         }
         
         // Sistema de sub-ondas
