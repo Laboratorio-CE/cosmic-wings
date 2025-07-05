@@ -7,6 +7,9 @@ import playerFrame1 from '../assets/images/player/player-frame-1.png';
 import playerFrame2 from '../assets/images/player/player-frame-2.png';
 import playerFrame3 from '../assets/images/player/player-frame-3.png';
 
+// Importar sprite dos efeitos
+import playerFire from '../assets/images/effects/player-fire.png';
+
 interface GameCanvasProps {
   backgroundSpeed?: number;
 }
@@ -164,12 +167,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       wasd: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
       playerSpeed = 300;
       lastMoveDirection = { x: 0, y: 0 };
+      
+      // Sistema de projéteis
+      playerBullets: Phaser.GameObjects.Group | null = null;
+      bulletSpeed = 500;
+      fireRate = 200; // Milissegundos entre tiros
+      lastFireTime = 0;
+      fireKeys: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
 
       preload() {
         // Carregar imagens do player
         this.load.image('player-frame-1', playerFrame1);
         this.load.image('player-frame-2', playerFrame2);
         this.load.image('player-frame-3', playerFrame3);
+        
+        // Carregar sprite do tiro do jogador
+        this.load.image('player-fire', playerFire);
       }
 
       create() {
@@ -177,9 +190,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.player = this.add.sprite(400, 550, 'player-frame-1');
         this.player.setScale(0.8); // Ajustar tamanho se necessário
 
+        // Criar grupo de projéteis do jogador
+        this.playerBullets = this.add.group({
+          classType: Phaser.GameObjects.Sprite,
+          maxSize: 50,
+          runChildUpdate: true
+        });
+
         // Configurar controles
         this.cursors = this.input.keyboard?.createCursorKeys() || null;
         this.wasd = this.input.keyboard?.addKeys('W,S,A,D') as { [key: string]: Phaser.Input.Keyboard.Key } || null;
+        
+        // Configurar teclas de disparo
+        this.fireKeys = this.input.keyboard?.addKeys('SPACE,F,NUMPAD_FIVE') as { [key: string]: Phaser.Input.Keyboard.Key } || null;
 
         // Definir os limites do player dentro do canvas
         if (this.player) {
@@ -211,6 +234,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           velocityY = 1;
         }
 
+        // Verificar input de disparo
+        const currentTime = this.time.now;
+        if (this.fireKeys && (this.fireKeys.SPACE?.isDown || this.fireKeys.F?.isDown || this.fireKeys.NUMPAD_FIVE?.isDown)) {
+          if (currentTime - this.lastFireTime > this.fireRate) {
+            this.fireBullet();
+            this.lastFireTime = currentTime;
+          }
+        }
+
         // Normalizar o vetor de movimento para manter velocidade constante
         const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
         if (magnitude > 0) {
@@ -233,10 +265,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.player.y = Phaser.Math.Clamp(newY, minY, maxY);
 
         // Atualizar frame do player baseado no movimento
-        this.updatePlayerFrame(velocityX, velocityY);
+        this.updatePlayerFrame(velocityX);
+        
+        // Atualizar projéteis
+        this.updateBullets();
       }
 
-      updatePlayerFrame(velocityX: number, velocityY: number) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      updatePlayerFrame(velocityX: number) {
         if (!this.player) return;
 
         // Se não há movimento horizontal, usar frame 1 (nave em repouso)
@@ -281,6 +316,66 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
               }
             });
           }
+        }
+      }
+      
+      fireBullet() {
+        if (!this.player || !this.playerBullets) return;
+        
+        // Criar projétil na posição do jogador
+        const bullet = this.playerBullets.get(this.player.x, this.player.y - 30, 'player-fire');
+        
+        if (bullet) {
+          bullet.setActive(true);
+          bullet.setVisible(true);
+          bullet.setScale(0.6); // Ajustar tamanho do projétil
+          
+          // Configurar dados do projétil
+          bullet.setData('speed', -this.bulletSpeed); // Negativo para ir para cima
+          bullet.setData('damage', 1); // Dano que o projétil causa
+        }
+      }
+      
+      updateBullets() {
+        if (!this.playerBullets) return;
+        
+        this.playerBullets.children.entries.forEach((bullet) => {
+          const sprite = bullet as Phaser.GameObjects.Sprite;
+          if (sprite.active) {
+            // Mover projétil para cima
+            const deltaTime = this.game.loop.delta / 1000;
+            sprite.y += sprite.getData('speed') * deltaTime;
+            
+            // Remover projétil se sair da tela
+            if (sprite.y < -10) {
+              sprite.setActive(false);
+              sprite.setVisible(false);
+            }
+          }
+        });
+      }
+      
+      // Método para quando o projétil colidir com inimigo
+      hitEnemy(bullet: Phaser.GameObjects.Sprite, enemy: Phaser.GameObjects.Sprite) {
+        // Desativar o projétil
+        bullet.setActive(false);
+        bullet.setVisible(false);
+        
+        // Reduzir HP do inimigo
+        const currentHP = enemy.getData('hp') || 1;
+        const bulletDamage = bullet.getData('damage') || 1;
+        const newHP = currentHP - bulletDamage;
+        
+        enemy.setData('hp', newHP);
+        
+        // Se HP chegou a 0, destruir inimigo
+        if (newHP <= 0) {
+          // Aqui você pode adicionar efeitos visuais de destruição
+          enemy.setActive(false);
+          enemy.setVisible(false);
+          
+          // Incrementar pontuação (se necessário)
+          // setScore(prevScore => prevScore + enemy.getData('points') || 10);
         }
       }
     }
