@@ -47,6 +47,11 @@ import bossBFrame1 from '../assets/images/enemy/boss-B-frame-1.png';
 import bossBFrame2 from '../assets/images/enemy/boss-B-frame-2.png';
 import bossBFrame3 from '../assets/images/enemy/boss-B-frame-3.png';
 
+// Importar sprites do boss tipo C
+import bossCFrame1 from '../assets/images/enemy/boss-C-frame-1.png';
+import bossCFrame2 from '../assets/images/enemy/boss-C-frame-2.png';
+import bossCFrame3 from '../assets/images/enemy/boss-C-frame-3.png';
+
 // Importar sprite do tiro do boss
 import bossFire from '../assets/images/effects/boss-fire.png';
 
@@ -978,11 +983,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       private shotsPerBurstC = 5; // 5 tiros por rajada
       
       // Sistema de movimento
-      private moveSpeed = 180; // Aumentado de 120 para 180
-      private targetX = 0;
-      private targetY = 0;
-      private movementCountC = 0;
-      private maxMovementsPerCycle = 3; // 3 movimentos por ciclo
+      protected moveSpeed = 180; // Aumentado de 120 para 180
+      protected targetX = 0; // Alterado para protected
+      protected targetY = 0; // Alterado para protected
+      protected movementCountC = 0; // Alterado para protected
+      protected maxMovementsPerCycle = 3; // 3 movimentos por ciclo
       private cycleCount = 0;
       private maxCycles = 3; // 3 ciclos antes de sair
       
@@ -1064,25 +1069,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             
             const gameScene = this.scene as GameScene;
             gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
-            break;
-          }
-            
-          case 'moving': {
-            // Chegou em uma posição de movimento e reservar posição
-            this.movementCountC++;
-            
-            const gameScene = this.scene as GameScene;
-            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
-            
-            if (this.movementCountC >= this.maxMovementsPerCycle) {
-              // Completou os movimentos deste ciclo, atirar novamente
-              this.state = 'shooting';
-              this.resetShooting();
-              this.movementCountC = 0;
-            } else {
-              // Continuar se movendo
-              this.setNextPosition();
-            }
             break;
           }
             
@@ -1969,7 +1955,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             this.burstTimer = currentTime;
           } else if (this.burstCount >= this.maxBursts) {
             // Completou os tiros nesta posição, mover para próxima
-            // Boss nunca vai embora, sempre vai para próxima posição
             this.setNextTarget();
             this.state = 'moving_to_position';
           }
@@ -1987,6 +1972,359 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
               this.fireTimer = currentTime;
             }
           }
+        }
+      }
+    }
+
+    // =============================================
+    // BOSS TYPE C
+    // =============================================
+    class BossTypeC extends Enemy {
+      // Estados do chefe (baseado no Enemy Type C)
+      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
+      
+      // Sistema de disparo
+      private fireTimer = 0;
+      private fireRate = 800; // 800ms entre tiros
+      private currentShots = 0;
+      private shotsPerBurstC = 5; // 5 tiros por rajada
+      
+      // Sistema de movimento
+      protected moveSpeed = 180; // Velocidade aumentada
+      protected targetX = 0;
+      protected targetY = 0;
+      protected movementCountC = 0;
+      protected maxMovementsPerCycle = 3; // 3 movimentos por ciclo
+      private cycleCount = 0;
+      private maxCycles = 3; // 3 ciclos antes de sair
+      
+      // Sistema de dano visual
+      private isFlashing = false;
+      
+      constructor(scene: Phaser.Scene, x: number, y: number) {
+        super(scene, x, y, 'boss-C-frame-1');
+        
+        // Stats específicos do Boss Type C
+        this.hp = 70;
+        this.maxHp = 70;
+        this.speed = 180;
+        this.maxSpeed = 250;
+        this.shotsPerBurst = 5; // 5 tiros por rajada
+        this.maxShotsPerBurst = 8;
+        this.totalShots = 30; // Será ajustado pela onda
+        this.maxTotalShots = 100;
+        this.movementsBeforeLeaving = 999; // Nunca vai embora
+        this.maxMovements = 999;
+        
+        // Configurar sprite
+        this.sprite.setScale(1.5); // Maior que inimigos normais
+        this.sprite.setData('enemyType', 'BossC');
+        this.sprite.setData('hp', this.hp);
+        this.sprite.setData('maxHp', this.maxHp);
+        
+        // Calcular pontuação baseada na onda
+        const gameScene = this.scene as GameScene;
+        this.points = 5000 * (gameScene.currentWave || 1);
+        
+        // Definir primeira posição aleatória
+        this.setNextPosition();
+        
+        console.log(`Boss Type C criado com ${this.hp} HP`);
+      }
+      
+      // Sobrescrever método para calcular pontos baseado na onda
+      adjustForWave(wave: number) {
+        // Pontuação baseada na onda
+        this.points = 5000 * wave;
+        
+        // Aumentar shots per burst baseado na onda
+        this.shotsPerBurstC = Math.min(this.maxShotsPerBurst, 5 + Math.floor(wave / 2));
+        
+        // Aumentar total shots baseado na onda
+        this.totalShots = Math.min(this.maxTotalShots, 30 + (wave * 10));
+        
+        // Aumentar velocidade ligeiramente baseado na onda
+        this.speed = Math.min(this.maxSpeed, 180 + (wave * 5));
+        this.moveSpeed = this.speed;
+        
+        console.log(`Boss C ajustado para onda ${wave}: ${this.shotsPerBurstC} tiros/rajada, ${this.points} pontos`);
+      }
+      
+      private setNextPosition() {
+        // Gerar posição aleatória inicial na área de jogo
+        const preferredX = Phaser.Math.Between(150, 650);
+        const preferredY = Phaser.Math.Between(120, 250);
+        
+        // Boss não precisa verificar posições ocupadas (ele tem prioridade)
+        this.targetX = preferredX;
+        this.targetY = preferredY;
+      }
+      
+      private setExitTarget() {
+        // Sair pela parte superior da tela
+        this.targetX = this.sprite.x;
+        this.targetY = -100; // Sair pelo topo
+      }
+      
+      move() {
+        const deltaTime = this.scene.game.loop.delta / 1000;
+        
+        // Calcular direção para o alvo
+        const directionX = this.targetX - this.sprite.x;
+        const directionY = this.targetY - this.sprite.y;
+        const distance = Math.sqrt(directionX * directionX + directionY * directionY);
+        
+        // Se chegou perto o suficiente do alvo
+        if (distance < 15) {
+          this.onReachedTarget();
+          return;
+        }
+        
+        // Normalizar direção e aplicar velocidade
+        const normalizedX = directionX / distance;
+        const normalizedY = directionY / distance;
+        
+        this.sprite.x += normalizedX * this.moveSpeed * deltaTime;
+        this.sprite.y += normalizedY * this.moveSpeed * deltaTime;
+        
+        // Atualizar animação de movimento
+        this.updateMovementAnimation(normalizedX);
+      }
+      
+      private onReachedTarget() {
+        switch (this.state) {
+          case 'moving_to_position':
+            // Chegou na posição, começar a atirar
+            this.state = 'shooting';
+            this.resetShooting();
+            break;
+            
+          case 'leaving':
+            // Saiu da tela, destruir boss
+            this.destroy();
+            break;
+        }
+      }
+      
+      shoot() {
+        // Obter referência ao jogador e ao grupo de projéteis
+        const gameScene = this.scene as GameScene;
+        if (!gameScene.enemyBullets || !gameScene.player) return;
+        
+        // Calcular direção para o jogador
+        const directionX = gameScene.player.x - this.sprite.x;
+        const directionY = gameScene.player.y - this.sprite.y;
+        const distance = Math.sqrt(directionX * directionX + directionY * directionY);
+        
+        // Normalizar direção
+        const normalizedX = directionX / distance;
+        const normalizedY = directionY / distance;
+        
+        // Tentar criar projétil do boss
+        let bullet = gameScene.enemyBullets.get(this.sprite.x, this.sprite.y + 40, 'boss-fire');
+        
+        // Sistema de fallback para garantir que o projétil seja criado
+        if (!bullet) {
+          // Limpar projéteis que saíram da tela para liberar espaço no grupo
+          gameScene.enemyBullets.children.entries.forEach((child: Phaser.GameObjects.GameObject) => {
+            const sprite = child as Phaser.GameObjects.Sprite;
+            if (sprite.active && (sprite.y > 650 || sprite.y < -50 || sprite.x < -50 || sprite.x > 850)) {
+              sprite.setActive(false).setVisible(false);
+            }
+          });
+          
+          // Tentar novamente após limpeza
+          bullet = gameScene.enemyBullets.get(this.sprite.x, this.sprite.y + 40, 'boss-fire');
+        }
+        
+        if (bullet) {
+          bullet.setActive(true);
+          bullet.setVisible(true);
+          bullet.setScale(1.2); // Projéteis do boss são maiores
+          
+          // Velocidade do projétil direcionado
+          const speed = 320;
+          const velocityX = normalizedX * speed;
+          const velocityY = normalizedY * speed;
+          
+          bullet.setData('velocityX', velocityX);
+          bullet.setData('velocityY', velocityY);
+          bullet.setData('damage', 2); // Boss causa mais dano
+          bullet.setData('isEnemyBullet', true);
+          bullet.setData('isBossBullet', true);
+          bullet.setData('isDirected', true); // Marcar como projétil direcionado
+        } else {
+          console.warn('Boss C não conseguiu criar projétil direcionado');
+        }
+        
+        this.currentShots++;
+        this.shotsFired++;
+      }
+      
+      private updateMovementAnimation(directionX: number) {
+        // Atualizar frame baseado na direção do movimento (apenas se não estiver em flash)
+        if (this.isFlashing) return;
+        
+        if (Math.abs(directionX) > 0.1) {
+          // Está se movendo horizontalmente - alternar entre frames 2 e 3
+          const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
+          const newTexture = `boss-C-frame-${frame}`;
+          
+          // Só mudar textura se for diferente da atual
+          if (this.sprite.texture.key !== newTexture) {
+            this.sprite.setTexture(newTexture);
+          }
+          
+          // Espelhar sprite baseado na direção
+          this.sprite.setFlipX(directionX > 0);
+        } else {
+          // Movimento apenas vertical ou parado - usar frame 1
+          if (this.sprite.texture.key !== 'boss-C-frame-1') {
+            this.sprite.setTexture('boss-C-frame-1');
+          }
+          this.sprite.setFlipX(false);
+        }
+      }
+      
+      private resetShooting() {
+        this.currentShots = 0;
+        this.fireTimer = this.scene.time.now;
+        
+        // Só mudar textura se não estiver em flash
+        if (!this.isFlashing && this.sprite.texture.key !== 'boss-C-frame-1') {
+          this.sprite.setTexture('boss-C-frame-1'); // Frame de repouso
+        }
+      }
+      
+      // Sobrescrever método takeDamage para adicionar efeito de flash
+      takeDamage(damage: number) {
+        this.hp -= damage;
+        console.log(`Boss C levou ${damage} de dano. HP restante: ${this.hp}/${this.maxHp}`);
+        
+        // Ativar efeito de flash
+        this.activateFlash();
+        
+        if (this.hp <= 0) {
+          this.destroy();
+        }
+      }
+      
+      private activateFlash() {
+        if (this.isFlashing) return; // Evitar múltiplos flashes simultâneos
+        
+        this.isFlashing = true;
+        console.log('Boss C piscando!');
+        
+        // Mudar para cor branca (flash)
+        this.sprite.setTintFill(0xffffff);
+        
+        // Voltar à cor normal após 250ms
+        this.scene.time.delayedCall(50, () => {
+          if (this.sprite && !this.isDestroyed) {
+            this.sprite.clearTint();
+            console.log('Flash do boss C terminado');
+          }
+          this.isFlashing = false;
+        });
+      }
+      
+      // Sobrescrever método destroy para múltiplas animações de destruição
+      destroy() {
+        if (this.isDestroyed) return;
+        
+        this.isDestroyed = true;
+        this.isKilledByPlayer = true;
+        
+        console.log(`Boss Type C destruído! Pontuação: ${this.points}`);
+        
+        // Criar 9 animações de destruição: centro + 8 ao redor
+        const centerX = this.sprite.x;
+        const centerY = this.sprite.y;
+        const offset = 60; // Distância maior para boss maior
+        
+        // Animação central
+        new DeathAnimation(this.scene, centerX, centerY);
+        
+        // Animações ao redor (com pequeno delay para efeito visual)
+        this.scene.time.delayedCall(60, () => {
+          new DeathAnimation(this.scene, centerX - offset, centerY - offset); // Superior esquerdo
+          new DeathAnimation(this.scene, centerX, centerY - offset); // Superior centro
+          new DeathAnimation(this.scene, centerX + offset, centerY - offset); // Superior direito
+        });
+        
+        this.scene.time.delayedCall(120, () => {
+          new DeathAnimation(this.scene, centerX - offset, centerY); // Esquerda
+          new DeathAnimation(this.scene, centerX + offset, centerY); // Direita
+        });
+        
+        this.scene.time.delayedCall(180, () => {
+          new DeathAnimation(this.scene, centerX - offset, centerY + offset); // Inferior esquerdo
+          new DeathAnimation(this.scene, centerX, centerY + offset); // Inferior centro
+        });
+        
+        this.scene.time.delayedCall(240, () => {
+          new DeathAnimation(this.scene, centerX + offset, centerY + offset, () => {
+            // Callback final após todas as animações - incrementar pontuação
+            const gameScene = this.scene as GameScene;
+            gameScene.addScore(this.points);
+          });
+        });
+        
+        // Remover sprite do boss
+        this.sprite.destroy();
+      }
+      
+      update() {
+        super.update();
+        if (this.isDestroyed) return;
+        
+        const currentTime = this.scene.time.now;
+        
+        // Máquina de estados
+        switch (this.state) {
+          case 'entering':
+            // Verificar se entrou na tela o suficiente
+            if (this.sprite.y > 80) {
+              this.state = 'moving_to_position';
+            } else {
+              // Continuar entrando (movimento para baixo)
+              this.sprite.y += this.moveSpeed * (this.scene.game.loop.delta / 1000);
+            }
+            break;
+            
+          case 'moving_to_position':
+          case 'moving':
+          case 'leaving':
+            this.move();
+            break;
+            
+          case 'shooting':
+            // Executar comportamento de tiro
+            if (currentTime - this.fireTimer > this.fireRate) {
+              if (this.currentShots < this.shotsPerBurstC) {
+                this.shoot();
+                this.fireTimer = currentTime;
+              } else {
+                // Completou os tiros, determinar próxima ação
+                this.onCompletedShooting();
+              }
+            }
+            break;
+        }
+      }
+      
+      private onCompletedShooting() {
+        this.cycleCount++;
+        
+        if (this.cycleCount >= this.maxCycles) {
+          // Completou todos os ciclos, sair da tela
+          this.setExitTarget();
+          this.state = 'leaving';
+        } else {
+          // Começar próximo ciclo de movimento
+          this.setNextPosition();
+          this.state = 'moving';
+          this.movementCountC = 0;
         }
       }
     }
@@ -2020,7 +2358,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       currentWave = 1;
       
       // Sistema de boss
-      currentBoss: BossTypeA | BossTypeB | null = null;
+      currentBoss: BossTypeA | BossTypeB | BossTypeC | null = null;
       bossSpawnTimer = 0;
       shouldSpawnBoss = false;
       bossSpawnDelay = 5000; // 5 segundos
@@ -2080,6 +2418,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.load.image('boss-B-frame-1', bossBFrame1);
         this.load.image('boss-B-frame-2', bossBFrame2);
         this.load.image('boss-B-frame-3', bossBFrame3);
+        
+        // Carregar sprites do boss tipo C
+        this.load.image('boss-C-frame-1', bossCFrame1);
+        this.load.image('boss-C-frame-2', bossCFrame2);
+        this.load.image('boss-C-frame-3', bossCFrame3);
         
         // Carregar sprite do tiro do boss
         this.load.image('boss-fire', bossFire);
@@ -2537,7 +2880,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         const bossX = 400; // Centro da tela
         const bossY = -100; // Fora da tela, no topo
         
-        this.currentBoss = new BossTypeB(this, bossX, bossY);
+        this.currentBoss = new BossTypeC(this, bossX, bossY);
         this.currentBoss.adjustForWave(this.currentWave);
         
         console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
