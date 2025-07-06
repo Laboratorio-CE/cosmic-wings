@@ -3258,6 +3258,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           console.log('Game Over!');
           setGameState('gameOver');
           
+          // Criar animação de morte na posição atual do jogador (última vida)
+          if (this.player) {
+            this.player.setVisible(false);
+            new DeathAnimation(this, this.player.x, this.player.y, () => {
+            });
+          }
+          
           // Criar esmaecimento para preto
           this.createGameOverFade();
           
