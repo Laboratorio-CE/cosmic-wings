@@ -21,7 +21,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
 
   // Função para validar o nome do jogador
   const isValidPlayerName = (name: string): boolean => {
-    return name.trim().length >= 3;
+    return name.trim().length >= 2;
   };
 
   // Função para enviar o score
@@ -109,7 +109,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
 
   return (
     <div>
-      <div className="w-[800px] h-[600px] bg-black/90 border-4 border-cyan-400 rounded-2xl flex flex-col items-center justify-center px-16 py-10 shadow-2xl shadow-cyan-500/50">
+      <div className="w-[800px] h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center px-16 py-10">
         <h2 className="text-cyan-400 font-mono text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
           FIM DE JOGO
         </h2>
@@ -127,7 +127,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
           <div className="mb-6">
             <input
               type="text"
-              placeholder="Digite seu nome"
+              placeholder="Digite seu nome ou apelido"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               onFocus={() => setIsInputFocused(true)}
@@ -137,9 +137,9 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                         text-cyan-400 font-mono text-lg placeholder-cyan-400/60 
                         focus:outline-none focus:border-cyan-300 focus:shadow-lg focus:shadow-cyan-400/30"
             />
-            {playerName.trim().length > 0 && playerName.trim().length < 3 && (
+            {playerName.trim().length > 0 && playerName.trim().length < 2 && (
               <p className="text-red-400 font-mono text-sm mt-2">
-                Mínimo de 3 caracteres
+                Mínimo de 2 caracteres
               </p>
             )}
           </div>
@@ -152,9 +152,10 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
               disabled={isSubmitting}
               className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
                         transition-all duration-200 cursor-pointer
-                        ${selectedButton === 0 
-                          ? 'text-yellow-300 scale-105' 
-                          : 'text-yellow-700 hover:text-yellow-300'
+                        ${
+                          selectedButton === 0
+                            ? "text-yellow-300 scale-105"
+                            : "text-yellow-700 hover:text-yellow-300"
                         }
                         active:scale-100 disabled:opacity-50`}
             >
@@ -175,9 +176,10 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
               disabled={!isValidPlayerName(playerName) || isSubmitting}
               className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
                         transition-all duration-200 cursor-pointer
-                        ${selectedButton === 1 
-                          ? 'text-yellow-300 scale-105' 
-                          : 'text-yellow-700 hover:text-yellow-300'
+                        ${
+                          selectedButton === 1
+                            ? "text-yellow-300 scale-105"
+                            : "text-yellow-700 hover:text-yellow-300"
                         }
                         active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -189,7 +191,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 />
               )}
               <span className="text-left w-full pl-8">
-                {isSubmitting ? 'ENVIANDO...' : 'ENVIAR'}
+                {isSubmitting ? "ENVIANDO..." : "ENVIAR"}
               </span>
             </button>
           </div>
