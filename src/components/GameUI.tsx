@@ -93,9 +93,7 @@ const GameUI: React.FC<GameUIProps> = ({
     <div className="absolute inset-0 pointer-events-none z-10">
       {/* Vidas - Canto superior esquerdo */}
       <div className="absolute top-4 left-4 flex items-center pointer-events-auto">
-        <div className="flex">
-          {renderLives()}
-        </div>
+        <div className="flex">{renderLives()}</div>
       </div>
 
       {/* Pontuação - Canto superior direito */}
@@ -116,6 +114,25 @@ const GameUI: React.FC<GameUIProps> = ({
         </div>
       )}
 
+      {/* Mensagem de Fim de Jogo */}
+      {gameState === "gameOver" && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/90 border-4 border-cyan-400 rounded-2xl px-16 py-10 shadow-2xl shadow-cyan-500/50">
+            <h2 className="text-cyan-400 font-mono text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
+              FIM DE JOGO
+            </h2>
+            <div className="text-center">
+              <p className="text-cyan-400 font-mono text-xl mb-2">
+                PONTUAÇÃO FINAL
+              </p>
+              <p className="text-white font-mono text-3xl font-bold">
+                {formatScore(score)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Controles Mobile - Apenas em dispositivos pequenos */}
       {isMobileDevice() && (
         <>
@@ -124,7 +141,7 @@ const GameUI: React.FC<GameUIProps> = ({
             <div className="relative w-32 h-32">
               {/* Botão Cima */}
               <button
-                onTouchStart={() => onMobileControl?.('up')}
+                onTouchStart={() => onMobileControl?.("up")}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-12 h-12 flex items-center justify-center
@@ -135,7 +152,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Esquerda */}
               <button
-                onTouchStart={() => onMobileControl?.('left')}
+                onTouchStart={() => onMobileControl?.("left")}
                 className="absolute top-1/2 left-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-12 h-12 flex items-center justify-center
@@ -146,7 +163,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Direita */}
               <button
-                onTouchStart={() => onMobileControl?.('right')}
+                onTouchStart={() => onMobileControl?.("right")}
                 className="absolute top-1/2 right-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-12 h-12 flex items-center justify-center
@@ -157,7 +174,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Baixo */}
               <button
-                onTouchStart={() => onMobileControl?.('down')}
+                onTouchStart={() => onMobileControl?.("down")}
                 className="absolute bottom-0 left-1/2 transform -translate-x-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-12 h-12 flex items-center justify-center

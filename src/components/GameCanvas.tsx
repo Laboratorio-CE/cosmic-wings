@@ -3552,7 +3552,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         <div className="pointer-events-auto">
           <GameUI
             lives={lives}
-            score={score}
+            score={hiScore}
             wave={wave}
             gameState={gameState}
             showWaveMessage={showWaveMessage}
