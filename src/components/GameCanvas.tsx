@@ -198,7 +198,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
-  const [lives] = useState(3);
+  const [lives, setLives] = useState(3);
   const [score, setScore] = useState(0);
   const [wave, setWave] = useState(1);
   const [currentBackgroundSpeed, setCurrentBackgroundSpeed] = useState(backgroundSpeed);
@@ -1106,17 +1106,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       private onReachedTarget() {
         switch (this.state) {
-          case 'moving_to_position': {
+          case "moving_to_position": {
             // Chegou na posição inicial, começar a atirar e reservar posição
-            this.state = 'shooting';
+            this.state = "shooting";
             this.resetShooting();
-            
+
             const gameScene = this.scene as GameScene;
             gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
             break;
           }
-            
-          case 'leaving':
+
+          case "moving": {
+            // Chegou na nova posição após completar tiros, começar a atirar novamente
+            this.state = "shooting";
+            this.resetShooting();
+
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
+            break;
+          }
+
+          case "leaving":
             // Saiu da tela
             this.isDestroyed = true;
             // Não marcar isKilledByPlayer como true - inimigo saiu da tela
@@ -1266,7 +1276,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
     // =============================================
     class BossTypeA extends Enemy {
       // Estados do chefe
-      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' = 'entering';
+      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
       
       // Sistema de disparo
       private fireTimer = 0;
@@ -1291,8 +1301,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         super(scene, x, y, 'boss-A-frame-1');
         
         // Stats específicos do Boss Type A
-        this.hp = 30;
-        this.maxHp = 30;
+        this.hp = 50;
+        this.maxHp = 100;
         this.speed = 120;
         this.maxSpeed = 200;
         this.shotsPerBurst = 3; // 3 tiros por rajada
@@ -1617,8 +1627,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         super(scene, x, y, 'boss-B-frame-1');
         
         // Stats específicos do Boss Type B
-        this.hp = 50;
-        this.maxHp = 50;
+        this.hp = 60;
+        this.maxHp = 120;
         this.speed = 100;
         this.maxSpeed = 150;
         this.shotsPerBurst = 3; // 3 tiros por rajada (cada tiro = 3 projéteis)
@@ -1958,7 +1968,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
               this.resetShooting();
             } else {
               // Continuar entrando (movimento para baixo)
-              this.sprite.y += this.moveSpeed * (this.scene.game.loop.delta / 1000);
+              this.sprite.y += 100 * (this.scene.game.loop.delta / 1000);
             }
             break;
             
@@ -2000,7 +2010,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             this.currentBurstShots = 0;
             this.burstTimer = currentTime;
           } else if (this.burstCount >= this.maxBursts) {
-            // Completou os tiros nesta posição, mover para próxima
+            // Completou o tiro na posição, mover para próxima
             this.setNextTarget();
             this.state = 'moving_to_position';
           }
@@ -2027,7 +2037,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
     // =============================================
     class BossTypeC extends Enemy {
       // Estados do chefe (baseado no Enemy Type C)
-      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' = 'entering';
+      private state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
       
       // Sistema de disparo
       private fireTimer = 0;
@@ -2052,7 +2062,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Stats específicos do Boss Type C
         this.hp = 70;
-        this.maxHp = 70;
+        this.maxHp = 140;
         this.speed = 180;
         this.maxSpeed = 250;
         this.shotsPerBurst = 5; // 5 tiros por rajada
@@ -2106,12 +2116,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         this.targetY = preferredY;
       }
       
-      private setExitTarget() {
-        // Sair pela parte superior da tela
-        this.targetX = this.sprite.x;
-        this.targetY = -100; // Sair pelo topo
-      }
-      
       move() {
         const deltaTime = this.scene.game.loop.delta / 1000;
         
@@ -2139,23 +2143,48 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       private onReachedTarget() {
         switch (this.state) {
-          case 'moving_to_position':
-          case 'moving':
-            // Chegou na posição, começar a atirar
-            this.state = 'shooting';
+          case "moving_to_position": {
+            // Chegou na posição inicial, começar a atirar e reservar posição
+            this.state = "shooting";
             this.resetShooting();
+
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
+            break;
+          }
+
+          case "moving": {
+            // Chegou na nova posição após completar tiros, começar a atirar novamente
+            this.state = "shooting";
+            this.resetShooting();
+
+            const gameScene = this.scene as GameScene;
+            gameScene.reservePosition(this.sprite.x, this.sprite.y, this.id);
+            break;
+          }
+
+          case "leaving":
+            // Saiu da tela
+            this.isDestroyed = true;
+            // Não marcar isKilledByPlayer como true - inimigo saiu da tela
             break;
         }
       }
       
       shoot() {
-        // Obter referência ao jogador e ao grupo de projéteis
+        // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
-        if (!gameScene.enemyBullets || !gameScene.player) return;
+        if (!gameScene.enemyBullets) return;
+        
+        // Capturar posição atual do jogador no momento do disparo
+        if (!gameScene.player) return;
+
+        const playerX = gameScene.player.x;
+        const playerY = gameScene.player.y;
         
         // Calcular direção para o jogador
-        const directionX = gameScene.player.x - this.sprite.x;
-        const directionY = gameScene.player.y - this.sprite.y;
+        const directionX = playerX - this.sprite.x;
+        const directionY = playerY - this.sprite.y;
         const distance = Math.sqrt(directionX * directionX + directionY * directionY);
         
         // Normalizar direção
@@ -2389,6 +2418,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       lastFireTime = 0;
       fireKeys: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
       
+      // Sistema de vidas do jogador
+      playerLives = 3;
+      isPlayerDead = false;
+      isPlayerInvulnerable = false;
+      invulnerabilityDuration = 5000; // 5 segundos de invencibilidade
+      invulnerabilityStartTime = 0;
+      respawnDelay = 2000; // 2 segundos para respawn
+      originalPlayerPosition = { x: 400, y: 550 };
+      
       // Sistema de sub-ondas
       currentSubWave = 1;
       maxSubWaves = 3;
@@ -2417,7 +2455,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Sistema de transição de onda
       isInWaveTransition = false;
       playerControlsEnabled = true;
-      originalPlayerPosition = { x: 400, y: 550 };
       transitionMoveSpeed = 150;
       
       // Sistema de spawn de inimigos
@@ -2630,6 +2667,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Atualizar inimigos
         this.updateEnemies();
+        
+        // Atualizar sistema de invencibilidade
+        this.updateInvulnerability();
         
         // Verificar colisões
         this.checkCollisions();
@@ -3036,7 +3076,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       
       checkCollisions() {
         if (!this.playerBullets || !this.enemyBullets || !this.player) return;
-        
+
         // Colisão projéteis do jogador vs inimigos
         this.playerBullets.children.entries.forEach((bullet) => {
           const bulletSprite = bullet as Phaser.GameObjects.Sprite;
@@ -3081,29 +3121,175 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         });
         
         // Colisão projéteis dos inimigos vs jogador
-        this.enemyBullets.children.entries.forEach((bullet) => {
-          const bulletSprite = bullet as Phaser.GameObjects.Sprite;
-          if (!bulletSprite.active) return;
-          
-          // Verificar colisão com jogador
-          const distance = Phaser.Math.Distance.Between(
-            bulletSprite.x, bulletSprite.y,
-            this.player!.x, this.player!.y
-          );
-          
-          // Raio de colisão maior para projéteis do boss
-          const collisionRadius = bulletSprite.getData('isBossBullet') ? 30 : 25;
-          
-          if (distance < collisionRadius) {
-            // Projétil atingiu jogador
-            bulletSprite.setActive(false);
-            bulletSprite.setVisible(false);
+        if (!this.isPlayerDead && !this.isPlayerInvulnerable) {
+          this.enemyBullets.children.entries.forEach((bullet) => {
+            const bulletSprite = bullet as Phaser.GameObjects.Sprite;
+            if (!bulletSprite.active) return;
             
-            // Dano diferente baseado no tipo de projétil
-            const damage = bulletSprite.getData('damage') || 1;
-            console.log(`Jogador atingido! Dano: ${damage}`);
+            // Verificar colisão com jogador
+            const distance = Phaser.Math.Distance.Between(
+              bulletSprite.x, bulletSprite.y,
+              this.player!.x, this.player!.y
+            );
+            
+            // Raio de colisão maior para projéteis do boss
+            const collisionRadius = bulletSprite.getData('isBossBullet') ? 30 : 25;
+            
+            if (distance < collisionRadius) {
+              // Projétil atingiu jogador
+              bulletSprite.setActive(false);
+              bulletSprite.setVisible(false);
+              
+              // Dano diferente baseado no tipo de projétil
+              const damage = bulletSprite.getData('damage') || 1;
+              console.log(`Jogador atingido por projétil! Dano: ${damage}`);
+              this.playerTakeDamage();
+            }
+          });
+          
+          // Colisão jogador vs inimigos (colisão direta com naves)
+          this.enemies.forEach((enemy) => {
+            if (enemy.isDestroyed) return;
+            
+            // Verificar colisão direta com inimigo
+            const distance = Phaser.Math.Distance.Between(
+              this.player!.x, this.player!.y,
+              enemy.sprite.x, enemy.sprite.y
+            );
+            
+            if (distance < 35) { // Raio de colisão para nave vs nave
+              console.log('Jogador colidiu com inimigo!');
+              this.playerTakeDamage();
+              // Destruir o inimigo também na colisão
+              enemy.destroy();
+            }
+          });
+          
+          // Colisão jogador vs boss
+          if (this.currentBoss && !this.currentBoss.isDestroyed) {
+            const distance = Phaser.Math.Distance.Between(
+              this.player!.x, this.player!.y,
+              this.currentBoss.sprite.x, this.currentBoss.sprite.y
+            );
+            
+            if (distance < 60) { // Raio de colisão maior para o boss
+              console.log('Jogador colidiu com boss!');
+              this.playerTakeDamage();
+            }
+          }
+        }
+      }
+      
+      // Sistema de vidas do jogador
+      playerTakeDamage() {
+        if (this.isPlayerDead || this.isPlayerInvulnerable) return;
+        
+        console.log('Jogador tomou dano!');
+        this.playerDie();
+      }
+      
+      playerDie() {
+        if (this.isPlayerDead) return;
+        
+        this.isPlayerDead = true;
+        this.playerControlsEnabled = false;
+        this.playerLives--;
+        
+        console.log(`Jogador morreu! Vidas restantes: ${this.playerLives}`);
+        
+        // Atualizar vidas na UI
+        setLives(this.playerLives);
+        
+        if (this.playerLives <= 0) {
+          // Game Over
+          console.log('Game Over!');
+          setGameState('gameOver');
+          return;
+        }
+        
+        // Criar animação de morte na posição atual do jogador
+        if (this.player) {
+          this.player.setVisible(false);
+          new DeathAnimation(this, this.player.x, this.player.y, () => {
+          });
+        }
+        
+        // Agendar respawn após 2 segundos
+        this.time.delayedCall(this.respawnDelay, () => {
+          this.respawnPlayer();
+        });
+      }
+      
+      respawnPlayer() {
+        if (!this.isPlayerDead) return;
+        
+        console.log('Respawnando jogador...');
+        
+        // Posicionar jogador fora da tela (parte inferior)
+        if (this.player) {
+          this.player.x = this.originalPlayerPosition.x;
+          this.player.y = 700; // Fora da tela, embaixo
+          this.player.setVisible(true);
+          this.player.setTexture('player-frame-1');
+          this.player.setFlipX(false);
+        }
+        
+        // Animar entrada do jogador
+        this.tweens.add({
+          targets: this.player,
+          y: this.originalPlayerPosition.y,
+          duration: 1500, // 1.5 segundos para entrar
+          ease: 'Power2',
+          onComplete: () => {
+            // Após chegar na posição, reabilitar controles
+            this.isPlayerDead = false;
+            this.playerControlsEnabled = true;
+            
+            // Ativar invencibilidade por 15 segundos
+            this.startInvulnerability();
+            
+            console.log('Jogador respawnou com sucesso!');
           }
         });
+      }
+      
+      startInvulnerability() {
+        this.isPlayerInvulnerable = true;
+        this.invulnerabilityStartTime = this.time.now;
+        
+        console.log('Invencibilidade ativada por 15 segundos');
+        
+        // Efeito visual de piscar durante invencibilidade
+        this.tweens.add({
+          targets: this.player,
+          alpha: 0.5,
+          duration: 200,
+          yoyo: true,
+          repeat: -1, // Repetir indefinidamente
+          onComplete: () => {
+            // Garantir que o player volte a ser totalmente visível
+            if (this.player) {
+              this.player.setAlpha(1);
+            }
+          }
+        });
+      }
+      
+      updateInvulnerability() {
+        if (!this.isPlayerInvulnerable) return;
+        
+        // Verificar se o tempo de invencibilidade acabou
+        if (this.time.now - this.invulnerabilityStartTime > this.invulnerabilityDuration) {
+          this.isPlayerInvulnerable = false;
+          
+          // Parar efeito de piscar
+          if (this.player) {
+            this.tweens.killTweensOf(this.player);
+            this.player.setAlpha(1);
+          }
+          
+          console.log('Invencibilidade removida');
+        }
       }
       
       addScore(points: number) {
@@ -3111,7 +3297,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         setScore(prevScore => prevScore + points);
         
         // Atualizar onda no estado do React (comentado temporariamente para debug)
-        // setWave(this.currentWave);
+        setWave(this.currentWave);
         
         // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
         this.lastEnemyKilledTime = this.time.now;
@@ -3144,7 +3330,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         // Vamos usar um evento customizado para comunicar com o componente React
         window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 50 } }));
         
-        // Mover nave para o centro inferior da tela gradualmente
+        // Mover nave para o centro gradualmente
         this.movePlayerToCenter();
       }
       
