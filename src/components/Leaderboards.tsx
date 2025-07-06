@@ -1,5 +1,6 @@
 import { Component } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
+import { find } from "../services/supabaseService";
 
 type Props = {
   onNavigate?: (route: string) => void;
@@ -15,50 +16,55 @@ type LeaderboardEntry = {
 type State = {
   isPressed: boolean;
   leaderboard: LeaderboardEntry[];
-};
-
-const generateLeaderboard = (): LeaderboardEntry[] => {
-  const playerNames = [
-    "COSMIC_WARRIOR", "STAR_SHOOTER", "GALAXY_HUNTER", "NEBULA_PILOT",
-    "SPACE_ACE", "VOID_MASTER", "STELLAR_KNIGHT", "PLASMA_RIDER",
-    "ASTRO_LEGEND", "METEOR_STORM", "NOVA_BLAST", "COSMIC_FURY",
-    "STARLIGHT_HERO", "QUANTUM_PILOT", "GALACTIC_STORM", "SOLAR_FLARE",
-    "DARK_MATTER", "PHOTON_STRIKE", "INFINITY_BLADE", "COSMIC_THUNDER",
-    "STELLAR_FORCE", "WARP_SPEED", "BLACK_HOLE", "COMET_TAIL",
-    "STAR_DUST", "ALPHA_CENTAURI", "ORION_HUNTER", "ANDROMEDA_SAGE",
-    "MILKY_WAY", "SUPERNOVA", "RED_GIANT", "WHITE_DWARF",
-    "PULSAR_BEAM", "QUASAR_LIGHT", "ASTEROID_KING", "PLANET_WALKER",
-    "MOON_RIDER", "SUN_CHASER", "EARTH_GUARDIAN", "MARS_CONQUEROR",
-    "JUPITER_STORM", "SATURN_RING", "URANUS_WIND", "NEPTUNE_TIDE",
-    "PLUTO_SHADOW", "ROCKET_MAN", "SPACE_RANGER", "COSMIC_EXPLORER",
-    "STAR_NAVIGATOR", "GALAXY_DEFENDER"
-  ];
-
-  return Array.from({ length: 50 }, (_, index) => {
-    const position = index + 1;
-    const baseScore = 100000 - (position - 1) * 1500;
-    const randomVariation = Math.floor(Math.random() * 1000);
-    const score = baseScore + randomVariation;
-    
-    const days = Math.floor(Math.random() * 30) + 1;
-    const month = Math.floor(Math.random() * 12) + 1;
-    const date = `${days.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/2024`;
-    
-    return {
-      position,
-      player: playerNames[index],
-      score,
-      date
-    };
-  });
+  loading: boolean;
 };
 
 export default class Leaderboards extends Component<Props, State> {
   state: State = {
     isPressed: true,
-    leaderboard: generateLeaderboard()
+    leaderboard: [],
+    loading: true
   };
+
+  // Função para formatar a data do formato ISO para DD/MM/YYYY
+  formatDate = (isoDate: string): string => {
+    const date = new Date(isoDate);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Função para carregar dados do Supabase
+  loadLeaderboardData = async (): Promise<void> => {
+    try {
+      this.setState({ loading: true });
+      const data = await find();
+      
+      const formattedData: LeaderboardEntry[] = data.map((entry, index) => ({
+        position: index + 1,
+        player: entry.player_name,
+        score: entry.player_score,
+        date: this.formatDate(entry.created_at || new Date().toISOString())
+      }));
+
+      this.setState({ 
+        leaderboard: formattedData,
+        loading: false 
+      });
+    } catch (error) {
+      console.error('Erro ao carregar leaderboard:', error);
+      this.setState({ 
+        leaderboard: [],
+        loading: false 
+      });
+    }
+  };
+
   componentDidMount() {
+    // Carregar dados do leaderboard
+    this.loadLeaderboardData();
+    
     if (this.props.onNavigate) {
       document.addEventListener("keydown", this.handleKeyDown);
     }
@@ -122,33 +128,62 @@ export default class Leaderboards extends Component<Props, State> {
                 <div className="text-center">DATA</div>
               </div>
 
-              {/* Linhas da tabela */}
+              {/* Conteúdo da tabela */}
               <div className="max-h-full">
-                {this.state.leaderboard.map((entry, index) => (
-                  <div 
-                    key={entry.position}
-                    className={`
-                      grid grid-cols-4 gap-4 p-2 text-sm border-b border-cyan-400/10 transition-colors duration-200 hover:bg-cyan-400/5 
-                      ${index < 3 ? 'text-yellow-300' : 'text-white'}
-                    `}
-                  >
-                    <div className="text-center font-bold">
-                      {entry.position === 1 && '🥇'}
-                      {entry.position === 2 && '🥈'}
-                      {entry.position === 3 && '🥉'}
-                      {entry.position > 3 && entry.position}
+                {this.state.loading ? (
+                  // Animação de loading
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="relative">
+                      <div className="w-16 h-16 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+                      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-cyan-400/60 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
                     </div>
-                    <div className="text-left truncate font-mono" title={entry.player}>
-                      {entry.player}
-                    </div>
-                    <div className="text-center font-bold">
-                      {entry.score.toLocaleString()}
-                    </div>
-                    <div className="text-center">
-                      {entry.date}
+                    <p className="text-cyan-400 text-lg font-bold tracking-wider animate-pulse">
+                      CARREGANDO DADOS...
+                    </p>
+                    <div className="flex space-x-1 mt-2">
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
                   </div>
-                ))}
+                ) : this.state.leaderboard.length === 0 ? (
+                  // Estado vazio
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <p className="text-cyan-400 text-lg font-bold tracking-wider">
+                      NENHUM DADO ENCONTRADO
+                    </p>
+                    <p className="text-white/60 text-sm mt-2">
+                      Seja o primeiro a marcar pontos!
+                    </p>
+                  </div>
+                ) : (
+                  // Linhas da tabela com dados
+                  this.state.leaderboard.map((entry, index) => (
+                    <div 
+                      key={`${entry.player}-${entry.score}-${index}`}
+                      className={`
+                        grid grid-cols-4 gap-4 p-2 text-sm border-b border-cyan-400/10 transition-colors duration-200 hover:bg-cyan-400/5 
+                        ${index < 3 ? 'text-yellow-300' : 'text-white'}
+                      `}
+                    >
+                      <div className="text-center font-bold">
+                        {entry.position === 1 && '🥇'}
+                        {entry.position === 2 && '🥈'}
+                        {entry.position === 3 && '🥉'}
+                        {entry.position > 3 && entry.position}
+                      </div>
+                      <div className="text-left truncate font-mono" title={entry.player}>
+                        {entry.player}
+                      </div>
+                      <div className="text-center font-bold">
+                        {entry.score.toLocaleString()}
+                      </div>
+                      <div className="text-center">
+                        {entry.date}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

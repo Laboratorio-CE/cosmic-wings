@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
-  db: { schema: "cosmi_wings" },
+  db: { schema: "cosmic_wings" },
 });
 
 export default supabase;
