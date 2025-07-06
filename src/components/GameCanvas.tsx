@@ -200,6 +200,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
   const [lives, setLives] = useState(3);
   const [score, setScore] = useState(0);
+  const [hiScore, setHiScore] = useState(0);
   const [wave, setWave] = useState(1);
   const [currentBackgroundSpeed, setCurrentBackgroundSpeed] = useState(backgroundSpeed);
   const [showWaveMessage, setShowWaveMessage] = useState(false);
@@ -378,6 +379,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           // Callback após animação - incrementar pontuação
           const gameScene = this.scene as GameScene;
           gameScene.addScore(this.points);
+          if (hiScore % 1000 === 0) {
+            setLives((prevLives) => prevLives + 1); // Adicionar vida a cada 1000 pontos
+          }
         });
         
         // Remover sprite do inimigo
@@ -387,7 +391,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Método de atualização chamado a cada frame
       update() {
         if (this.isDestroyed) return;
-        
+
         // Verificar se saiu da tela (sair pela parte inferior ou superior)
         if (this.sprite.y > 650 || this.sprite.y < -100) {
           // Liberar posição antes de destruir
@@ -3295,6 +3299,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       addScore(points: number) {
         // Incrementar pontuação usando o setter do React
         setScore(prevScore => prevScore + points);
+
+        // Atualizar hiScore como acumulador total (sempre crescente)
+        setHiScore(prevHiScore => prevHiScore + points);
         
         // Atualizar onda no estado do React (comentado temporariamente para debug)
         setWave(this.currentWave);
@@ -3309,9 +3316,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         
         // Parar o spawn de novos inimigos
         this.enemySpawnEnabled = false;
-        
-        // Incrementar pontuação
-        this.addScore(points);
         
         // Iniciar animação de transição de onda
         this.startWaveTransition();
