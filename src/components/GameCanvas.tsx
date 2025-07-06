@@ -205,6 +205,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
   const [currentBackgroundSpeed, setCurrentBackgroundSpeed] = useState(backgroundSpeed);
   const [showWaveMessage, setShowWaveMessage] = useState(false);
   const [waveMessageText, setWaveMessageText] = useState('');
+  
+  // Ref para acessar hiScore atual sem causar reexecução do useEffect
+  const hiScoreRef = useRef(hiScore);
+  
+  // Atualizar ref sempre que hiScore mudar
+  useEffect(() => {
+    hiScoreRef.current = hiScore;
+  }, [hiScore]);
 
   // Listener para mudanças de velocidade do background durante transições
   useEffect(() => {
@@ -378,9 +386,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         new DeathAnimation(this.scene, this.sprite.x, this.sprite.y, () => {
           // Callback após animação - incrementar pontuação
           const gameScene = this.scene as GameScene;
+          
+          // Verificar se cruzou um marco de 1000 pontos antes de adicionar a pontuação
+          const previousScore = hiScoreRef.current;
+          const newScore = previousScore + this.points;
+          const previousMilestone = Math.floor(previousScore / 1000000);
+          const newMilestone = Math.floor(newScore / 1000000);
+          
+          // Adicionar a pontuação
           gameScene.addScore(this.points);
-          if (hiScore % 1000 === 0) {
-            setLives((prevLives) => prevLives + 1); // Adicionar vida a cada 1000 pontos
+          
+          // Se cruzou um marco de 1000 pontos, adicionar vida
+          if (newMilestone > previousMilestone) {
+            setLives((prevLives) => prevLives + 1);
+            console.log(`Marco de ${newMilestone * 1000} pontos atingido! Vida adicionada.`);
           }
         });
         
@@ -3459,7 +3478,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
         gameRef.current = null;
       }
     };
-  }, []); // Remover dependências que causam reexecução
+  }, [setLives]); // Manter apenas dependências que não mudam durante o jogo
 
   const handleMobileControl = (direction: 'up' | 'down' | 'left' | 'right') => {
     // Implementar controles móveis posteriormente
