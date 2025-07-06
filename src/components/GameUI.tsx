@@ -7,6 +7,7 @@ import {
 import { FaCircle } from "react-icons/fa";
 import React, { useState, useEffect } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
+import { create } from "../services/supabaseService";
 
 interface GameUIProps {
   lives: number;
@@ -17,6 +18,7 @@ interface GameUIProps {
   waveMessageText?: string;
   onMobileControl?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onMobileAction?: () => void;
+  onNavigateToMenu?: () => void;
 }
 
 const GameUI: React.FC<GameUIProps> = ({ 
@@ -27,13 +29,18 @@ const GameUI: React.FC<GameUIProps> = ({
   showWaveMessage = false,
   waveMessageText = '',
   onMobileControl,
-  onMobileAction
+  onMobileAction,
+  onNavigateToMenu
 }) => {
   // Estado para controlar a exibição das mensagens
   const [showMessage, setShowMessage] = useState(false);
   const [messageText, setMessageText] = useState('');
   // Estado para controlar a exibição do game over com delay
   const [showGameOver, setShowGameOver] = useState(false);
+  // Estados para o formulário de nome
+  const [playerName, setPlayerName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // Efeito para controlar as mensagens de preparação e onda
   useEffect(() => {
@@ -73,16 +80,54 @@ const GameUI: React.FC<GameUIProps> = ({
       // Exibe o game over após 2 segundos
       const gameOverTimer = setTimeout(() => {
         setShowGameOver(true);
+        // Exibe o formulário após mais 3 segundos
+        const formTimer = setTimeout(() => {
+          setShowForm(true);
+        }, 3000);
+        
+        return () => clearTimeout(formTimer);
       }, 2000);
       
       return () => clearTimeout(gameOverTimer);
     } else {
       setShowGameOver(false);
+      setShowForm(false);
+      setPlayerName('');
+      setIsSubmitting(false);
     }
   }, [gameState]);
   // Detecta se é um dispositivo móvel/touch
   const isMobileDevice = () => {
     return window.innerWidth <= 768 || 'ontouchstart' in window;
+  };
+
+  // Função para validar o nome do jogador
+  const isValidPlayerName = (name: string): boolean => {
+    return name.trim().length >= 3;
+  };
+
+  // Função para enviar o score
+  const handleSubmitScore = async () => {
+    if (!isValidPlayerName(playerName) || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await create({
+        player_name: playerName.trim(),
+        player_score: score
+      });
+      
+      // Volta ao menu após o envio
+      onNavigateToMenu?.();
+    } catch (error) {
+      console.error('Erro ao enviar score:', error);
+      setIsSubmitting(false);
+    }
+  };
+
+  // Função para voltar ao menu
+  const handleBackToMenu = () => {
+    onNavigateToMenu?.();
   };
   // Formata a pontuação com 7 dígitos, preenchendo com zeros à esquerda
   const formatScore = (currentScore: number): string => {
@@ -141,10 +186,69 @@ const GameUI: React.FC<GameUIProps> = ({
               <p className="text-cyan-400 font-mono text-xl mb-2">
                 PONTUAÇÃO FINAL
               </p>
-              <p className="text-white font-mono text-3xl font-bold">
+              <p className="text-white font-mono text-3xl font-bold mb-6">
                 {formatScore(score)}
               </p>
             </div>
+
+            {/* Formulário para inserir nome */}
+            {showForm && (
+              <div className="pointer-events-auto">
+                <div className="mb-6">
+                  <input
+                    type="text"
+                    placeholder="Digite seu nome"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    maxLength={20}
+                    className="w-full px-4 py-3 bg-black/80 border-2 border-cyan-400 rounded-lg 
+                              text-cyan-400 font-mono text-lg placeholder-cyan-400/60 
+                              focus:outline-none focus:border-cyan-300 focus:shadow-lg focus:shadow-cyan-400/30"
+                  />
+                  {playerName.trim().length > 0 && playerName.trim().length < 3 && (
+                    <p className="text-red-400 font-mono text-sm mt-2">
+                      Mínimo de 3 caracteres
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-4 justify-center">
+                  {/* Botão Voltar */}
+                  <button
+                    onClick={handleBackToMenu}
+                    disabled={isSubmitting}
+                    className="relative flex items-center justify-center w-40 p-3 font-bold text-base 
+                              transition-all duration-200 cursor-pointer text-yellow-300
+                              hover:scale-105 active:scale-100 disabled:opacity-50"
+                  >
+                    <img
+                      src={imagemPlayer}
+                      alt="Nave selecionada"
+                      className="absolute left-0 w-6 h-6 rotate-90"
+                    />
+                    <span className="text-left w-full pl-8">VOLTAR</span>
+                  </button>
+
+                  {/* Botão Enviar */}
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={!isValidPlayerName(playerName) || isSubmitting}
+                    className="relative flex items-center justify-center w-40 p-3 font-bold text-base 
+                              transition-all duration-200 cursor-pointer text-yellow-300
+                              hover:scale-105 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <img
+                      src={imagemPlayer}
+                      alt="Nave selecionada"
+                      className="absolute left-0 w-6 h-6 rotate-90"
+                    />
+                    <span className="text-left w-full pl-8">
+                      {isSubmitting ? 'ENVIANDO...' : 'ENVIAR'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

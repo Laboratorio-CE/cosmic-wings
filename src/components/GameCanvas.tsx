@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
@@ -57,6 +58,7 @@ import bossFire from '../assets/images/effects/boss-fire.png';
 
 interface GameCanvasProps {
   backgroundSpeed?: number;
+  onNavigate?: (route: string) => void;
 }
 
 interface BackgroundScrollProps {
@@ -194,7 +196,7 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
   );
 };
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
@@ -3531,6 +3533,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
     console.log('Mobile action');
   };
 
+  const handleNavigateToMenu = () => {
+    onNavigate?.('/menu');
+  };
+
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-black">
       {/* Canvas container com background */}
@@ -3559,6 +3565,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
             waveMessageText={waveMessageText}
             onMobileControl={handleMobileControl}
             onMobileAction={handleMobileAction}
+            onNavigateToMenu={handleNavigateToMenu}
           />
         </div>
       </div>
