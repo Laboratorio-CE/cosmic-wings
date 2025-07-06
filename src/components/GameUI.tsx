@@ -32,6 +32,8 @@ const GameUI: React.FC<GameUIProps> = ({
   // Estado para controlar a exibição das mensagens
   const [showMessage, setShowMessage] = useState(false);
   const [messageText, setMessageText] = useState('');
+  // Estado para controlar a exibição do game over com delay
+  const [showGameOver, setShowGameOver] = useState(false);
 
   // Efeito para controlar as mensagens de preparação e onda
   useEffect(() => {
@@ -64,6 +66,20 @@ const GameUI: React.FC<GameUIProps> = ({
       setShowMessage(false);
     }
   }, [gameState, wave, showWaveMessage, waveMessageText]);
+
+  // Efeito para controlar o delay da exibição do game over
+  useEffect(() => {
+    if (gameState === 'gameOver') {
+      // Exibe o game over após 2 segundos
+      const gameOverTimer = setTimeout(() => {
+        setShowGameOver(true);
+      }, 2000);
+      
+      return () => clearTimeout(gameOverTimer);
+    } else {
+      setShowGameOver(false);
+    }
+  }, [gameState]);
   // Detecta se é um dispositivo móvel/touch
   const isMobileDevice = () => {
     return window.innerWidth <= 768 || 'ontouchstart' in window;
@@ -115,7 +131,7 @@ const GameUI: React.FC<GameUIProps> = ({
       )}
 
       {/* Mensagem de Fim de Jogo */}
-      {gameState === "gameOver" && (
+      {showGameOver && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-black/90 border-4 border-cyan-400 rounded-2xl px-16 py-10 shadow-2xl shadow-cyan-500/50">
             <h2 className="text-cyan-400 font-mono text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
