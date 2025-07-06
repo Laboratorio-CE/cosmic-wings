@@ -1,32 +1,42 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from 'react'
+import { Component } from 'react'
 import Layout from '../components/Layout'
 import Instructions from '../components/Instructions'
 import Menu from '../components/Menu'
 import GameCanvas from '../components/GameCanvas'
 import Leaderboards from '../components/Leaderboards'
+import RankingRegister from '../components/RankingRegister'
 
 // Path não recebe props por enquanto
 type Props = {}
 
 // Path pode ter state para controlar qual tela mostrar
 type State = {
-  currentRoute: '/menu' | '/play' | '/instructions' | '/leaderboards';
+  currentRoute: '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register';
+  gameScore?: number; // Para armazenar a pontuação do jogo
 }
 
 export default class Path extends Component<Props, State> {
   state: State = {
-    currentRoute: '/menu' // Começa mostrando o menu
+    currentRoute: '/menu', // Começa mostrando o menu
+    gameScore: 0
   }
 
   // Função para navegar entre rotas
-  handleNavigate = (route: string) => {
-    this.setState({ currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' });
+  handleNavigate = (route: string, data?: { score?: number }) => {
+    if (route === '/ranking-register' && data?.score) {
+      this.setState({ 
+        currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register',
+        gameScore: data.score
+      });
+    } else {
+      this.setState({ currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' });
+    }
   }
 
   // Função para renderizar o conteúdo baseado na rota
   renderContent = () => {
-    const { currentRoute } = this.state;
+    const { currentRoute, gameScore } = this.state;
 
     switch (currentRoute) {
       case '/menu':
@@ -40,6 +50,12 @@ export default class Path extends Component<Props, State> {
       
       case '/leaderboards':
         return <Leaderboards onNavigate={this.handleNavigate} />;
+      
+      case '/ranking-register':
+        return <RankingRegister 
+          score={gameScore || 0} 
+          onNavigateToMenu={() => this.handleNavigate('/menu')} 
+        />;
       
       default:
         return <Menu onNavigate={this.handleNavigate} />;

@@ -58,7 +58,8 @@ import bossFire from '../assets/images/effects/boss-fire.png';
 
 interface GameCanvasProps {
   backgroundSpeed?: number;
-  onNavigate?: (route: string) => void;
+  onNavigate?: (route: string, data?: { score?: number }) => void;
+  showUI?: boolean;
 }
 
 interface BackgroundScrollProps {
@@ -196,7 +197,7 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
   );
 };
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate, showUI = true }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
@@ -3537,6 +3538,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     onNavigate?.('/menu');
   };
 
+  const handleNavigateToRankingRegister = () => {
+    onNavigate?.('/ranking-register', { score: hiScore });
+  };
+
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-black">
       {/* Canvas container com background */}
@@ -3554,21 +3559,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       </div>
       
       {/* Game UI overlay */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
-        <div className="pointer-events-auto">
-          <GameUI
-            lives={lives}
-            score={hiScore}
-            wave={wave}
-            gameState={gameState}
-            showWaveMessage={showWaveMessage}
-            waveMessageText={waveMessageText}
-            onMobileControl={handleMobileControl}
-            onMobileAction={handleMobileAction}
-            onNavigateToMenu={handleNavigateToMenu}
-          />
+      {showUI && (
+        <div className="absolute inset-0 z-20 pointer-events-none">
+          <div className="pointer-events-auto">
+            <GameUI
+              lives={lives}
+              score={hiScore}
+              wave={wave}
+              gameState={gameState}
+              showWaveMessage={showWaveMessage}
+              waveMessageText={waveMessageText}
+              onMobileControl={handleMobileControl}
+              onMobileAction={handleMobileAction}
+              onNavigateToMenu={handleNavigateToMenu}
+              onNavigateToRankingRegister={handleNavigateToRankingRegister}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
