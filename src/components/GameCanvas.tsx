@@ -2483,6 +2483,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
       // Sistema de spawn de inimigos
       enemySpawnEnabled = true;
 
+      // Sistema de game over
+      gameOverOverlay: Phaser.GameObjects.Rectangle | null = null;
+      isGameOver = false;
+
       // Reserva uma posição ocupada por um inimigo
       reservePosition(x: number, y: number, enemyId: string) {
         this.occupiedPositions.push({ x, y, enemyId });
@@ -2519,6 +2523,29 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           }
         }
         return { x: newX, y: newY };
+      }
+
+      // Método para criar esmaecimento de game over
+      createGameOverFade() {
+        if (this.gameOverOverlay || this.isGameOver) return;
+        
+        this.isGameOver = true;
+        
+        // Criar retângulo preto que cobre toda a tela
+        this.gameOverOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000);
+        this.gameOverOverlay.setAlpha(0); // Começa transparente
+        this.gameOverOverlay.setDepth(1000); // Garantir que fique acima de tudo
+        
+        // Animar fade para preto
+        this.tweens.add({
+          targets: this.gameOverOverlay,
+          alpha: 1, // Fade para 100% opaco (preto)
+          duration: 2000, // 2 segundos para fazer o fade
+          ease: 'Power2',
+          onComplete: () => {
+            console.log('Fade de game over completo - tela 100% preta');
+          }
+        });
       }
 
       preload() {
@@ -2624,6 +2651,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
 
       update() {
         if (!this.player || !this.cursors) return;
+        
+        // Parar todas as atualizações se o game over estiver ativo
+        if (this.isGameOver) return;
 
         let velocityX = 0;
         let velocityY = 0;
@@ -3227,6 +3257,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75 }) => {
           // Game Over
           console.log('Game Over!');
           setGameState('gameOver');
+          
+          // Criar esmaecimento para preto
+          this.createGameOverFade();
+          
           return;
         }
         
