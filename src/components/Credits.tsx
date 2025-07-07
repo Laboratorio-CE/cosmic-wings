@@ -3,12 +3,28 @@ import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import banner from "../assets/images/credits/Banner.jpg";
 import avatar from "../assets/images/credits/avatar.png";
 
+// Importar arquivo de áudio
+import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+
 interface CreditsProps {
   onNavigateToMenu: () => void;
 }
 
 const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
   const [selectedButton, setSelectedButton] = useState(0);
+
+  // Função para reproduzir som de confirmação
+  const playConfirmSound = () => {
+    try {
+      const audio = new Audio(menuConfirmSound);
+      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de confirmação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de confirmação:', error);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -20,6 +36,8 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
         case ' ':
         case 'Escape':
           event.preventDefault();
+          // Reproduzir som de confirmação
+          playConfirmSound();
           onNavigateToMenu();
           break;
 
@@ -103,7 +121,11 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
 
         {/* Botão Voltar */}
         <button
-          onClick={onNavigateToMenu}
+          onClick={() => {
+            // Reproduzir som de confirmação
+            playConfirmSound();
+            onNavigateToMenu();
+          }}
           onMouseEnter={() => setSelectedButton(0)}
           className={`relative flex items-center justify-center w-32 sm:w-40 p-2 sm:p-3 font-bold text-sm sm:text-base 
                   transition-all duration-200 cursor-pointer
