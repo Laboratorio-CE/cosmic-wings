@@ -69,7 +69,7 @@ import boost from '../assets/audios/sfx/boost.wav';
 import engine from '../assets/audios/sfx/engine.wav';
 
 // Importar o audio de vida extra
-import powerup from '../assets/audios/sfx/powerup_2.wav';
+import powerup from '../assets/audios/sfx/powerup.wav';
 
 interface GameCanvasProps {
   backgroundSpeed?: number;
@@ -454,6 +454,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         this.isDestroyed = true;
         this.isKilledByPlayer = true; // Marcar como morto pelo jogador
+        
+        // Reproduzir som de morte do inimigo
+        this.scene.sound.play('enemy-kill', { volume: 0.3 });
         
         // Liberar posição ocupada
         const gameScene = this.scene as GameScene;
@@ -1611,6 +1614,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isDestroyed = true;
         this.isKilledByPlayer = true;
         
+        // Reproduzir som de morte do boss
+        this.scene.sound.play('boss-kill', { volume: 0.5 });
+        
         console.log(`Boss Type A destruído! Pontuação: ${this.points}`);
         
         // Criar 5 animações de destruição: centro + 4 cantos
@@ -2031,6 +2037,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isDestroyed = true;
         this.isKilledByPlayer = true;
         
+        // Reproduzir som de morte do boss
+        this.scene.sound.play('boss-kill', { volume: 0.5 });
+        
         console.log(`Boss Type B destruído! Pontuação: ${this.points}`);
         
         // Criar 7 animações de destruição: centro + 6 ao redor
@@ -2424,6 +2433,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isDestroyed = true;
         this.isKilledByPlayer = true;
         
+        // Reproduzir som de morte do boss
+        this.scene.sound.play('boss-kill', { volume: 0.5 });
+        
         console.log(`Boss Type C destruído! Pontuação: ${this.points}`);
         
         // Criar 9 animações de destruição: centro + 8 ao redor
@@ -2707,6 +2719,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.load.audio('player-shoot', playerShoot);
         this.load.audio('player-kill', playerKill);
         this.load.audio('enemy-shoot', enemyShoot);
+        this.load.audio('enemy-kill', enemyKill);
+        this.load.audio('boss-kill', bossKill);
       }
 
       create() {
