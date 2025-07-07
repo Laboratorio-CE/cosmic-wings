@@ -9,11 +9,13 @@ import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
 interface RankingRegisterProps {
   score: number;
   onNavigateToMenu: () => void;
+  onNavigateToLeaderboards: () => void;
 }
 
 const RankingRegister: React.FC<RankingRegisterProps> = ({ 
   score,
-  onNavigateToMenu
+  onNavigateToMenu,
+  onNavigateToLeaderboards
 }) => {
   // Estados para o formulário de nome
   const [playerName, setPlayerName] = useState('');
@@ -65,13 +67,13 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
         player_score: score
       });
       
-      // Volta ao menu após o envio
-      onNavigateToMenu();
+      // Vai para o Leaderboards após o envio
+      onNavigateToLeaderboards();
     } catch (error) {
       console.error('Erro ao enviar score:', error);
       setIsSubmitting(false);
     }
-  }, [playerName, isSubmitting, score, onNavigateToMenu]);
+  }, [playerName, isSubmitting, score, onNavigateToLeaderboards]);
 
   // Função para voltar ao menu
   const handleBackToMenu = useCallback(() => {

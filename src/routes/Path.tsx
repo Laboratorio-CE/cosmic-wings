@@ -151,6 +151,7 @@ export default class Path extends Component<Props, State> {
         return <RankingRegister 
           score={gameScore || 0} 
           onNavigateToMenu={() => this.handleNavigate('/menu')} 
+          onNavigateToLeaderboards={() => this.handleNavigate('/leaderboards')}
         />;
       
       case '/credits':
