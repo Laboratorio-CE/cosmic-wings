@@ -214,17 +214,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   // Event listener para pausa global
   useEffect(() => {
     const handleTogglePause = () => {
+      console.log('Toggle pause called, current gameState:', gameState);
+      
       if (gameState === 'playing') {
+        console.log('Pausing game...');
         setGameState('paused');
-        // Pausar a cena do Phaser
+        // Pausar o jogo Phaser completamente
         if (gameRef.current) {
-          gameRef.current.scene.pause('GameScene');
+          console.log('Pausing Phaser game');
+          gameRef.current.scene.pause('MainGameScene');
         }
       } else if (gameState === 'paused') {
+        console.log('Resuming game...');
         setGameState('playing');
-        // Retomar a cena do Phaser
+        // Retomar o jogo Phaser
         if (gameRef.current) {
-          gameRef.current.scene.resume('GameScene');
+          console.log('Resuming Phaser game');
+          gameRef.current.scene.resume('MainGameScene');
         }
       }
     };
@@ -2460,6 +2466,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     // CLASSE DA CENA DO JOGO
     // =============================================
     class GameScene extends Phaser.Scene {
+      constructor() {
+        super({ key: 'MainGameScene' });
+      }
+
       player: Phaser.GameObjects.Sprite | null = null;
       cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
       wasd: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;

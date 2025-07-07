@@ -54,6 +54,7 @@ export default class Path extends Component<Props, State> {
 
   // Função para alternar a pausa do jogo
   handleTogglePause = () => {
+    console.log('Path handleTogglePause called, dispatching event');
     // Dispatcha um evento customizado para o GameCanvas
     window.dispatchEvent(new CustomEvent('toggleGamePause'));
   }

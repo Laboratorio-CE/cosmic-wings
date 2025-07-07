@@ -44,7 +44,10 @@ export default class OptionsToggle extends Component<Props, State> {
         {/* Botão de Pausa - apenas no jogo */}
         {isGameView && (
           <button
-            onClick={onTogglePause}
+            onClick={() => {
+              console.log('Pause button clicked, calling onTogglePause');
+              onTogglePause?.();
+            }}
             className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
           >
             {gameState === 'paused' ? <FaPlay color="black" /> : <FaPause color="black" />}
