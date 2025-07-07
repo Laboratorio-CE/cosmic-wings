@@ -71,6 +71,11 @@ import engine from '../assets/audios/sfx/engine.wav';
 // Importar o audio de vida extra
 import powerup from '../assets/audios/sfx/powerup.wav';
 
+// Importar as músicas de fundo
+import ostWave1 from '../assets/audios/music/ost-wave-1.mp3';
+import ostWave2 from '../assets/audios/music/ost-wave-2.mp3';
+import ostWave3 from '../assets/audios/music/ost-wave-3.mp3';
+
 interface GameCanvasProps {
   backgroundSpeed?: number;
   onNavigate?: (route: string, data?: { score?: number }) => void;
@@ -225,7 +230,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   const [showWaveMessage, setShowWaveMessage] = useState(false);
   const [waveMessageText, setWaveMessageText] = useState('');
   
-  // Ref para acessar hiScore atual sem causar reexecução do useEffect
+  // Ref para acessar hiScore atual não causar reexecução do useEffect
   const hiScoreRef = useRef(hiScore);
 
   // Event listener para pausa global
@@ -2567,7 +2572,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     // =============================================
     class GameScene extends Phaser.Scene {
       constructor() {
-        super({ key: 'MainGameScene' });
+        super({ key: "MainGameScene" });
       }
 
       player: Phaser.GameObjects.Sprite | null = null;
@@ -2575,7 +2580,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       wasd: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
       playerSpeed = 300;
       lastMoveDirection = { x: 0, y: 0 };
-      
+
       // Sistema de projéteis
       playerBullets: Phaser.GameObjects.Group | null = null;
       enemyBullets: Phaser.GameObjects.Group | null = null;
@@ -2584,7 +2589,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       fireRate = 150; // Milissegundos entre tiros
       lastFireTime = 0;
       fireKeys: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
-      
+
       // Sistema de vidas do jogador
       playerLives = 3;
       isPlayerDead = false;
@@ -2593,18 +2598,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       invulnerabilityStartTime = 0;
       respawnDelay = 2000; // 2 segundos para respawn
       originalPlayerPosition = { x: 400, y: 550 };
-      
+
       // Sistema de sub-ondas
       currentSubWave = 1;
       maxSubWaves = 3;
       subWaveDelay = 2000; // 2 segundos entre sub-ondas
       lastEnemyKilledTime = 0;
-      
+
       // Sistema de contagem de inimigos
       enemiesDefeated = 0; // Contador de inimigos derrotados
       maxEnemiesInWave = 15; // Máximo de inimigos por onda
       currentWave = 1;
-      
+
       // Sistema de boss
       currentBoss: BossTypeA | BossTypeB | BossTypeC | null = null;
       bossSpawnTimer = 0;
@@ -2614,7 +2619,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       // Sistema de controle de posições ocupadas
       occupiedPositions: { x: number; y: number; enemyId: string }[] = [];
       positionRadius = 60; // Raio mínimo entre inimigos parados
-      
+
       // Sistema de limpeza de projéteis
       lastCleanupTime = 0;
       cleanupInterval = 2000; // Limpeza a cada 2 segundos
@@ -2623,13 +2628,72 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       isInWaveTransition = false;
       playerControlsEnabled = true;
       transitionMoveSpeed = 150;
-      
+
       // Sistema de spawn de inimigos
       enemySpawnEnabled = true;
 
       // Sistema de game over
       gameOverOverlay: Phaser.GameObjects.Rectangle | null = null;
       isGameOver = false;
+
+      // Sistema de música de fundo
+      currentBackgroundMusic: Phaser.Sound.BaseSound | null = null;
+      musicTracks = ["ost-wave-1", "ost-wave-2", "ost-wave-3"];
+      currentMusicIndex = 0;
+      musicVolume = 0.1;
+      fadeOutDuration = 1000; // 1 segundo para fade out
+      fadeInDuration = 1000; // 1 segundo para fade in
+
+      playBackgroundMusic() {
+        if (this.currentBackgroundMusic) return; // já tocando
+        const key = this.musicTracks[this.currentMusicIndex];
+        this.currentBackgroundMusic = this.sound.add(key, {
+          volume: this.musicVolume,
+          loop: true,
+        });
+        this.currentBackgroundMusic.play();
+      }
+
+      switchToNextTrack() {
+        const nextIndex =
+          (this.currentMusicIndex + 1) % this.musicTracks.length;
+        const nextKey = this.musicTracks[nextIndex];
+
+        if (this.currentBackgroundMusic) {
+          this.tweens.add({
+            targets: this.currentBackgroundMusic,
+            volume: 0,
+            duration: this.fadeOutDuration,
+            onComplete: () => {
+              this.currentBackgroundMusic!.stop();
+              this.currentBackgroundMusic!.destroy();
+
+              this.currentMusicIndex = nextIndex;
+              this.currentBackgroundMusic = this.sound.add(nextKey, {
+                volume: 0,
+                loop: true,
+              });
+              this.currentBackgroundMusic.play();
+
+              this.tweens.add({
+                targets: this.currentBackgroundMusic,
+                volume: this.musicVolume,
+                duration: this.fadeInDuration,
+              });
+            },
+          });
+        } else {
+          // caso não houvesse música ainda
+          this.currentMusicIndex = nextIndex;
+          this.playBackgroundMusic();
+        }
+      }
+
+      updateMusicForWave() {
+        if (this.currentWave > 1 && (this.currentWave - 1) % 5 === 0) {
+          this.switchToNextTrack();
+        }
+      }
 
       // Reserva uma posição ocupada por um inimigo
       reservePosition(x: number, y: number, enemyId: string) {
@@ -2638,7 +2702,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       // Libera uma posição ocupada por um inimigo
       releasePosition(enemyId: string) {
-        this.occupiedPositions = this.occupiedPositions.filter(pos => pos.enemyId !== enemyId);
+        this.occupiedPositions = this.occupiedPositions.filter(
+          (pos) => pos.enemyId !== enemyId
+        );
       }
 
       // Encontra uma posição livre próxima de (x, y) que não esteja ocupada
@@ -2661,8 +2727,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           }
           if (!found) {
             // Tentar uma nova posição aleatória próxima
-            newX = Phaser.Math.Clamp(x + Phaser.Math.Between(-radius, radius), 100, 700);
-            newY = Phaser.Math.Clamp(y + Phaser.Math.Between(-radius, radius), 80, 500);
+            newX = Phaser.Math.Clamp(
+              x + Phaser.Math.Between(-radius, radius),
+              100,
+              700
+            );
+            newY = Phaser.Math.Clamp(
+              y + Phaser.Math.Between(-radius, radius),
+              80,
+              500
+            );
             tryCount++;
           }
         }
@@ -2672,144 +2746,155 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       // Método para criar esmaecimento de game over
       createGameOverFade() {
         if (this.gameOverOverlay || this.isGameOver) return;
-        
+
         this.isGameOver = true;
-        
+
         // Criar retângulo preto que cobre toda a tela
         this.gameOverOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000);
         this.gameOverOverlay.setAlpha(0); // Começa transparente
         this.gameOverOverlay.setDepth(1000); // Garantir que fique acima de tudo
-        
+
         // Animar fade para preto
         this.tweens.add({
           targets: this.gameOverOverlay,
           alpha: 1, // Fade para 100% opaco (preto)
           duration: 2000, // 2 segundos para fazer o fade
-          ease: 'Power2',
+          ease: "Power2",
           onComplete: () => {
-            console.log('Fade de game over completo - tela 100% preta');
-          }
+            console.log("Fade de game over completo - tela 100% preta");
+          },
         });
       }
 
       preload() {
         // Carregar imagens do player
-        this.load.image('player-frame-1', playerFrame1);
-        this.load.image('player-frame-2', playerFrame2);
-        this.load.image('player-frame-3', playerFrame3);
-        
+        this.load.image("player-frame-1", playerFrame1);
+        this.load.image("player-frame-2", playerFrame2);
+        this.load.image("player-frame-3", playerFrame3);
+
         // Carregar sprite do tiro do jogador
-        this.load.image('player-fire', playerFire);
-        
+        this.load.image("player-fire", playerFire);
+
         // Carregar sprite do tiro do inimigo
-        this.load.image('enemy-fire', enemyFire);
-        
+        this.load.image("enemy-fire", enemyFire);
+
         // Carregar sprites de destruição
-        this.load.image('death-frame-1', deathFrame1);
-        this.load.image('death-frame-2', deathFrame2);
-        this.load.image('death-frame-3', deathFrame3);
-        this.load.image('death-frame-4', deathFrame4);
-        this.load.image('death-frame-5', deathFrame5);
-        this.load.image('death-frame-6', deathFrame6);
-        this.load.image('death-frame-7', deathFrame7);
-        this.load.image('death-frame-8', deathFrame8);
-        this.load.image('death-frame-9', deathFrame9);
-        
+        this.load.image("death-frame-1", deathFrame1);
+        this.load.image("death-frame-2", deathFrame2);
+        this.load.image("death-frame-3", deathFrame3);
+        this.load.image("death-frame-4", deathFrame4);
+        this.load.image("death-frame-5", deathFrame5);
+        this.load.image("death-frame-6", deathFrame6);
+        this.load.image("death-frame-7", deathFrame7);
+        this.load.image("death-frame-8", deathFrame8);
+        this.load.image("death-frame-9", deathFrame9);
+
         // Carregar sprites do inimigo tipo A
-        this.load.image('enemy-A-frame-1', enemyAFrame1);
-        this.load.image('enemy-A-frame-2', enemyAFrame2);
-        this.load.image('enemy-A-frame-3', enemyAFrame3);
-        
+        this.load.image("enemy-A-frame-1", enemyAFrame1);
+        this.load.image("enemy-A-frame-2", enemyAFrame2);
+        this.load.image("enemy-A-frame-3", enemyAFrame3);
+
         // Carregar sprites do inimigo tipo B
-        this.load.image('enemy-B-frame-1', enemyBFrame1);
-        this.load.image('enemy-B-frame-2', enemyBFrame2);
-        this.load.image('enemy-B-frame-3', enemyBFrame3);
-        
+        this.load.image("enemy-B-frame-1", enemyBFrame1);
+        this.load.image("enemy-B-frame-2", enemyBFrame2);
+        this.load.image("enemy-B-frame-3", enemyBFrame3);
+
         // Carregar sprites do inimigo tipo C
-        this.load.image('enemy-C-frame-1', enemyCFrame1);
-        this.load.image('enemy-C-frame-2', enemyCFrame2);
-        this.load.image('enemy-C-frame-3', enemyCFrame3);
-        
+        this.load.image("enemy-C-frame-1", enemyCFrame1);
+        this.load.image("enemy-C-frame-2", enemyCFrame2);
+        this.load.image("enemy-C-frame-3", enemyCFrame3);
+
         // Carregar sprites do boss tipo A
-        this.load.image('boss-A-frame-1', bossAFrame1);
-        this.load.image('boss-A-frame-2', bossAFrame2);
-        this.load.image('boss-A-frame-3', bossAFrame3);
-        
+        this.load.image("boss-A-frame-1", bossAFrame1);
+        this.load.image("boss-A-frame-2", bossAFrame2);
+        this.load.image("boss-A-frame-3", bossAFrame3);
+
         // Carregar sprites do boss tipo B
-        this.load.image('boss-B-frame-1', bossBFrame1);
-        this.load.image('boss-B-frame-2', bossBFrame2);
-        this.load.image('boss-B-frame-3', bossBFrame3);
-        
+        this.load.image("boss-B-frame-1", bossBFrame1);
+        this.load.image("boss-B-frame-2", bossBFrame2);
+        this.load.image("boss-B-frame-3", bossBFrame3);
+
         // Carregar sprites do boss tipo C
-        this.load.image('boss-C-frame-1', bossCFrame1);
-        this.load.image('boss-C-frame-2', bossCFrame2);
-        this.load.image('boss-C-frame-3', bossCFrame3);
-        
+        this.load.image("boss-C-frame-1", bossCFrame1);
+        this.load.image("boss-C-frame-2", bossCFrame2);
+        this.load.image("boss-C-frame-3", bossCFrame3);
+
         // Carregar sprite do tiro do boss
-        this.load.image('boss-fire', bossFire);
-        
+        this.load.image("boss-fire", bossFire);
+
         // Carregar áudios
-        this.load.audio('player-shoot', playerShoot);
-        this.load.audio('player-kill', playerKill);
-        this.load.audio('enemy-shoot', enemyShoot);
-        this.load.audio('enemy-kill', enemyKill);
-        this.load.audio('boss-kill', bossKill);
-        this.load.audio('boost', boost);
-        this.load.audio('engine', engine);
-        this.load.audio('powerup', powerup);
+        this.load.audio("player-shoot", playerShoot);
+        this.load.audio("player-kill", playerKill);
+        this.load.audio("enemy-shoot", enemyShoot);
+        this.load.audio("enemy-kill", enemyKill);
+        this.load.audio("boss-kill", bossKill);
+        this.load.audio("boost", boost);
+        this.load.audio("engine", engine);
+        this.load.audio("powerup", powerup);
+
+        // Carregar músicas de fundo
+        this.load.audio("ost-wave-1", ostWave1);
+        this.load.audio("ost-wave-2", ostWave2);
+        this.load.audio("ost-wave-3", ostWave3);
       }
 
       create() {
         // Sinalizar que o preload foi concluído
-        window.dispatchEvent(new CustomEvent('phaserPreloadComplete'));
-        
+        window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
+
         // Criar o player no centro do fundo da tela
-        this.player = this.add.sprite(400, 550, 'player-frame-1');
+        this.player = this.add.sprite(400, 550, "player-frame-1");
         this.player.setScale(0.8); // Ajustar tamanho se necessário
 
         // Criar grupo de projéteis do jogador
         this.playerBullets = this.add.group({
           classType: Phaser.GameObjects.Sprite,
           maxSize: 50,
-          runChildUpdate: true
+          runChildUpdate: true,
         });
 
         // Criar grupo de projéteis dos inimigos
         this.enemyBullets = this.add.group({
           classType: Phaser.GameObjects.Sprite,
           maxSize: 200, // Aumentado para acomodar mais projéteis simultâneos
-          runChildUpdate: true
+          runChildUpdate: true,
         });
 
         // Configurar controles
         this.cursors = this.input.keyboard?.createCursorKeys() || null;
-        this.wasd = this.input.keyboard?.addKeys('W,S,A,D') as { [key: string]: Phaser.Input.Keyboard.Key } || null;
-        
+        this.wasd =
+          (this.input.keyboard?.addKeys("W,S,A,D") as {
+            [key: string]: Phaser.Input.Keyboard.Key;
+          }) || null;
+
         // Configurar teclas de disparo
-        this.fireKeys = this.input.keyboard?.addKeys('SPACE,F,NUMPAD_FIVE') as { [key: string]: Phaser.Input.Keyboard.Key } || null;
+        this.fireKeys =
+          (this.input.keyboard?.addKeys("SPACE,F,NUMPAD_FIVE") as {
+            [key: string]: Phaser.Input.Keyboard.Key;
+          }) || null;
 
         // Definir os limites do player dentro do canvas
         if (this.player) {
-          this.player.setData('minX', this.player.width * 0.4);
-          this.player.setData('maxX', 800 - this.player.width * 0.4);
-          this.player.setData('minY', this.player.height * 0.4);
-          this.player.setData('maxY', 600 - this.player.height * 0.4);
+          this.player.setData("minX", this.player.width * 0.4);
+          this.player.setData("maxX", 800 - this.player.width * 0.4);
+          this.player.setData("minY", this.player.height * 0.4);
+          this.player.setData("maxY", 600 - this.player.height * 0.4);
         }
 
         // Não iniciar o jogo imediatamente - aguardar sequência de mensagens
         // setGameState('playing') será chamado após as mensagens
-        
+
         // Inicializar sistema de ondas (mas não iniciar ainda)
-        this.currentWave = 1;
+        this.currentWave = 5;
         this.calculateMaxEnemiesForWave(this.currentWave);
-        
+
         // Aguardar evento para iniciar o jogo
         this.scene.pause();
       }
 
       update() {
         if (!this.player || !this.cursors) return;
-        
+
         // Parar todas as atualizações se o game over estiver ativo
         if (this.isGameOver) return;
 
@@ -2818,21 +2903,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Verificar input de movimento apenas se controles estão habilitados
         if (this.playerControlsEnabled) {
-          if (this.cursors.left.isDown || (this.wasd?.A?.isDown)) {
+          if (this.cursors.left.isDown || this.wasd?.A?.isDown) {
             velocityX = -1;
-          } else if (this.cursors.right.isDown || (this.wasd?.D?.isDown)) {
+          } else if (this.cursors.right.isDown || this.wasd?.D?.isDown) {
             velocityX = 1;
           }
 
-          if (this.cursors.up.isDown || (this.wasd?.W?.isDown)) {
+          if (this.cursors.up.isDown || this.wasd?.W?.isDown) {
             velocityY = -1;
-          } else if (this.cursors.down.isDown || (this.wasd?.S?.isDown)) {
+          } else if (this.cursors.down.isDown || this.wasd?.S?.isDown) {
             velocityY = 1;
           }
 
           // Verificar input de disparo
           const currentTime = this.time.now;
-          if (this.fireKeys && (this.fireKeys.SPACE?.isDown || this.fireKeys.F?.isDown || this.fireKeys.NUMPAD_FIVE?.isDown)) {
+          if (
+            this.fireKeys &&
+            (this.fireKeys.SPACE?.isDown ||
+              this.fireKeys.F?.isDown ||
+              this.fireKeys.NUMPAD_FIVE?.isDown)
+          ) {
             if (currentTime - this.lastFireTime > this.fireRate) {
               this.fireBullet();
               this.lastFireTime = currentTime;
@@ -2841,7 +2931,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         }
 
         // Normalizar o vetor de movimento para manter velocidade constante
-        const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+        const magnitude = Math.sqrt(
+          velocityX * velocityX + velocityY * velocityY
+        );
         if (magnitude > 0) {
           velocityX = (velocityX / magnitude) * this.playerSpeed;
           velocityY = (velocityY / magnitude) * this.playerSpeed;
@@ -2853,10 +2945,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         const newY = this.player.y + velocityY * deltaTime;
 
         // Aplicar limites
-        const minX = this.player.getData('minX');
-        const maxX = this.player.getData('maxX');
-        const minY = this.player.getData('minY');
-        const maxY = this.player.getData('maxY');
+        const minX = this.player.getData("minX");
+        const maxX = this.player.getData("maxX");
+        const minY = this.player.getData("minY");
+        const maxY = this.player.getData("maxY");
 
         this.player.x = Phaser.Math.Clamp(newX, minX, maxX);
         this.player.y = Phaser.Math.Clamp(newY, minY, maxY);
@@ -2865,23 +2957,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         if (this.playerControlsEnabled) {
           this.updatePlayerFrame(velocityX);
         }
-        
+
         // Atualizar projéteis
         this.updateBullets();
-        
+
         // Limpeza periódica de projéteis (a cada 2 segundos)
         const currentTime = this.time.now;
         if (currentTime - this.lastCleanupTime > this.cleanupInterval) {
           this.forceCleanupBullets();
           this.lastCleanupTime = currentTime;
         }
-        
+
         // Atualizar inimigos
         this.updateEnemies();
-        
+
         // Atualizar sistema de invencibilidade
         this.updateInvulnerability();
-        
+
         // Verificar colisões
         this.checkCollisions();
       }
@@ -2891,7 +2983,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Se não há movimento horizontal, usar frame 1 (nave em repouso)
         if (velocityX === 0) {
-          this.player.setTexture('player-frame-1');
+          this.player.setTexture("player-frame-1");
           this.player.setFlipX(false);
           this.lastMoveDirection.x = 0;
           return;
@@ -2901,70 +2993,74 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         if (velocityX < 0) {
           if (this.lastMoveDirection.x !== -1) {
             // Transição para esquerda - frame 2
-            this.player.setTexture('player-frame-2');
+            this.player.setTexture("player-frame-2");
             this.player.setFlipX(false);
             this.lastMoveDirection.x = -1;
-            
+
             // Depois de um tempo, mudar para frame 3
             this.time.delayedCall(100, () => {
               if (this.player && velocityX < 0) {
-                this.player.setTexture('player-frame-3');
+                this.player.setTexture("player-frame-3");
                 this.player.setFlipX(false);
               }
             });
           }
         }
-        
+
         // Movimento para a direita (espelhado)
         else if (velocityX > 0) {
           if (this.lastMoveDirection.x !== 1) {
             // Transição para direita - frame 2 espelhado
-            this.player.setTexture('player-frame-2');
+            this.player.setTexture("player-frame-2");
             this.player.setFlipX(true);
             this.lastMoveDirection.x = 1;
-            
+
             // Depois de um tempo, mudar para frame 3 espelhado
             this.time.delayedCall(100, () => {
               if (this.player && velocityX > 0) {
-                this.player.setTexture('player-frame-3');
+                this.player.setTexture("player-frame-3");
                 this.player.setFlipX(true);
               }
             });
           }
         }
       }
-      
+
       fireBullet() {
         if (!this.player || !this.playerBullets) return;
-        
+
         // Reproduzir som do tiro do jogador
-        this.sound.play('player-shoot', { volume: 0.3 });
-        
+        this.sound.play("player-shoot", { volume: 0.3 });
+
         // Criar projétil na posição do jogador
-        const bullet = this.playerBullets.get(this.player.x, this.player.y - 30, 'player-fire');
-        
+        const bullet = this.playerBullets.get(
+          this.player.x,
+          this.player.y - 30,
+          "player-fire"
+        );
+
         if (bullet) {
           bullet.setActive(true);
           bullet.setVisible(true);
           bullet.setScale(1); // Ajustar tamanho do projétil
-          
+
           // Configurar dados do projétil
-          bullet.setData('speed', -this.bulletSpeed); // Negativo para ir para cima
-          bullet.setData('damage', 1); // Dano que o projétil causa
+          bullet.setData("speed", -this.bulletSpeed); // Negativo para ir para cima
+          bullet.setData("damage", 1); // Dano que o projétil causa
         }
       }
-      
+
       updateBullets() {
         if (!this.playerBullets || !this.enemyBullets) return;
-        
+
         // Atualizar projéteis do jogador
         this.playerBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
           if (sprite.active) {
             // Mover projétil para cima
             const deltaTime = this.game.loop.delta / 1000;
-            sprite.y += sprite.getData('speed') * deltaTime;
-            
+            sprite.y += sprite.getData("speed") * deltaTime;
+
             // Remover projétil se sair da tela (expandir área para garantir limpeza)
             if (sprite.y < -50) {
               sprite.setActive(false);
@@ -2972,133 +3068,179 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             }
           }
         });
-        
+
         // Atualizar projéteis dos inimigos
         this.enemyBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
           if (sprite.active) {
             const deltaTime = this.game.loop.delta / 1000;
-            
+
             // Verificar se é projétil do boss
-            if (sprite.getData('isBossBullet')) {
+            if (sprite.getData("isBossBullet")) {
               // Verificar se é projétil angular do boss (Boss Type B) ou direcionado (Boss Type C)
-              if (sprite.getData('isAngled') || sprite.getData('isDirected')) {
+              if (sprite.getData("isAngled") || sprite.getData("isDirected")) {
                 // Movimento baseado em velocidade X e Y para projéteis angulares/direcionados do boss
-                sprite.x += sprite.getData('velocityX') * deltaTime;
-                sprite.y += sprite.getData('velocityY') * deltaTime;
+                sprite.x += sprite.getData("velocityX") * deltaTime;
+                sprite.y += sprite.getData("velocityY") * deltaTime;
               } else {
                 // Boss Type A: sempre move em linha reta para baixo
-                sprite.y += sprite.getData('speed') * deltaTime;
+                sprite.y += sprite.getData("speed") * deltaTime;
                 // Não alterar X - manter trajetória vertical
               }
             }
             // Verificar se é projétil angular (inimigo tipo B) ou direcionado (inimigo tipo C)
-            else if (sprite.getData('isAngled') || sprite.getData('isDirected')) {
+            else if (
+              sprite.getData("isAngled") ||
+              sprite.getData("isDirected")
+            ) {
               // Movimento baseado em velocidade X e Y
-              sprite.x += sprite.getData('velocityX') * deltaTime;
-              sprite.y += sprite.getData('velocityY') * deltaTime;
+              sprite.x += sprite.getData("velocityX") * deltaTime;
+              sprite.y += sprite.getData("velocityY") * deltaTime;
             } else {
               // Movimento padrão para baixo (inimigo tipo A)
-              sprite.y += sprite.getData('speed') * deltaTime;
+              sprite.y += sprite.getData("speed") * deltaTime;
             }
-            
+
             // Remover projétil se sair da tela (área expandida para garantir limpeza completa)
-            if (sprite.y > 650 || sprite.y < -50 || sprite.x < -50 || sprite.x > 850) {
+            if (
+              sprite.y > 650 ||
+              sprite.y < -50 ||
+              sprite.x < -50 ||
+              sprite.x > 850
+            ) {
               sprite.setActive(false);
               sprite.setVisible(false);
             }
           }
         });
       }
-      
+
       forceCleanupBullets() {
         if (!this.playerBullets || !this.enemyBullets) return;
-        
+
         // Limpeza agressiva de projéteis do jogador
         this.playerBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
-          if (sprite.active && (sprite.y < -100 || sprite.x < -100 || sprite.x > 900)) {
+          if (
+            sprite.active &&
+            (sprite.y < -100 || sprite.x < -100 || sprite.x > 900)
+          ) {
             sprite.setActive(false);
             sprite.setVisible(false);
           }
         });
-        
+
         // Limpeza agressiva de projéteis dos inimigos
         this.enemyBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
-          if (sprite.active && (sprite.y > 700 || sprite.y < -100 || sprite.x < -100 || sprite.x > 900)) {
+          if (
+            sprite.active &&
+            (sprite.y > 700 ||
+              sprite.y < -100 ||
+              sprite.x < -100 ||
+              sprite.x > 900)
+          ) {
             sprite.setActive(false);
             sprite.setVisible(false);
           }
         });
-        
+
         // Log para debug (remover em produção)
-        const activePlayerBullets = this.playerBullets.children.entries.filter(b => (b as Phaser.GameObjects.Sprite).active).length;
-        const activeEnemyBullets = this.enemyBullets.children.entries.filter(b => (b as Phaser.GameObjects.Sprite).active).length;
-        console.log(`Projéteis ativos - Jogador: ${activePlayerBullets}, Inimigos: ${activeEnemyBullets}`);
+        const activePlayerBullets = this.playerBullets.children.entries.filter(
+          (b) => (b as Phaser.GameObjects.Sprite).active
+        ).length;
+        const activeEnemyBullets = this.enemyBullets.children.entries.filter(
+          (b) => (b as Phaser.GameObjects.Sprite).active
+        ).length;
+        console.log(
+          `Projéteis ativos - Jogador: ${activePlayerBullets}, Inimigos: ${activeEnemyBullets}`
+        );
       }
-      
+
       updateEnemies() {
         // Atualizar todos os inimigos e remover os destruídos
         const previousEnemyCount = this.enemies.length;
         let enemiesKilledByPlayer = 0;
-        
-        this.enemies = this.enemies.filter(enemy => {
+
+        this.enemies = this.enemies.filter((enemy) => {
           if (!enemy.isDestroyed) {
             enemy.update();
             return true;
           } else {
             // Garantir que a posição seja liberada quando o inimigo for removido
             this.releasePosition(enemy.id);
-            
+
             // Contar apenas inimigos mortos pelo jogador
             if (enemy.isKilledByPlayer) {
               enemiesKilledByPlayer++;
             }
-            
+
             return false;
           }
         });
-        
+
         // Atualizar boss se existir
         if (this.currentBoss) {
           if (!this.currentBoss.isDestroyed) {
             this.currentBoss.update();
           } else {
             this.currentBoss = null;
-            console.log('Boss foi derrotado!');
+            console.log("Boss foi derrotado!");
           }
         }
-        
+
         // Atualizar contador de inimigos derrotados apenas com os que foram mortos pelo jogador
         if (enemiesKilledByPlayer > 0) {
           this.enemiesDefeated += enemiesKilledByPlayer;
-          console.log(`${enemiesKilledByPlayer} inimigo(s) derrotado(s) pelo jogador. Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
+          console.log(
+            `${enemiesKilledByPlayer} inimigo(s) derrotado(s) pelo jogador. Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
+          );
           this.lastEnemyKilledTime = this.time.now;
         }
-        
+
         // Log de inimigos que saíram da tela
-        const enemiesThatLeft = (previousEnemyCount - this.enemies.length) - enemiesKilledByPlayer;
+        const enemiesThatLeft =
+          previousEnemyCount - this.enemies.length - enemiesKilledByPlayer;
         if (enemiesThatLeft > 0) {
-          console.log(`${enemiesThatLeft} inimigo(s) saíram da tela (não contabilizados como derrotados)`);
+          console.log(
+            `${enemiesThatLeft} inimigo(s) saíram da tela (não contabilizados como derrotados)`
+          );
         }
-        
+
         // Verificar se deve spawnar boss (apenas se não estivermos em transição de onda)
-        if (this.enemiesDefeated >= this.maxEnemiesInWave && !this.currentBoss && !this.shouldSpawnBoss && !this.isInWaveTransition) {
-          console.log('Todos os inimigos da onda foram derrotados. Boss spawnará em 5 segundos...');
+        if (
+          this.enemiesDefeated >= this.maxEnemiesInWave &&
+          !this.currentBoss &&
+          !this.shouldSpawnBoss &&
+          !this.isInWaveTransition
+        ) {
+          console.log(
+            "Todos os inimigos da onda foram derrotados. Boss spawnará em 5 segundos..."
+          );
           this.shouldSpawnBoss = true;
           this.bossSpawnTimer = this.time.now;
         }
-        
+
         // Spawnar boss após delay (apenas se não estivermos em transição de onda)
-        if (this.shouldSpawnBoss && this.time.now - this.bossSpawnTimer > this.bossSpawnDelay && !this.isInWaveTransition) {
+        if (
+          this.shouldSpawnBoss &&
+          this.time.now - this.bossSpawnTimer > this.bossSpawnDelay &&
+          !this.isInWaveTransition
+        ) {
           this.spawnBoss();
           this.shouldSpawnBoss = false;
         }
-        
+
         // Sistema de sub-ondas (apenas se boss não foi spawnado ainda e spawn está habilitado)
-        if (!this.shouldSpawnBoss && !this.currentBoss && this.enemySpawnEnabled) {
-          if (this.enemies.length === 0 && this.enemiesDefeated < this.maxEnemiesInWave) {
+        if (
+          !this.shouldSpawnBoss &&
+          !this.currentBoss &&
+          this.enemySpawnEnabled
+        ) {
+          if (
+            this.enemies.length === 0 &&
+            this.enemiesDefeated < this.maxEnemiesInWave
+          ) {
             // Verificar se passou tempo suficiente desde o último inimigo morto
             if (this.time.now - this.lastEnemyKilledTime > this.subWaveDelay) {
               this.currentSubWave++;
@@ -3107,11 +3249,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           }
         }
       }
-      
+
       spawnSubWave(subWave: number) {
-        console.log(`DEBUG - spawnSubWave chamada com subWave=${subWave}, currentWave=${this.currentWave}`);
+        console.log(
+          `DEBUG - spawnSubWave chamada com subWave=${subWave}, currentWave=${this.currentWave}`
+        );
         console.log(`Spawning sub-onda ${subWave} da onda ${this.currentWave}`);
-        
+
         // Primeiras 5 sub-ondas da onda 1 são fixas
         if (this.currentWave === 1 && subWave <= 5) {
           switch (subWave) {
@@ -3148,50 +3292,54 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           this.spawnRandomEnemies();
         }
       }
-      
+
       calculateMaxEnemiesForWave(wave: number) {
         if (wave === 1) {
           // Onda 1: Sub-onda 1 (5A) + Sub-onda 2 (3B) + Sub-onda 3 (1C) + Sub-onda 4 (3A+2B) + Sub-onda 5 (1A+3B+1C) = 19 inimigos
           this.maxEnemiesInWave = 15;
         } else if (wave <= 3) {
-          this.maxEnemiesInWave = 15 + (5 * (wave - 1));
+          this.maxEnemiesInWave = 15 + 5 * (wave - 1);
         } else {
           // A partir da onda 4, incremento aleatório entre 5 e 10
           const previousMax = wave === 4 ? 25 : this.maxEnemiesInWave;
           const increment = Phaser.Math.Between(5, 10);
           this.maxEnemiesInWave = previousMax + increment;
         }
-        console.log(`Onda ${wave}: Máximo de ${this.maxEnemiesInWave} inimigos`);
+        console.log(
+          `Onda ${wave}: Máximo de ${this.maxEnemiesInWave} inimigos`
+        );
       }
-      
+
       spawnMultipleEnemiesTypeA(count: number) {
         for (let i = 0; i < count; i++) {
           this.spawnEnemyA();
         }
       }
-      
+
       spawnMultipleEnemiesTypeB(count: number) {
         for (let i = 0; i < count; i++) {
           this.spawnEnemyB();
         }
       }
-      
+
       spawnMultipleEnemiesTypeC(count: number) {
         for (let i = 0; i < count; i++) {
           this.spawnEnemyC();
         }
       }
-      
+
       spawnRandomEnemies() {
         // Calcular quantos inimigos spawnar baseado na onda
         let enemiesToSpawn = 5 + Math.floor((this.currentWave - 1) / 2);
         enemiesToSpawn = Math.min(enemiesToSpawn, 15); // Máximo de 15 inimigos por spawn
-        
-        console.log(`Spawning ${enemiesToSpawn} inimigos aleatórios (derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave})`);
-        
+
+        console.log(
+          `Spawning ${enemiesToSpawn} inimigos aleatórios (derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave})`
+        );
+
         for (let i = 0; i < enemiesToSpawn; i++) {
           const enemyType = Phaser.Math.Between(1, 3);
-          
+
           switch (enemyType) {
             case 1:
               this.spawnEnemyA();
@@ -3205,61 +3353,70 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           }
         }
       }
-      
+
       spawnEnemyA() {
         // Spawnar inimigo do tipo A no topo da tela, posição aleatória
         const x = Phaser.Math.Between(100, 700);
         const y = -50; // Fora da tela, no topo
-        
+
         const enemy = new EnemyTypeA(this, x, y);
         enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
-        
-        console.log(`Enemy A spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
+
+        console.log(
+          `Enemy A spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
+        );
       }
-      
+
       spawnEnemyB() {
         // Spawnar inimigo do tipo B no topo da tela, posição aleatória
         const x = Phaser.Math.Between(200, 600); // Posição mais centralizada para a curva
         const y = -50; // Fora da tela, no topo
-        
+
         const enemy = new EnemyTypeB(this, x, y);
         enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
-        
-        console.log(`Enemy B spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
+
+        console.log(
+          `Enemy B spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
+        );
       }
-      
+
       spawnEnemyC() {
         // Spawnar inimigo do tipo C no topo da tela, posição aleatória
         const x = Phaser.Math.Between(250, 550); // Posição centralizada
         const y = -50; // Fora da tela, no topo
-        
+
         const enemy = new EnemyTypeC(this, x, y);
         enemy.adjustForWave(this.currentWave);
         this.enemies.push(enemy);
-        
-        console.log(`Enemy C spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`);
+
+        console.log(
+          `Enemy C spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
+        );
       }
-      
+
       spawnBoss() {
         console.log(`Spawnando Boss Type B para onda ${this.currentWave}`);
-        
+
         // Spawnar boss no centro superior da tela
         const bossX = 400; // Centro da tela
         const bossY = -100; // Fora da tela, no topo
-        
-        
+
         if (this.currentWave === 1) {
           // Boss tipo A fixo para onda 1
           this.currentBoss = new BossTypeA(this, bossX, bossY);
           this.currentBoss.adjustForWave(this.currentWave);
-          console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+          console.log(
+            `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+          );
         } else if (this.currentWave === 2) {
           // Boss tipo B fixo para onda 2
           this.currentBoss = new BossTypeB(this, bossX, bossY);
           this.currentBoss.adjustForWave(this.currentWave);
-          console.log(`Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+          console.log(
+            `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+          );
         } else if (this.currentWave === 3) {
           // Boss tipo C fixo para onda 3
           this.currentBoss = new BossTypeC(this, bossX, bossY);
@@ -3270,24 +3427,29 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         } else {
           // Da onda 4 em diante: spawnar boss aleatório
           const randomBossType = Phaser.Math.Between(1, 3);
-          
+
           if (randomBossType === 1) {
             this.currentBoss = new BossTypeA(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
-            console.log(`Boss Type A aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+            console.log(
+              `Boss Type A aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+            );
           } else if (randomBossType === 2) {
             this.currentBoss = new BossTypeB(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
-            console.log(`Boss Type B aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+            console.log(
+              `Boss Type B aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+            );
           } else {
             this.currentBoss = new BossTypeC(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
-            console.log(`Boss Type C aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`);
+            console.log(
+              `Boss Type C aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
+            );
           }
         }
-        
       }
-      
+
       checkCollisions() {
         if (!this.playerBullets || !this.enemyBullets || !this.player) return;
 
@@ -3295,198 +3457,212 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.playerBullets.children.entries.forEach((bullet) => {
           const bulletSprite = bullet as Phaser.GameObjects.Sprite;
           if (!bulletSprite.active) return;
-          
+
           // Verificar colisão com inimigos normais
           this.enemies.forEach((enemy) => {
             if (enemy.isDestroyed) return;
-            
+
             // Verificar colisão simples usando distância
             const distance = Phaser.Math.Distance.Between(
-              bulletSprite.x, bulletSprite.y,
-              enemy.sprite.x, enemy.sprite.y
+              bulletSprite.x,
+              bulletSprite.y,
+              enemy.sprite.x,
+              enemy.sprite.y
             );
-            
-            if (distance < 30) { // Raio de colisão
+
+            if (distance < 30) {
+              // Raio de colisão
               // Projétil atingiu inimigo
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
-              
+
               // Inimigo recebe dano
-              enemy.takeDamage(bulletSprite.getData('damage') || 1);
+              enemy.takeDamage(bulletSprite.getData("damage") || 1);
             }
           });
-          
+
           // Verificar colisão com boss
           if (this.currentBoss && !this.currentBoss.isDestroyed) {
             const distance = Phaser.Math.Distance.Between(
-              bulletSprite.x, bulletSprite.y,
-              this.currentBoss.sprite.x, this.currentBoss.sprite.y
+              bulletSprite.x,
+              bulletSprite.y,
+              this.currentBoss.sprite.x,
+              this.currentBoss.sprite.y
             );
-            
-            if (distance < 50) { // Raio de colisão maior para o boss
+
+            if (distance < 50) {
+              // Raio de colisão maior para o boss
               // Projétil atingiu boss
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
-              
+
               // Boss recebe dano
-              this.currentBoss.takeDamage(bulletSprite.getData('damage') || 1);
+              this.currentBoss.takeDamage(bulletSprite.getData("damage") || 1);
             }
           }
         });
-        
+
         // Colisão projéteis dos inimigos vs jogador
         if (!this.isPlayerDead && !this.isPlayerInvulnerable) {
           this.enemyBullets.children.entries.forEach((bullet) => {
             const bulletSprite = bullet as Phaser.GameObjects.Sprite;
             if (!bulletSprite.active) return;
-            
+
             // Verificar colisão com jogador
             const distance = Phaser.Math.Distance.Between(
-              bulletSprite.x, bulletSprite.y,
-              this.player!.x, this.player!.y
+              bulletSprite.x,
+              bulletSprite.y,
+              this.player!.x,
+              this.player!.y
             );
-            
+
             // Raio de colisão maior para projéteis do boss
-            const collisionRadius = bulletSprite.getData('isBossBullet') ? 30 : 25;
-            
+            const collisionRadius = bulletSprite.getData("isBossBullet")
+              ? 30
+              : 25;
+
             if (distance < collisionRadius) {
               // Projétil atingiu jogador
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
-              
+
               // Dano diferente baseado no tipo de projétil
-              const damage = bulletSprite.getData('damage') || 1;
+              const damage = bulletSprite.getData("damage") || 1;
               console.log(`Jogador atingido por projétil! Dano: ${damage}`);
               this.playerTakeDamage();
             }
           });
-          
+
           // Colisão jogador vs inimigos (colisão direta com naves)
           this.enemies.forEach((enemy) => {
             if (enemy.isDestroyed) return;
-            
+
             // Verificar colisão direta com inimigo
             const distance = Phaser.Math.Distance.Between(
-              this.player!.x, this.player!.y,
-              enemy.sprite.x, enemy.sprite.y
+              this.player!.x,
+              this.player!.y,
+              enemy.sprite.x,
+              enemy.sprite.y
             );
-            
-            if (distance < 35) { // Raio de colisão para nave vs nave
-              console.log('Jogador colidiu com inimigo!');
+
+            if (distance < 35) {
+              // Raio de colisão para nave vs nave
+              console.log("Jogador colidiu com inimigo!");
               this.playerTakeDamage();
               // Destruir o inimigo também na colisão
               enemy.destroy();
             }
           });
-          
+
           // Colisão jogador vs boss
           if (this.currentBoss && !this.currentBoss.isDestroyed) {
             const distance = Phaser.Math.Distance.Between(
-              this.player!.x, this.player!.y,
-              this.currentBoss.sprite.x, this.currentBoss.sprite.y
+              this.player!.x,
+              this.player!.y,
+              this.currentBoss.sprite.x,
+              this.currentBoss.sprite.y
             );
-            
-            if (distance < 60) { // Raio de colisão maior para o boss
-              console.log('Jogador colidiu com boss!');
+
+            if (distance < 60) {
+              // Raio de colisão maior para o boss
+              console.log("Jogador colidiu com boss!");
               this.playerTakeDamage();
             }
           }
         }
       }
-      
+
       // Sistema de vidas do jogador
       playerTakeDamage() {
         if (this.isPlayerDead || this.isPlayerInvulnerable) return;
-        
-        console.log('Jogador tomou dano!');
+
+        console.log("Jogador tomou dano!");
         this.playerDie();
       }
-      
+
       playerDie() {
         if (this.isPlayerDead) return;
-        
+
         // Reproduzir som da morte do jogador
-        this.sound.play('player-kill', { volume: 0.5 });
-        
+        this.sound.play("player-kill", { volume: 0.5 });
+
         this.isPlayerDead = true;
         this.playerControlsEnabled = false;
         this.playerLives--;
-        
+
         console.log(`Jogador morreu! Vidas restantes: ${this.playerLives}`);
-        
+
         // Atualizar vidas na UI
         setLives(this.playerLives);
-        
+
         if (this.playerLives <= 0) {
           // Game Over
-          console.log('Game Over!');
-          setGameState('gameOver');
-          
+          console.log("Game Over!");
+          setGameState("gameOver");
+
           // Criar animação de morte na posição atual do jogador (última vida)
           if (this.player) {
             this.player.setVisible(false);
-            new DeathAnimation(this, this.player.x, this.player.y, () => {
-            });
+            new DeathAnimation(this, this.player.x, this.player.y, () => {});
           }
-          
+
           // Criar esmaecimento para preto
           this.createGameOverFade();
-          
+
           return;
         }
-        
+
         // Criar animação de morte na posição atual do jogador
         if (this.player) {
           this.player.setVisible(false);
-          new DeathAnimation(this, this.player.x, this.player.y, () => {
-          });
+          new DeathAnimation(this, this.player.x, this.player.y, () => {});
         }
-        
+
         // Agendar respawn após 2 segundos
         this.time.delayedCall(this.respawnDelay, () => {
           this.respawnPlayer();
         });
       }
-      
+
       respawnPlayer() {
         if (!this.isPlayerDead) return;
-        
-        console.log('Respawnando jogador...');
-        
+
+        console.log("Respawnando jogador...");
+
         // Posicionar jogador fora da tela (parte inferior)
         if (this.player) {
           this.player.x = this.originalPlayerPosition.x;
           this.player.y = 700; // Fora da tela, embaixo
           this.player.setVisible(true);
-          this.player.setTexture('player-frame-1');
+          this.player.setTexture("player-frame-1");
           this.player.setFlipX(false);
         }
-        
+
         // Animar entrada do jogador
         this.tweens.add({
           targets: this.player,
           y: this.originalPlayerPosition.y,
           duration: 1500, // 1.5 segundos para entrar
-          ease: 'Power2',
+          ease: "Power2",
           onComplete: () => {
             // Após chegar na posição, reabilitar controles
             this.isPlayerDead = false;
             this.playerControlsEnabled = true;
-            
+
             // Ativar invencibilidade por 15 segundos
             this.startInvulnerability();
-            
-            console.log('Jogador respawnou com sucesso!');
-          }
+
+            console.log("Jogador respawnou com sucesso!");
+          },
         });
       }
-      
+
       startInvulnerability() {
         this.isPlayerInvulnerable = true;
         this.invulnerabilityStartTime = this.time.now;
-        
-        console.log('Invencibilidade ativada por 15 segundos');
-        
+
+        console.log("Invencibilidade ativada por 15 segundos");
+
         // Efeito visual de piscar durante invencibilidade
         this.tweens.add({
           targets: this.player,
@@ -3499,163 +3675,180 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             if (this.player) {
               this.player.setAlpha(1);
             }
-          }
+          },
         });
       }
-      
+
       updateInvulnerability() {
         if (!this.isPlayerInvulnerable) return;
-        
+
         // Verificar se o tempo de invencibilidade acabou
-        if (this.time.now - this.invulnerabilityStartTime > this.invulnerabilityDuration) {
+        if (
+          this.time.now - this.invulnerabilityStartTime >
+          this.invulnerabilityDuration
+        ) {
           this.isPlayerInvulnerable = false;
-          
+
           // Parar efeito de piscar
           if (this.player) {
             this.tweens.killTweensOf(this.player);
             this.player.setAlpha(1);
           }
-          
-          console.log('Invencibilidade removida');
+
+          console.log("Invencibilidade removida");
         }
       }
-      
+
       addScore(points: number) {
         // Incrementar pontuação usando o setter do React
-        setScore(prevScore => prevScore + points);
+        setScore((prevScore) => prevScore + points);
 
         // Atualizar hiScore como acumulador total (sempre crescente)
-        setHiScore(prevHiScore => prevHiScore + points);
-        
+        setHiScore((prevHiScore) => prevHiScore + points);
+
         // Atualizar onda no estado do React (comentado temporariamente para debug)
         setWave(this.currentWave);
-        
+
         // Registrar que um inimigo foi morto (para o sistema de sub-ondas)
         this.lastEnemyKilledTime = this.time.now;
       }
 
       // Método chamado quando um boss é derrotado
       onBossDefeated(points: number) {
-        console.log(`Boss derrotado! Iniciando transição de onda. Pontos: ${points}`);
-        
+        console.log(
+          `Boss derrotado! Iniciando transição de onda. Pontos: ${points}`
+        );
+
         // Parar o spawn de novos inimigos
         this.enemySpawnEnabled = false;
-        
+
         // Iniciar animação de transição de onda
         this.startWaveTransition();
       }
-      
+
       // Método para iniciar a transição de onda
       startWaveTransition() {
         if (this.isInWaveTransition) return;
-        
+
         this.isInWaveTransition = true;
         this.playerControlsEnabled = false;
-        
-        console.log('Iniciando transição de onda...');
-        
+
+        console.log("Iniciando transição de onda...");
+
         // Reproduzir áudio de boost no início da transição
-        this.sound.play('engine', { volume: 0.4 });
-        
+        this.sound.play("engine", { volume: 0.4 });
+
         // Reproduzir áudio de engine após 1 segundo
         this.time.delayedCall(1000, () => {
-          this.sound.play('boost', { volume: 0.4 });
+          this.sound.play("boost", { volume: 0.4 });
         });
-        
+
         // Aumentar velocidade do background para 50 (via callback para o React)
         // Vamos usar um evento customizado para comunicar com o componente React
-        window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 50 } }));
-        
+        window.dispatchEvent(
+          new CustomEvent("changeBackgroundSpeed", { detail: { speed: 50 } })
+        );
+
         // Mover nave para o centro gradualmente
         this.movePlayerToCenter();
       }
-      
+
       // Método para mover o jogador para o centro gradualmente
       movePlayerToCenter() {
         if (!this.player) return;
-        
+
         const targetX = 400; // Centro da tela
         const targetY = 550; // Posição inferior original
-        
+
         // Criar tween para movimento suave
         this.tweens.add({
           targets: this.player,
           x: targetX,
           y: targetY,
           duration: 2000, // 2 segundos para mover
-          ease: 'Power2',
+          ease: "Power2",
           onComplete: () => {
             // Após mover o jogador, continuar com a transição
             this.continueWaveTransition();
-          }
+          },
         });
       }
-      
+
       // Continuar com a transição após mover o jogador
       continueWaveTransition() {
         // Voltar velocidade do background para 0.75
-        window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 0.75 } }));
-        
+        window.dispatchEvent(
+          new CustomEvent("changeBackgroundSpeed", { detail: { speed: 0.75 } })
+        );
+
         // Incrementar número da onda
         this.currentWave++;
+        this.updateMusicForWave();
         console.log(`Avançando para onda ${this.currentWave}`);
         console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
-        
+
         // Atualizar onda no estado React (comentado temporariamente para debug)
         // setWave(this.currentWave);
-        
+
         // Mostrar mensagem da nova onda
-        window.dispatchEvent(new CustomEvent('showWaveMessage', { 
-          detail: { message: `ONDA ${this.currentWave}` } 
-        }));
-        
+        window.dispatchEvent(
+          new CustomEvent("showWaveMessage", {
+            detail: { message: `ONDA ${this.currentWave}` },
+          })
+        );
+
         // Aguardar 3 segundos para mostrar a mensagem da nova onda e finalizar
         this.time.delayedCall(3000, () => {
           this.finishWaveTransition();
         });
       }
-      
+
       // Finalizar a transição de onda
       finishWaveTransition() {
         // Habilitar novamente os controles e spawn de inimigos
         this.playerControlsEnabled = true;
         this.enemySpawnEnabled = true;
         this.isInWaveTransition = false;
-        
-        console.log(`Transição de onda completa. Iniciando onda ${this.currentWave}`);
-        
+
+        console.log(
+          `Transição de onda completa. Iniciando onda ${this.currentWave}`
+        );
+
         // Preparar nova onda - resetar dados DEPOIS de confirmar a onda
         this.resetWaveData();
-        console.log(`Dados da nova onda - maxEnemies: ${this.maxEnemiesInWave}, enemiesDefeated: ${this.enemiesDefeated}`);
-        
+        console.log(
+          `Dados da nova onda - maxEnemies: ${this.maxEnemiesInWave}, enemiesDefeated: ${this.enemiesDefeated}`
+        );
+
         // Começar nova onda - definir sub-onda 1 e spawnar
         this.currentSubWave = 1;
         console.log(`Spawnando primeira sub-onda da onda ${this.currentWave}`);
         this.spawnSubWave(this.currentSubWave);
       }
-      
+
       // Resetar dados da onda
       resetWaveData() {
         this.enemiesDefeated = 0;
         this.shouldSpawnBoss = false;
         this.bossSpawnTimer = 0;
         this.lastEnemyKilledTime = this.time.now;
-        
+
         // Calcular novo máximo de inimigos para a onda
         this.calculateMaxEnemiesForWave(this.currentWave);
-        
+
         // Limpar posições ocupadas
         this.occupiedPositions = [];
       }
 
       // Método para iniciar o jogo após a sequência de mensagens
       startGame() {
-        console.log('Iniciando jogo após sequência de mensagens');
-        setGameState('playing');
+        console.log("Iniciando jogo após sequência de mensagens");
+        setGameState("playing");
         this.scene.resume();
-        
+
         // Iniciar com sub-onda 1 (inimigo tipo A)
         this.spawnSubWave(1);
+        this.playBackgroundMusic();
       }
     }
 
