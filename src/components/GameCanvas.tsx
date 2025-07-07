@@ -478,6 +478,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           
           // Se cruzou um marco de 1000 pontos, adicionar vida
           if (newMilestone > previousMilestone) {
+            // Reproduzir som de vida extra
+            this.scene.sound.play('powerup', { volume: 0.6 });
+            
             setLives((prevLives) => prevLives + 1);
             console.log(`Marco de ${newMilestone * 1000} pontos atingido! Vida adicionada.`);
           }
@@ -2723,6 +2726,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.load.audio('boss-kill', bossKill);
         this.load.audio('boost', boost);
         this.load.audio('engine', engine);
+        this.load.audio('powerup', powerup);
       }
 
       create() {
