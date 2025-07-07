@@ -19,7 +19,7 @@ export default class Layout extends Component<Props, State> {
     const { children, starCount = 1000 } = this.props;
     
     return (
-      <div className="cosmic-gradient text-cyan-50 h-screen flex flex-col items-center justify-center relative">
+      <div className="cosmic-gradient text-cyan-50 h-screen flex flex-col justify-center relative">
         {/* Background com estrelas */}
         <Background starCount={starCount} />
         
@@ -27,7 +27,7 @@ export default class Layout extends Component<Props, State> {
         <OptionsToggle />
         
         {/* Conteúdo principal passado como children */}
-        <div className="relative z-10">
+        <div className="relative z-10 w-full h-full">
           {children}
         </div>
       </div>
