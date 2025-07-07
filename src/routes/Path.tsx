@@ -67,8 +67,10 @@ export default class Path extends Component<Props, State> {
   }
 
   render() {
+    const { currentRoute } = this.state;
+    
     return (
-      <Layout starCount={1500}>
+      <Layout starCount={1500} currentRoute={currentRoute}>
         {this.renderContent()}
       </Layout>
     )
