@@ -55,6 +55,22 @@ import bossCFrame3 from '../assets/images/enemy/boss-C-frame-3.png';
 // Importar sprite do tiro do boss
 import bossFire from '../assets/images/effects/boss-fire.png';
 
+// Importar os audios do jogador
+import playerShoot from '../assets/audios/sfx/player-fire.wav';
+import playerKill from "../assets/audios/sfx/player-kill.wav";
+
+// Importar os audios dos inimigos
+import enemyShoot from '../assets/audios/sfx/enemy-fire.wav';
+import enemyKill from "../assets/audios/sfx/enemy-kill.wav";
+import bossKill from "../assets/audios/sfx/boss-kill.wav";
+
+// Importar o audio de transição de onda
+import boost from '../assets/audios/sfx/boost.wav';
+import engine from '../assets/audios/sfx/engine.wav';
+
+// Importar o audio de vida extra
+import powerup from '../assets/audios/sfx/powerup_2.wav';
+
 interface GameCanvasProps {
   backgroundSpeed?: number;
   onNavigate?: (route: string, data?: { score?: number }) => void;
@@ -2668,6 +2684,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         // Carregar sprite do tiro do boss
         this.load.image('boss-fire', bossFire);
+        
+        // Carregar áudios
+        this.load.audio('player-shoot', playerShoot);
       }
 
       create() {
@@ -2843,6 +2862,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       
       fireBullet() {
         if (!this.player || !this.playerBullets) return;
+        
+        // Reproduzir som do tiro do jogador
+        this.sound.play('player-shoot', { volume: 0.3 });
         
         // Criar projétil na posição do jogador
         const bullet = this.playerBullets.get(this.player.x, this.player.y - 30, 'player-fire');
