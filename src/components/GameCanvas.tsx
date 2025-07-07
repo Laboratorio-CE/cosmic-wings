@@ -215,6 +215,7 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
 const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate, showUI = true }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
   const [lives, setLives] = useState(3);
   const [, setScore] = useState(0);
@@ -307,12 +308,41 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }, 3000);
     };
 
+    const handlePhaserPreloadComplete = () => {
+      console.log('Phaser preload concluído, iniciando sequência de mensagens');
+      setIsLoading(false);
+      
+      // Sequência de mensagens: "Preparar" (1s) → "Onda 1" (1s) → iniciar jogo
+      setTimeout(() => {
+        setWaveMessageText('Preparar');
+        setShowWaveMessage(true);
+        
+        setTimeout(() => {
+          setWaveMessageText('Onda 1');
+          
+          setTimeout(() => {
+            setShowWaveMessage(false);
+            
+            // Iniciar o jogo
+            if (gameRef.current) {
+              const gameScene = gameRef.current.scene.getScene('MainGameScene') as Phaser.Scene & { startGame?: () => void };
+              if (gameScene && gameScene.startGame) {
+                gameScene.startGame();
+              }
+            }
+          }, 1000);
+        }, 1000);
+      }, 100); // Pequeno delay para garantir que a tela de loading seja removida
+    };
+
     window.addEventListener('changeBackgroundSpeed', handleBackgroundSpeedChange as EventListener);
     window.addEventListener('showWaveMessage', handleShowWaveMessage as EventListener);
+    window.addEventListener('phaserPreloadComplete', handlePhaserPreloadComplete as EventListener);
     
     return () => {
       window.removeEventListener('changeBackgroundSpeed', handleBackgroundSpeedChange as EventListener);
       window.removeEventListener('showWaveMessage', handleShowWaveMessage as EventListener);
+      window.removeEventListener('phaserPreloadComplete', handlePhaserPreloadComplete as EventListener);
     };
   }, []);
 
@@ -1091,7 +1121,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             this.currentBurstShots = 0;
             this.burstTimer = currentTime;
           } else if (this.burstCount >= this.maxBursts) {
-            // Completou o tiro na posição, ir para próxima posição
+            // Completou o tiro na posição, ir para próxima
             this.onCompletedShooting();
           }
         } else {
@@ -2522,7 +2552,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Boss nunca vai embora, sempre continua em ciclos infinitos
         // Reiniciar contador de ciclos quando atingir o máximo
         if (this.cycleCount >= this.maxCycles) {
-          this.cycleCount = 0; // Reiniciar ciclos
+          this.cycleCount = 0;
         }
         
         // Sempre começar próximo ciclo de movimento
@@ -2730,6 +2760,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
 
       create() {
+        // Sinalizar que o preload foi concluído
+        window.dispatchEvent(new CustomEvent('phaserPreloadComplete'));
+        
         // Criar o player no centro do fundo da tela
         this.player = this.add.sprite(400, 550, 'player-frame-1');
         this.player.setScale(0.8); // Ajustar tamanho se necessário
@@ -2763,14 +2796,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           this.player.setData('maxY', 600 - this.player.height * 0.4);
         }
 
-        setGameState('playing');
+        // Não iniciar o jogo imediatamente - aguardar sequência de mensagens
+        // setGameState('playing') será chamado após as mensagens
         
-        // Inicializar sistema de ondas
+        // Inicializar sistema de ondas (mas não iniciar ainda)
         this.currentWave = 1;
         this.calculateMaxEnemiesForWave(this.currentWave);
         
-        // Iniciar com sub-onda 1 (inimigo tipo A)
-        this.spawnSubWave(1);
+        // Aguardar evento para iniciar o jogo
+        this.scene.pause();
       }
 
       update() {
@@ -3613,6 +3647,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Limpar posições ocupadas
         this.occupiedPositions = [];
       }
+
+      // Método para iniciar o jogo após a sequência de mensagens
+      startGame() {
+        console.log('Iniciando jogo após sequência de mensagens');
+        setGameState('playing');
+        this.scene.resume();
+        
+        // Iniciar com sub-onda 1 (inimigo tipo A)
+        this.spawnSubWave(1);
+      }
     }
 
     // Configuração do Phaser
@@ -3676,6 +3720,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
+      {/* Tela de Loading */}
+      {isLoading && (
+        <div className="absolute z-50 bg-black flex items-center justify-center border border-gray-600 rounded-lg" 
+             style={{ width: '800px', height: '600px' }}>
+          <div className="text-center">
+            <div className="text-white text-2xl mb-4">Carregando...</div>
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      )}
+      
       {/* Canvas container com background */}
       <div className="relative z-10 bg-black">
         <div 
@@ -3689,7 +3744,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           </div>
           
           {/* Game UI overlay - restrita ao canvas */}
-          {showUI && (
+          {showUI && !isLoading && (
             <div className="absolute inset-0 z-20 pointer-events-none">
               <GameUI
                 lives={lives}
