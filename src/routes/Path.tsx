@@ -8,6 +8,9 @@ import Leaderboards from '../components/Leaderboards'
 import RankingRegister from '../components/RankingRegister'
 import Credits from '../components/Credits'
 
+// Importar música do menu
+import menuMusic from '../assets/audios/music/ost-menu.mp3';
+
 // Path não recebe props por enquanto
 type Props = {}
 
@@ -19,6 +22,8 @@ type State = {
 }
 
 export default class Path extends Component<Props, State> {
+  private backgroundMusic: HTMLAudioElement | null = null;
+
   state: State = {
     currentRoute: '/menu', // Começa mostrando o menu
     gameScore: 0,
@@ -28,10 +33,61 @@ export default class Path extends Component<Props, State> {
   componentDidMount() {
     // Event listener para sincronizar estado do jogo
     window.addEventListener('gameStateChange', this.handleGameStateChange as EventListener);
+    
+    // Iniciar música do menu
+    this.startBackgroundMusic();
   }
 
   componentWillUnmount() {
     window.removeEventListener('gameStateChange', this.handleGameStateChange as EventListener);
+    
+    // Limpar música de fundo
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic = null;
+    }
+  }
+
+  // Método para iniciar música de fundo
+  private startBackgroundMusic = () => {
+    // Verificar se a música já está tocando para evitar sobreposição
+    if (this.backgroundMusic && !this.backgroundMusic.paused) {
+      return;
+    }
+
+    try {
+      this.backgroundMusic = new Audio(menuMusic);
+      this.backgroundMusic.volume = 0.1; // Volume baixo para música de fundo
+      this.backgroundMusic.loop = true; // Tocar em loop
+      this.backgroundMusic.play().catch(error => {
+        console.log('Erro ao reproduzir música de fundo:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de música de fundo:', error);
+    }
+  }
+
+  // Método para parar música de fundo gradualmente (fade out)
+  private stopBackgroundMusic = () => {
+    if (this.backgroundMusic) {
+      const fadeOutDuration = 1000; // 1 segundo para fade out
+      const fadeSteps = 20;
+      const volumeStep = this.backgroundMusic.volume / fadeSteps;
+      const stepDuration = fadeOutDuration / fadeSteps;
+
+      const fadeInterval = setInterval(() => {
+        if (this.backgroundMusic && this.backgroundMusic.volume > volumeStep) {
+          this.backgroundMusic.volume -= volumeStep;
+        } else {
+          clearInterval(fadeInterval);
+          if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic = null;
+          }
+        }
+      }, stepDuration);
+    }
   }
 
   // Função para sincronizar estado do jogo
@@ -42,6 +98,15 @@ export default class Path extends Component<Props, State> {
 
   // Função para navegar entre rotas
   handleNavigate = (route: string, data?: { score?: number }) => {
+    // Controlar música baseado na rota
+    if (route === '/play') {
+      // Parar música gradualmente quando for para o jogo
+      this.stopBackgroundMusic();
+    } else if (this.state.currentRoute === '/play' && route !== '/play') {
+      // Iniciar música quando sair do jogo para qualquer outra tela
+      this.startBackgroundMusic();
+    }
+
     if (route === '/ranking-register' && data?.score) {
       this.setState({ 
         currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' | '/credits',

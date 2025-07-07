@@ -65,6 +65,8 @@ export default class Menu extends Component<Props, State> {
 
   componentWillUnmount() {
     document.removeEventListener('keydown', this.handleKeyDown);
+    // Não pausar a música aqui - deixar tocando para outras telas
+    // A música só será pausada quando navegar especificamente para "/play"
   }
 
   handleKeyDown = (event: KeyboardEvent) => {
@@ -113,6 +115,7 @@ export default class Menu extends Component<Props, State> {
   selectCurrentOption = () => {
     const { selectedIndex } = this.state;
     const selectedOption = this.menuOptions[selectedIndex];
+    
     this.props.onNavigate(selectedOption.route);
   }
 
