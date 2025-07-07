@@ -2687,6 +2687,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         // Carregar áudios
         this.load.audio('player-shoot', playerShoot);
+        this.load.audio('player-kill', playerKill);
       }
 
       create() {
@@ -3330,6 +3331,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       
       playerDie() {
         if (this.isPlayerDead) return;
+        
+        // Reproduzir som da morte do jogador
+        this.sound.play('player-kill', { volume: 0.5 });
         
         this.isPlayerDead = true;
         this.playerControlsEnabled = false;
