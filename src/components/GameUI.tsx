@@ -166,17 +166,17 @@ const GameUI: React.FC<GameUIProps> = ({
       {isMobileDevice() && (
         <>
           {/* D-Pad - Canto inferior esquerdo */}
-          <div className="absolute bottom-8 left-8 pointer-events-auto">
-            <div className="relative w-32 h-32">
+          <div className="absolute bottom-4 left-4 pointer-events-auto">
+            <div className="relative w-24 h-24">
               {/* Botão Cima */}
               <button
                 onTouchStart={() => onMobileControl?.("up")}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
-                          rounded-full w-12 h-12 flex items-center justify-center
+                          rounded-full w-8 h-8 flex items-center justify-center
                           transition-all duration-150 active:scale-95"
               >
-                <IoChevronUpCircleOutline className="text-cyan-400 text-2xl" />
+                <IoChevronUpCircleOutline className="text-cyan-400 text-lg" />
               </button>
 
               {/* Botão Esquerda */}
@@ -184,10 +184,10 @@ const GameUI: React.FC<GameUIProps> = ({
                 onTouchStart={() => onMobileControl?.("left")}
                 className="absolute top-1/2 left-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
-                          rounded-full w-12 h-12 flex items-center justify-center
+                          rounded-full w-8 h-8 flex items-center justify-center
                           transition-all duration-150 active:scale-95"
               >
-                <IoChevronBackCircleOutline className="text-cyan-400 text-2xl" />
+                <IoChevronBackCircleOutline className="text-cyan-400 text-lg" />
               </button>
 
               {/* Botão Direita */}
@@ -195,10 +195,10 @@ const GameUI: React.FC<GameUIProps> = ({
                 onTouchStart={() => onMobileControl?.("right")}
                 className="absolute top-1/2 right-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
-                          rounded-full w-12 h-12 flex items-center justify-center
+                          rounded-full w-8 h-8 flex items-center justify-center
                           transition-all duration-150 active:scale-95"
               >
-                <IoChevronForwardCircleOutline className="text-cyan-400 text-2xl" />
+                <IoChevronForwardCircleOutline className="text-cyan-400 text-lg" />
               </button>
 
               {/* Botão Baixo */}
@@ -206,25 +206,25 @@ const GameUI: React.FC<GameUIProps> = ({
                 onTouchStart={() => onMobileControl?.("down")}
                 className="absolute bottom-0 left-1/2 transform -translate-x-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
-                          rounded-full w-12 h-12 flex items-center justify-center
+                          rounded-full w-8 h-8 flex items-center justify-center
                           transition-all duration-150 active:scale-95"
               >
-                <IoChevronDownCircleOutline className="text-cyan-400 text-2xl" />
+                <IoChevronDownCircleOutline className="text-cyan-400 text-lg" />
               </button>
             </div>
           </div>
 
           {/* Botão de Ação - Canto inferior direito */}
-          <div className="absolute bottom-8 right-8 pointer-events-auto">
+          <div className="absolute bottom-4 right-4 pointer-events-auto">
             <button
               onTouchStart={() => onMobileAction?.()}
               className="bg-red-500/20 hover:bg-red-500/40 border-2 border-red-500 
-                        rounded-full w-16 h-16 flex items-center justify-center
+                        rounded-full w-12 h-12 flex items-center justify-center
                         transition-all duration-150 active:scale-95"
             >
-              <FaCircle className="text-red-500 text-2xl" />
+              <FaCircle className="text-red-500 text-lg" />
             </button>
-            <span className="block text-center text-cyan-400 text-xs mt-2 font-mono">
+            <span className="block text-center text-cyan-400 text-xs mt-1 font-mono">
               ATIRAR
             </span>
           </div>

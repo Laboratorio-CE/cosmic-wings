@@ -3542,9 +3542,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   };
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-black">
+    <div className="relative w-full h-full flex items-center justify-center">
       {/* Canvas container com background */}
-      <div className="relative z-10">
+      <div className="relative z-10 bg-black">
         <div 
           ref={canvasRef}
           className="border border-gray-600 rounded-lg overflow-hidden relative bg-transparent"
@@ -3554,28 +3554,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           <div className="absolute inset-0 z-0">
             <ScrollingBackground speed={currentBackgroundSpeed} width={800} height={600} />
           </div>
+          
+          {/* Game UI overlay - restrita ao canvas */}
+          {showUI && (
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <GameUI
+                lives={lives}
+                score={hiScore}
+                wave={wave}
+                gameState={gameState}
+                showWaveMessage={showWaveMessage}
+                waveMessageText={waveMessageText}
+                onMobileControl={handleMobileControl}
+                onMobileAction={handleMobileAction}
+                onNavigateToMenu={handleNavigateToMenu}
+                onNavigateToRankingRegister={handleNavigateToRankingRegister}
+              />
+            </div>
+          )}
         </div>
       </div>
-      
-      {/* Game UI overlay */}
-      {showUI && (
-        <div className="absolute inset-0 z-20 pointer-events-none">
-          <div className="pointer-events-auto">
-            <GameUI
-              lives={lives}
-              score={hiScore}
-              wave={wave}
-              gameState={gameState}
-              showWaveMessage={showWaveMessage}
-              waveMessageText={waveMessageText}
-              onMobileControl={handleMobileControl}
-              onMobileAction={handleMobileAction}
-              onNavigateToMenu={handleNavigateToMenu}
-              onNavigateToRankingRegister={handleNavigateToRankingRegister}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
