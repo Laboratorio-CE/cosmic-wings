@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from "react";
+import { Component } from "react";
 import { FaMusic } from "react-icons/fa";
 import { AiFillSound } from "react-icons/ai";
 
@@ -33,11 +33,11 @@ export default class OptionsToggle extends Component<Props, State> {
     const { musicMuted, soundMuted } = this.state
 
     return (
-      <div className="fixed top-4 right-4 flex gap-2 z-50">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2 z-50">
         {/* Botão de Música */}
         <button
           onClick={this.toggleMusic}
-          className="relative w-8 h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
+          className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
         >
           {/* Ícone de Música */}
           <FaMusic color="black" />
@@ -55,7 +55,7 @@ export default class OptionsToggle extends Component<Props, State> {
         {/* Botão de Som */}
         <button
           onClick={this.toggleSound}
-          className="relative w-8 h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
+          className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
         >
           {/* Ícone de Alto-falante */}
                 <AiFillSound
