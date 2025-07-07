@@ -1,6 +1,10 @@
 import { Component } from "react";
 import imagemPlayer from '../assets/images/player/player-frame-1.png';
 
+// Importar arquivos de áudio
+import menuNavigateSound from '../assets/audios/sfx/menu-navigate.wav';
+import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+
 // Props para receber função de navegação do componente pai
 type Props = {
   onNavigate: (route: string) => void;
@@ -29,6 +33,32 @@ export default class Menu extends Component<Props, State> {
     isPressed: false // Inicializa como false
   }
 
+  // Método para reproduzir som de navegação
+  private playNavigateSound = () => {
+    try {
+      const audio = new Audio(menuNavigateSound);
+      audio.volume = 0.3; // Volume baixo para não incomodar
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de navegação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de navegação:', error);
+    }
+  }
+
+  // Método para reproduzir som de confirmação
+  private playConfirmSound = () => {
+    try {
+      const audio = new Audio(menuConfirmSound);
+      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de confirmação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de confirmação:', error);
+    }
+  }
+
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyDown);
   }
@@ -46,6 +76,8 @@ export default class Menu extends Component<Props, State> {
       case 'W':
       case 'ArrowUp':
         event.preventDefault();
+        // Reproduzir som de navegação
+        this.playNavigateSound();
         this.setState({
           selectedIndex: selectedIndex > 0 ? selectedIndex - 1 : maxIndex
         });
@@ -55,6 +87,8 @@ export default class Menu extends Component<Props, State> {
       case 'S':
       case 'ArrowDown':
         event.preventDefault();
+        // Reproduzir som de navegação
+        this.playNavigateSound();
         this.setState({
           selectedIndex: selectedIndex < maxIndex ? selectedIndex + 1 : 0
         });
@@ -66,6 +100,8 @@ export default class Menu extends Component<Props, State> {
       case '5':
       case ' ': 
         event.preventDefault();
+        // Reproduzir som de confirmação
+        this.playConfirmSound();
         this.animatePress(); // Adiciona animação antes de selecionar
         break;
 
@@ -92,6 +128,10 @@ export default class Menu extends Component<Props, State> {
   }
 
   handleMouseEnter = (index: number) => {
+    // Só reproduzir som se a opção realmente mudou
+    if (this.state.selectedIndex !== index) {
+      this.playNavigateSound();
+    }
     this.setState({ selectedIndex: index });
   }
 
@@ -119,6 +159,8 @@ export default class Menu extends Component<Props, State> {
                   }
                   // Desktop ou mobile com mesma opção - executa imediatamente
                   this.setState({ selectedIndex: index });
+                  // Reproduzir som de confirmação
+                  this.playConfirmSound();
                   this.selectCurrentOption();
                 }}
                 onMouseEnter={() => this.handleMouseEnter(index)}
