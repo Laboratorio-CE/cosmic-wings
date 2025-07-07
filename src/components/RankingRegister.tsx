@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import { create } from "../services/supabaseService";
 
+// Importar arquivos de áudio
+import menuNavigateSound from '../assets/audios/sfx/menu-navigate.wav';
+import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+
 interface RankingRegisterProps {
   score: number;
   onNavigateToMenu: () => void;
@@ -18,6 +22,32 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
   const [selectedButton, setSelectedButton] = useState(1);
   // Estado para controlar se o input está em foco
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Função para reproduzir som de navegação
+  const playNavigateSound = () => {
+    try {
+      const audio = new Audio(menuNavigateSound);
+      audio.volume = 0.3; // Volume baixo para não incomodar
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de navegação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de navegação:', error);
+    }
+  };
+
+  // Função para reproduzir som de confirmação
+  const playConfirmSound = () => {
+    try {
+      const audio = new Audio(menuConfirmSound);
+      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de confirmação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de confirmação:', error);
+    }
+  };
 
   // Função para validar o nome do jogador
   const isValidPlayerName = (name: string): boolean => {
@@ -68,6 +98,8 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
         case 'a':
         case 'A':
         case 'ArrowLeft':
+          // Reproduzir som de navegação
+          playNavigateSound();
           setSelectedButton(0); // Voltar
           break;
 
@@ -77,6 +109,8 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
         case 'd':
         case 'D':
         case 'ArrowRight':
+          // Reproduzir som de navegação
+          playNavigateSound();
           setSelectedButton(1); // Enviar
           break;
 
@@ -86,6 +120,8 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
         case '5':
         case ' ':
           event.preventDefault();
+          // Reproduzir som de confirmação
+          playConfirmSound();
           if (selectedButton === 0) {
             handleBackToMenu();
           } else if (selectedButton === 1) {
@@ -147,8 +183,16 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
           <div className="flex gap-4 justify-center">
             {/* Botão Voltar */}
             <button
-              onClick={handleBackToMenu}
-              onMouseEnter={() => setSelectedButton(0)}
+              onClick={() => {
+                playConfirmSound();
+                handleBackToMenu();
+              }}
+              onMouseEnter={() => {
+                if (selectedButton !== 0) {
+                  playNavigateSound();
+                }
+                setSelectedButton(0);
+              }}
               disabled={isSubmitting}
               className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
                         transition-all duration-200 cursor-pointer
@@ -171,8 +215,16 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
 
             {/* Botão Enviar */}
             <button
-              onClick={handleSubmitScore}
-              onMouseEnter={() => setSelectedButton(1)}
+              onClick={() => {
+                playConfirmSound();
+                handleSubmitScore();
+              }}
+              onMouseEnter={() => {
+                if (selectedButton !== 1) {
+                  playNavigateSound();
+                }
+                setSelectedButton(1);
+              }}
               disabled={!isValidPlayerName(playerName) || isSubmitting}
               className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
                         transition-all duration-200 cursor-pointer

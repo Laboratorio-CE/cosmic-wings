@@ -4,6 +4,9 @@ import imagemDisparo from '../assets/images/effects/player-fire.png'
 import imagemInimigo from '../assets/images/enemy/enemy-C-frame-1.png'
 import imagemBoss from '../assets/images/enemy/boss-C-frame-1.png'
 
+// Importar arquivo de áudio
+import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+
 type Props = {
   onNavigate?: (route: string) => void;
 }
@@ -15,6 +18,19 @@ type State = {
 export default class Instructions extends Component<Props, State> {
   state: State = {
     isPressed: true 
+  }
+
+  // Método para reproduzir som de confirmação
+  private playConfirmSound = () => {
+    try {
+      const audio = new Audio(menuConfirmSound);
+      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de confirmação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de confirmação:', error);
+    }
   }
 
   componentDidMount() {
@@ -48,6 +64,9 @@ export default class Instructions extends Component<Props, State> {
   }
 
   animatePress = () => {
+    // Reproduzir som de confirmação
+    this.playConfirmSound();
+    
     this.setState({ isPressed: false });
     
     setTimeout(() => {

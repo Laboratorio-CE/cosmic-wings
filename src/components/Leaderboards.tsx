@@ -2,6 +2,9 @@ import { Component } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import { find } from "../services/supabaseService";
 
+// Importar arquivo de áudio
+import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+
 type Props = {
   onNavigate?: (route: string) => void;
 }
@@ -25,6 +28,19 @@ export default class Leaderboards extends Component<Props, State> {
     leaderboard: [],
     loading: true
   };
+
+  // Método para reproduzir som de confirmação
+  private playConfirmSound = () => {
+    try {
+      const audio = new Audio(menuConfirmSound);
+      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
+      audio.play().catch(error => {
+        console.log('Erro ao reproduzir som de confirmação:', error);
+      });
+    } catch (error) {
+      console.log('Erro ao criar áudio de confirmação:', error);
+    }
+  }
 
   // Função para formatar a data do formato ISO para DD/MM/YYYY
   formatDate = (isoDate: string): string => {
@@ -95,6 +111,9 @@ export default class Leaderboards extends Component<Props, State> {
   };
 
   animatePress = () => {
+    // Reproduzir som de confirmação
+    this.playConfirmSound();
+    
     this.setState({ isPressed: false });
 
     setTimeout(() => {
