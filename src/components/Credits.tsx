@@ -33,10 +33,11 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
   }, [onNavigateToMenu]);
 
   return (
-    <div className="w-full max-w-[800px] h-[600px] sm:h-full max-h-screen bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-start px-4 sm:px-8 py-6 overflow-y-auto scrollbar-hide">
+    <div className="flex justify-center items-center h-screen sm:min-h-screen p-0 sm:p-4">
+      <div className="w-full h-full sm:max-w-[800px] sm:h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-start px-4 sm:px-8 py-6 overflow-y-auto scrollbar-hide">
       
       {/* Título */}
-      <h2 className="text-cyan-400 font-mono text-2xl sm:text-4xl font-bold tracking-wider text-center mt-4 sm:mt-6 mb-4 sm:mb-6">
+      <h2 className="text-cyan-400 font-mono text-2xl sm:text-4xl font-bold tracking-wider text-center mt-12 sm:mt-6 mb-4 sm:mb-6 pt-4 sm:pt-0">
         CRÉDITOS
       </h2>
 
@@ -109,6 +110,7 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
         />
         <span className="text-left w-full pl-6 sm:pl-8">VOLTAR</span>
       </button>
+    </div>
     </div>
   );
 };
