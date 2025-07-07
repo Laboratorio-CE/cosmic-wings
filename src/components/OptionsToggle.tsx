@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaMusic, FaPlay, FaPause } from "react-icons/fa";
 import { AiFillSound } from "react-icons/ai";
-
+import AudioManager from "../services/AudioManager";
 
 type Props = {
   currentRoute?: string;
@@ -10,21 +10,49 @@ type Props = {
 }
 
 const OptionsToggle: React.FC<Props> = ({ currentRoute, gameState, onTogglePause }) => {
+  const [isPaused, setIsPaused] = useState(false);
   const [musicMuted, setMusicMuted] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+
+  const audioManager = AudioManager.getInstance();
 
   // Sincroniza o estado local com a prop gameState
   useEffect(() => {
     setIsPaused(gameState === 'paused');
   }, [gameState]);
 
-  const toggleMusic = () => {
-    setMusicMuted(prev => !prev);
+  // Sincroniza estado local com o AudioManager
+  useEffect(() => {
+    const updateAudioState = () => {
+      setMusicMuted(audioManager.isMusicMuted);
+      setSoundMuted(audioManager.isSoundMuted);
+    };
+
+    // Atualizar estado inicial
+    updateAudioState();
+
+    // Verificar mudanças periodicamente (alternativa simples ao sistema de eventos)
+    const interval = setInterval(updateAudioState, 100);
+
+    return () => clearInterval(interval);
+  }, [audioManager]);
+
+  const toggleMusic = async () => {
+    try {
+      await audioManager.toggleMusic();
+      setMusicMuted(audioManager.isMusicMuted);
+    } catch (error) {
+      console.error('Erro ao alternar música:', error);
+    }
   }
 
   const toggleSound = () => {
-    setSoundMuted(prev => !prev);
+    try {
+      audioManager.toggleSound();
+      setSoundMuted(audioManager.isSoundMuted);
+    } catch (error) {
+      console.error('Erro ao alternar som:', error);
+    }
   }
     
   // Verifica se está na tela do jogo

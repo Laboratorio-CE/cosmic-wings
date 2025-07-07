@@ -3855,19 +3855,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     // Configuração do Phaser
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
-      parent: canvasRef.current,
-      backgroundColor: 'rgba(0,0,0,0)', // Totalmente transparente
-      transparent: true, // Garantir transparência
+      backgroundColor: "rgba(0,0,0,0)",
+      transparent: true,
+
+      // ↓ ScaleManager assume o tamanho do contêiner
+      scale: {
+        parent: canvasRef.current!, // div ref
+        mode: Phaser.Scale.RESIZE, // adapta sem distorcer
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 800, // referência interna
+        height: 600,
+      },
+
       physics: {
-        default: 'arcade',
+        default: "arcade",
         arcade: {
           gravity: { x: 0, y: 0 },
-          debug: false
-        }
+          debug: false,
+        },
       },
-      scene: GameScene
+      scene: GameScene,
     };
 
     // Criar o jogo Phaser
@@ -3877,10 +3884,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     setTimeout(() => {
       const phaserCanvas = canvasRef.current?.querySelector('canvas');
       if (phaserCanvas) {
-        phaserCanvas.style.position = 'relative';
-        phaserCanvas.style.zIndex = '10';
-        phaserCanvas.style.background = 'transparent';
-        phaserCanvas.style.pointerEvents = 'auto';
+        phaserCanvas.style.position = "relative";
+        phaserCanvas.style.zIndex = "10";
+        phaserCanvas.style.background = "transparent";
+        phaserCanvas.style.pointerEvents = "auto";
+        phaserCanvas.style.width = "100%"; 
+        phaserCanvas.style.height = "100%"; 
       }
     }, 100);
 
@@ -3915,45 +3924,51 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     <div className="relative w-full h-full flex items-center justify-center">
       {/* Tela de Loading */}
       {isLoading && (
-        <div className="absolute z-50 bg-black flex items-center justify-center border border-gray-600 rounded-lg" 
-             style={{ width: '800px', height: '600px' }}>
+        <div
+          className="absolute z-50 bg-black flex items-center justify-center border border-gray-600 rounded-lg
+             w-full h-[85vh]
+             sm:w-[800px] sm:h-[600px]"
+        >
           <div className="text-center flex flex-col items-center justify-center">
             <div className="text-white text-2xl mb-4">Carregando...</div>
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         </div>
       )}
-      
+
       {/* Canvas container com background */}
-      <div className="relative z-10 bg-black">
-        <div 
-          ref={canvasRef}
-          className="border border-gray-600 rounded-lg overflow-hidden relative bg-transparent"
-          style={{ width: '800px', height: '600px' }}
-        >
-          {/* Background scrolling dentro do canvas */}
-          <div className="absolute inset-0 z-0">
-            <ScrollingBackground speed={currentBackgroundSpeed} width={800} height={600} />
-          </div>
-          
-          {/* Game UI overlay - restrita ao canvas */}
-          {showUI && !isLoading && (
-            <div className="absolute inset-0 z-20 pointer-events-none">
-              <GameUI
-                lives={lives}
-                score={hiScore}
-                wave={wave}
-                gameState={gameState}
-                showWaveMessage={showWaveMessage}
-                waveMessageText={waveMessageText}
-                onMobileControl={handleMobileControl}
-                onMobileAction={handleMobileAction}
-                onNavigateToMenu={handleNavigateToMenu}
-                onNavigateToRankingRegister={handleNavigateToRankingRegister}
-              />
-            </div>
-          )}
+
+      <div
+        ref={canvasRef}
+        className="border border-gray-600 rounded-lg overflow-hidden relative bg-transparent
+             w-full h-[85vh]           // mobile ≤ 639 px
+             sm:w-[800px] sm:h-[600px] // ≥ 640 px"
+      >
+        {/* Background scrolling dentro do canvas */}
+        <div className="absolute inset-0 z-0">
+          <ScrollingBackground
+            speed={currentBackgroundSpeed}
+            width={800}
+            height={600}
+          />
         </div>
+        {/* Game UI overlay - restrita ao canvas */}
+        {showUI && !isLoading && (
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            <GameUI
+              lives={lives}
+              score={hiScore}
+              wave={wave}
+              gameState={gameState}
+              showWaveMessage={showWaveMessage}
+              waveMessageText={waveMessageText}
+              onMobileControl={handleMobileControl}
+              onMobileAction={handleMobileAction}
+              onNavigateToMenu={handleNavigateToMenu}
+              onNavigateToRankingRegister={handleNavigateToRankingRegister}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
