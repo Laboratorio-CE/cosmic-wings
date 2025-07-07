@@ -2721,6 +2721,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.load.audio('enemy-shoot', enemyShoot);
         this.load.audio('enemy-kill', enemyKill);
         this.load.audio('boss-kill', bossKill);
+        this.load.audio('boost', boost);
+        this.load.audio('engine', engine);
       }
 
       create() {
@@ -3514,6 +3516,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         console.log('Iniciando transição de onda...');
         
+        // Reproduzir áudio de boost no início da transição
+        this.sound.play('engine', { volume: 0.4 });
+        
+        // Reproduzir áudio de engine após 1 segundo
+        this.time.delayedCall(1000, () => {
+          this.sound.play('boost', { volume: 0.4 });
+        });
+        
         // Aumentar velocidade do background para 50 (via callback para o React)
         // Vamos usar um evento customizado para comunicar com o componente React
         window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 50 } }));
@@ -3545,28 +3555,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       
       // Continuar com a transição após mover o jogador
       continueWaveTransition() {
-        // Aguardar 1 segundo antes de prosseguir
-        this.time.delayedCall(1000, () => {
-          // Voltar velocidade do background para 0.75
-          window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 0.75 } }));
-          
-          // Incrementar número da onda
-          this.currentWave++;
-          console.log(`Avançando para onda ${this.currentWave}`);
-          console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
-          
-          // Atualizar onda no estado React (comentado temporariamente para debug)
-          // setWave(this.currentWave);
-          
-          // Mostrar mensagem da nova onda
-          window.dispatchEvent(new CustomEvent('showWaveMessage', { 
-            detail: { message: `ONDA ${this.currentWave}` } 
-          }));
-          
-          // Aguardar mais 2 segundos para mostrar a mensagem da nova onda
-          this.time.delayedCall(2000, () => {
-            this.finishWaveTransition();
-          });
+        // Voltar velocidade do background para 0.75
+        window.dispatchEvent(new CustomEvent('changeBackgroundSpeed', { detail: { speed: 0.75 } }));
+        
+        // Incrementar número da onda
+        this.currentWave++;
+        console.log(`Avançando para onda ${this.currentWave}`);
+        console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
+        
+        // Atualizar onda no estado React (comentado temporariamente para debug)
+        // setWave(this.currentWave);
+        
+        // Mostrar mensagem da nova onda
+        window.dispatchEvent(new CustomEvent('showWaveMessage', { 
+          detail: { message: `ONDA ${this.currentWave}` } 
+        }));
+        
+        // Aguardar 3 segundos para mostrar a mensagem da nova onda e finalizar
+        this.time.delayedCall(3000, () => {
+          this.finishWaveTransition();
         });
       }
       
