@@ -99,8 +99,8 @@ export default class Menu extends Component<Props, State> {
     const { selectedIndex, isPressed } = this.state;
 
     return (
-      <div className="flex justify-center items-center h-full w-full sm:min-h-screen p-0 sm:p-4">
-        <div className="w-full h-full sm:w-auto sm:max-w-md sm:h-auto p-0 sm:p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col justify-center">
+      <div className="flex justify-center items-center h-full w-full min-h-0 p-0 sm:p-4">
+        <div className="w-full h-full sm:w-auto sm:max-w-md sm:h-auto p-0 sm:p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col justify-center overflow-hidden">
           <h1 className="text-center text-cyan-400 text-2xl sm:text-4xl mb-8 font-bold tracking-widest pt-12 sm:pt-0 px-4 sm:px-0">
             COSMIC WINGS
           </h1>
