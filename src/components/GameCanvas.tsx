@@ -246,6 +246,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     };
   }, [gameState, backgroundSpeed]);
 
+  // Listener para tecla ESC
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        console.log('ESC key pressed, dispatching toggleGamePause');
+        // Dispatchar evento de pausa/retomada
+        window.dispatchEvent(new CustomEvent('toggleGamePause'));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []);
+
   // Sincronizar estado do jogo com outros componentes
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('gameStateChange', { 
