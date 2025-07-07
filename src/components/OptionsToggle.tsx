@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { Component } from "react";
 import { FaMusic, FaPlay, FaPause } from "react-icons/fa";
 import { AiFillSound } from "react-icons/ai";
 
 
-type Props = {}
+type Props = {
+  currentRoute?: string;
+  gameState?: 'preparing' | 'playing' | 'paused' | 'gameOver';
+  onTogglePause?: () => void;
+}
 
 type State = {
   musicMuted: boolean;
@@ -31,9 +34,23 @@ export default class OptionsToggle extends Component<Props, State> {
 
   render() {
     const { musicMuted, soundMuted } = this.state
+    const { currentRoute, gameState, onTogglePause } = this.props
+    
+    // Verifica se está na tela do jogo
+    const isGameView = currentRoute === '/play'
 
     return (
       <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2 z-50">
+        {/* Botão de Pausa - apenas no jogo */}
+        {isGameView && (
+          <button
+            onClick={onTogglePause}
+            className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
+          >
+            {gameState === 'paused' ? <FaPlay color="black" /> : <FaPause color="black" />}
+          </button>
+        )}
+
         {/* Botão de Música */}
         <button
           onClick={this.toggleMusic}
