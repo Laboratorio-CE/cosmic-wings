@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { useState, useEffect } from "react";
 import { FaMusic, FaPlay, FaPause } from "react-icons/fa";
 import { AiFillSound } from "react-icons/ai";
 
@@ -9,54 +9,53 @@ type Props = {
   onTogglePause?: () => void;
 }
 
-type State = {
-  musicMuted: boolean;
-  soundMuted: boolean;
-}
+const OptionsToggle: React.FC<Props> = ({ currentRoute, gameState, onTogglePause }) => {
+  const [musicMuted, setMusicMuted] = useState(false);
+  const [soundMuted, setSoundMuted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
-export default class OptionsToggle extends Component<Props, State> {
-  state: State = {
-    musicMuted: false,
-    soundMuted: false
+  // Sincroniza o estado local com a prop gameState
+  useEffect(() => {
+    setIsPaused(gameState === 'paused');
+  }, [gameState]);
+
+  const toggleMusic = () => {
+    setMusicMuted(prev => !prev);
   }
 
-  toggleMusic = () => {
-    this.setState(prevState => ({
-      musicMuted: !prevState.musicMuted
-    }))
+  const toggleSound = () => {
+    setSoundMuted(prev => !prev);
   }
-
-  toggleSound = () => {
-    this.setState(prevState => ({
-      soundMuted: !prevState.soundMuted
-    }))
-  }
-
-  render() {
-    const { musicMuted, soundMuted } = this.state
-    const { currentRoute, gameState, onTogglePause } = this.props
     
-    // Verifica se está na tela do jogo
-    const isGameView = currentRoute === '/play'
+  // Verifica se está na tela do jogo
+  const isGameView = currentRoute === '/play'
+
+  // Função para renderizar o ícone correto baseado no estado
+  const renderPauseIcon = () => {
+    if (isPaused) {
+      return <FaPlay color="black" size={16} key="play" />;
+    }
+    return <FaPause color="black" size={16} key="pause" />;
+  };
 
     return (
       <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2 z-50">
         {/* Botão de Pausa - apenas no jogo */}
         {isGameView && (
           <button
+            key={`pause-button-${isPaused ? 'paused' : 'playing'}`}
             onClick={() => {
-              console.log('Pause button clicked, calling onTogglePause');
               onTogglePause?.();
             }}
             className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
           >
-            {gameState === 'paused' ? <FaPlay color="black" /> : <FaPause color="black" />}
+            {renderPauseIcon()}
           </button>
         )}
 
         {/* Botão de Música */}
         <button
-          onClick={this.toggleMusic}
+          onClick={toggleMusic}
           className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
         >
           {/* Ícone de Música */}
@@ -74,7 +73,7 @@ export default class OptionsToggle extends Component<Props, State> {
 
         {/* Botão de Som */}
         <button
-          onClick={this.toggleSound}
+          onClick={toggleSound}
           className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
         >
           {/* Ícone de Alto-falante */}
@@ -93,5 +92,6 @@ export default class OptionsToggle extends Component<Props, State> {
         </button>
       </div>
     );
-  }
-}
+};
+
+export default OptionsToggle;
