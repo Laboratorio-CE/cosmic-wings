@@ -65,6 +65,10 @@ const GameUI: React.FC<GameUIProps> = ({
       }, 2000);
       
       return () => clearTimeout(prepareTimer);
+    } else if (gameState === 'paused') {
+      // Mostra "PAUSA" quando o jogo estiver pausado
+      setMessageText('PAUSA');
+      setShowMessage(true);
     } else {
       setShowMessage(false);
     }
