@@ -6,6 +6,7 @@ import OptionsToggle from './OptionsToggle'
 type Props = {
   children: React.ReactNode;
   starCount?: number;
+  currentRoute?: string;
 }
 
 // Layout não precisa de state interno
@@ -16,7 +17,7 @@ export default class Layout extends Component<Props, State> {
   state = {}
 
   render() {
-    const { children, starCount = 1000 } = this.props;
+    const { children, starCount = 1000, currentRoute } = this.props;
     
     return (
       <div className="cosmic-gradient text-cyan-50 h-screen w-screen flex flex-col justify-center relative overflow-hidden">
@@ -24,7 +25,7 @@ export default class Layout extends Component<Props, State> {
         <Background starCount={starCount} />
         
         {/* Controles de opções */}
-        <OptionsToggle />
+        <OptionsToggle currentRoute={currentRoute} />
         
         {/* Conteúdo principal passado como children */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
