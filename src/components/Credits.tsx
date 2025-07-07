@@ -1,0 +1,116 @@
+import React, { useState, useEffect } from "react";
+import imagemPlayer from "../assets/images/player/player-frame-1.png";
+import banner from "../assets/images/credits/Banner.jpg";
+import avatar from "../assets/images/credits/avatar.png";
+
+interface CreditsProps {
+  onNavigateToMenu: () => void;
+}
+
+const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
+  const [selectedButton, setSelectedButton] = useState(0);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'Enter':
+        case 'f':
+        case 'F':
+        case '5':
+        case ' ':
+        case 'Escape':
+          event.preventDefault();
+          onNavigateToMenu();
+          break;
+
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onNavigateToMenu]);
+
+  return (
+    <div className="w-[800px] h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center px-8 py-6 overflow-y-auto scrollbar-hide">
+      
+      {/* Título */}
+      <h2 className="text-cyan-400 font-mono text-4xl font-bold tracking-wider text-center my-6">
+        CRÉDITOS
+      </h2>
+
+      {/* Desenvolvido por */}
+      <div className="text-center mb-6 flex flex-col gap-10">
+        <p className="text-cyan-400 font-mono text-xl mb-4">
+          Desenvolvido por:
+        </p>
+        
+        {/* Container do banner com avatar */}
+        <div className="relative inline-block">
+          <img 
+            src={banner} 
+            alt="Banner dos desenvolvedores" 
+            className="w-80 h-auto rounded-lg border-2 border-cyan-400/50"
+          />
+          <img 
+            src={avatar} 
+            alt="Avatar desenvolvedor" 
+            className="absolute -top-15 left-1/2 transform -translate-x-1/2 w-16 h-16"
+          />
+        </div>
+      </div>
+
+      {/* Links dos desenvolvedores */}
+      <div className="text-center mb-6 space-y-2">
+        <div className="text-cyan-300 text-sm">
+          <p className="mb-1">GitHub Pessoal:</p>
+          <p className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30">
+            [Link será preenchido posteriormente]
+          </p>
+        </div>
+        
+        <div className="text-cyan-300 text-sm">
+          <p className="mb-1">GitHub Laboratório CE:</p>
+          <p className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30">
+            [Link será preenchido posteriormente]
+          </p>
+        </div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="text-center mb-6">
+        <div className="bg-black/40 border border-cyan-400/30 rounded-lg p-4 max-w-lg">
+          <p className="text-cyan-300 text-xs leading-relaxed">
+            <strong className="text-yellow-300">Disclaimer:</strong> Este jogo é totalmente gratuito e foi desenvolvido 
+            para fins educativos. Todos os assets (imagens, sons e sprites) foram utilizados 
+            exclusivamente para aprender a desenvolver jogos e não possuem fins comerciais.
+          </p>
+        </div>
+      </div>
+
+      {/* Botão Voltar */}
+      <button
+        onClick={onNavigateToMenu}
+        onMouseEnter={() => setSelectedButton(0)}
+        className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
+                  transition-all duration-200 cursor-pointer
+                  ${
+                    selectedButton === 0
+                      ? "text-yellow-300 scale-105"
+                      : "text-yellow-700 hover:text-yellow-300"
+                  }
+                  active:scale-100`}
+      >
+        <img
+          src={imagemPlayer}
+          alt="Nave selecionada"
+          className="absolute left-0 w-6 h-6 rotate-90"
+        />
+        <span className="text-left w-full pl-8">VOLTAR</span>
+      </button>
+    </div>
+  );
+};
+
+export default Credits;

@@ -20,7 +20,8 @@ export default class Menu extends Component<Props, State> {
   private menuOptions: MenuOption[] = [
     { label: "INICIAR JOGO", route: "/play" },
     { label: "COMO JOGAR", route: "/instructions" },
-    { label: "LEADERBOARDS", route: "/leaderboards" }
+    { label: "LEADERBOARDS", route: "/leaderboards" },
+    { label: "CRÉDITOS", route: "/credits" }
   ];
 
   state: State = {

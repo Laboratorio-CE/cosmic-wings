@@ -6,13 +6,14 @@ import Menu from '../components/Menu'
 import GameCanvas from '../components/GameCanvas'
 import Leaderboards from '../components/Leaderboards'
 import RankingRegister from '../components/RankingRegister'
+import Credits from '../components/Credits'
 
 // Path não recebe props por enquanto
 type Props = {}
 
 // Path pode ter state para controlar qual tela mostrar
 type State = {
-  currentRoute: '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register';
+  currentRoute: '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' | '/credits';
   gameScore?: number; // Para armazenar a pontuação do jogo
 }
 
@@ -26,11 +27,11 @@ export default class Path extends Component<Props, State> {
   handleNavigate = (route: string, data?: { score?: number }) => {
     if (route === '/ranking-register' && data?.score) {
       this.setState({ 
-        currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register',
+        currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' | '/credits',
         gameScore: data.score
       });
     } else {
-      this.setState({ currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' });
+      this.setState({ currentRoute: route as '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' | '/credits' });
     }
   }
 
@@ -56,6 +57,9 @@ export default class Path extends Component<Props, State> {
           score={gameScore || 0} 
           onNavigateToMenu={() => this.handleNavigate('/menu')} 
         />;
+      
+      case '/credits':
+        return <Credits onNavigateToMenu={() => this.handleNavigate('/menu')} />;
       
       default:
         return <Menu onNavigate={this.handleNavigate} />;
