@@ -105,26 +105,26 @@ export default class Leaderboards extends Component<Props, State> {
 
   render() {
     return (
-      <div className="flex justify-center items-center min-h-screen p-4">
+      <div className="flex justify-center items-center h-screen sm:min-h-screen p-0 sm:p-4">
         <div 
-          className="bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20"
-          style={{ width: '800px', height: '600px' }}
+          className="bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 w-full h-full sm:w-[800px] sm:h-[600px]"
         >
           {/* Título - 10% da altura */}
-          <div className="h-[10%] flex items-center justify-center border-b border-cyan-400/30">
-            <h2 className="text-cyan-400 text-3xl font-bold tracking-widest cursor-default">
+          <div className="h-[10%] flex items-center justify-center border-b border-cyan-400/30 px-4 sm:px-4">
+            <h2 className="text-cyan-400 text-xl sm:text-3xl font-bold tracking-widest cursor-default text-center pt-12 sm:pt-5">
               LEADERBOARDS
             </h2>
           </div>
 
           {/* Lista - 80% da altura */}
-          <div className="h-[80%] p-4 overflow-y-auto scrollbar-hide cursor-default">
+          <div className="h-[80%] p-4 sm:p-4 overflow-y-auto scrollbar-hide cursor-default">
             <div className="overflow-hidden rounded-lg border border-cyan-400/20">
               {/* Cabeçalho da tabela */}
-              <div className="bg-cyan-400/10 border-b border-cyan-400/30 p-2 grid grid-cols-4 gap-4 text-cyan-400 font-bold text-sm">
-                <div className="text-center">POSITION</div>
+              <div className="bg-cyan-400/10 border-b border-cyan-400/30 p-2 sm:p-2 grid grid-cols-4 gap-2 sm:gap-4 text-cyan-400 font-bold text-xs sm:text-sm">
+                <div className="text-center">POS</div>
                 <div className="text-left">PLAYER</div>
-                <div className="text-center">PONTUAÇÃO</div>
+                <div className="text-center hidden sm:block">PONTUAÇÃO</div>
+                <div className="text-center sm:hidden">SCORE</div>
                 <div className="text-center">DATA</div>
               </div>
 
@@ -132,13 +132,13 @@ export default class Leaderboards extends Component<Props, State> {
               <div className="max-h-full">
                 {this.state.loading ? (
                   // Animação de loading
-                  <div className="flex flex-col items-center justify-center py-16">
+                  <div className="flex flex-col items-center justify-center py-8 sm:py-16">
                     <div className="relative">
-                      <div className="w-16 h-16 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-                      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-cyan-400/60 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+                      <div className="absolute inset-0 w-12 h-12 sm:w-16 sm:h-16 border-4 border-transparent border-r-cyan-400/60 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
                     </div>
-                    <p className="text-cyan-400 text-lg font-bold tracking-wider animate-pulse">
-                      CARREGANDO DADOS...
+                    <p className="text-cyan-400 text-sm sm:text-lg font-bold tracking-wider animate-pulse text-center">
+                      CARREGANDO...
                     </p>
                     <div className="flex space-x-1 mt-2">
                       <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -148,11 +148,11 @@ export default class Leaderboards extends Component<Props, State> {
                   </div>
                 ) : this.state.leaderboard.length === 0 ? (
                   // Estado vazio
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <p className="text-cyan-400 text-lg font-bold tracking-wider">
+                  <div className="flex flex-col items-center justify-center py-8 sm:py-16">
+                    <p className="text-cyan-400 text-sm sm:text-lg font-bold tracking-wider text-center">
                       NENHUM DADO ENCONTRADO
                     </p>
-                    <p className="text-white/60 text-sm mt-2">
+                    <p className="text-white/60 text-xs sm:text-sm mt-2 text-center px-2">
                       Seja o primeiro a marcar pontos!
                     </p>
                   </div>
@@ -162,7 +162,7 @@ export default class Leaderboards extends Component<Props, State> {
                     <div 
                       key={`${entry.player}-${entry.score}-${index}`}
                       className={`
-                        grid grid-cols-4 gap-4 p-2 text-sm border-b border-cyan-400/10 transition-colors duration-200 hover:bg-cyan-400/5 
+                        grid grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-2 text-xs sm:text-sm border-b border-cyan-400/10 transition-colors duration-200 hover:bg-cyan-400/5 
                         ${index < 3 ? 'text-yellow-300' : 'text-white'}
                       `}
                     >
@@ -172,14 +172,16 @@ export default class Leaderboards extends Component<Props, State> {
                         {entry.position === 3 && '🥉'}
                         {entry.position > 3 && entry.position}
                       </div>
-                      <div className="text-left truncate font-mono" title={entry.player}>
+                      <div className="text-left truncate font-mono text-xs sm:text-sm" title={entry.player}>
                         {entry.player}
                       </div>
                       <div className="text-center font-bold">
-                        {entry.score.toLocaleString()}
+                        <span className="hidden sm:inline">{entry.score.toLocaleString()}</span>
+                        <span className="sm:hidden">{entry.score >= 1000000 ? `${(entry.score / 1000000).toFixed(1)}M` : entry.score >= 1000 ? `${(entry.score / 1000).toFixed(1)}K` : entry.score.toString()}</span>
                       </div>
-                      <div className="text-center">
-                        {entry.date}
+                      <div className="text-center text-xs sm:text-sm">
+                        <span className="hidden sm:inline">{entry.date}</span>
+                        <span className="sm:hidden">{entry.date.replace(/\//g, '/')}</span>
                       </div>
                     </div>
                   ))
@@ -189,12 +191,12 @@ export default class Leaderboards extends Component<Props, State> {
           </div>
 
           {/* Botão - 10% da altura */}
-          <div className="h-[10%] flex items-center justify-center border-t border-cyan-400/30">
+          <div className="h-[10%] flex items-center justify-center border-t border-cyan-400/30 px-4 sm:px-4">
             {this.props.onNavigate && (
               <button
                 onClick={() => this.animatePress()}
                 className={`
-                  relative flex items-center justify-center w-56 p-2 font-bold text-base transition-all duration-200 cursor-pointer text-yellow-300
+                  relative flex items-center justify-center w-full max-w-56 p-2 font-bold text-sm sm:text-base transition-all duration-200 cursor-pointer text-yellow-300
                   ${this.state.isPressed ? "scale-105" : "scale-100"}
                   active:scale-100
                 `}
@@ -202,9 +204,12 @@ export default class Leaderboards extends Component<Props, State> {
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-0 w-7 h-7 rotate-90"
+                  className="absolute left-0 w-5 h-5 sm:w-7 sm:h-7 rotate-90"
                 />
-                <span className="text-left w-full pl-10">VOLTAR AO MENU</span>
+                <span className="w-full pl-8 sm:pl-10 text-center sm:text-left">
+                  <span className="hidden sm:inline">VOLTAR AO MENU</span>
+                  <span className="sm:hidden">VOLTAR</span>
+                </span>
               </button>
             )}
           </div>
