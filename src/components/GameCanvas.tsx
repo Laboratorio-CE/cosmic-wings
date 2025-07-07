@@ -219,6 +219,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       if (gameState === 'playing') {
         console.log('Pausing game...');
         setGameState('paused');
+        // Pausar o background
+        setCurrentBackgroundSpeed(0);
         // Pausar o jogo Phaser completamente
         if (gameRef.current) {
           console.log('Pausing Phaser game');
@@ -227,6 +229,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       } else if (gameState === 'paused') {
         console.log('Resuming game...');
         setGameState('playing');
+        // Retomar o background
+        setCurrentBackgroundSpeed(backgroundSpeed);
         // Retomar o jogo Phaser
         if (gameRef.current) {
           console.log('Resuming Phaser game');
@@ -240,7 +244,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     return () => {
       window.removeEventListener('toggleGamePause', handleTogglePause);
     };
-  }, [gameState]);
+  }, [gameState, backgroundSpeed]);
 
   // Sincronizar estado do jogo com outros componentes
   useEffect(() => {
