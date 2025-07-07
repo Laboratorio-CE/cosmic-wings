@@ -15,12 +15,29 @@ type Props = {}
 type State = {
   currentRoute: '/menu' | '/play' | '/instructions' | '/leaderboards' | '/ranking-register' | '/credits';
   gameScore?: number; // Para armazenar a pontuação do jogo
+  gameState: 'preparing' | 'playing' | 'paused' | 'gameOver';
 }
 
 export default class Path extends Component<Props, State> {
   state: State = {
     currentRoute: '/menu', // Começa mostrando o menu
-    gameScore: 0
+    gameScore: 0,
+    gameState: 'preparing'
+  }
+
+  componentDidMount() {
+    // Event listener para sincronizar estado do jogo
+    window.addEventListener('gameStateChange', this.handleGameStateChange as EventListener);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('gameStateChange', this.handleGameStateChange as EventListener);
+  }
+
+  // Função para sincronizar estado do jogo
+  handleGameStateChange = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    this.setState({ gameState: customEvent.detail.gameState });
   }
 
   // Função para navegar entre rotas
@@ -35,6 +52,12 @@ export default class Path extends Component<Props, State> {
     }
   }
 
+  // Função para alternar a pausa do jogo
+  handleTogglePause = () => {
+    // Dispatcha um evento customizado para o GameCanvas
+    window.dispatchEvent(new CustomEvent('toggleGamePause'));
+  }
+
   // Função para renderizar o conteúdo baseado na rota
   renderContent = () => {
     const { currentRoute, gameScore } = this.state;
@@ -44,6 +67,10 @@ export default class Path extends Component<Props, State> {
         return <Menu onNavigate={this.handleNavigate} />;
       
       case '/play':
+        // Reset do estado do jogo quando entrar na tela de jogo
+        if (this.state.gameState !== 'preparing') {
+          this.setState({ gameState: 'preparing' });
+        }
         return <GameCanvas onNavigate={this.handleNavigate} />;
       
       case '/instructions':
@@ -67,10 +94,15 @@ export default class Path extends Component<Props, State> {
   }
 
   render() {
-    const { currentRoute } = this.state;
+    const { currentRoute, gameState } = this.state;
     
     return (
-      <Layout starCount={1500} currentRoute={currentRoute}>
+      <Layout 
+        starCount={1500} 
+        currentRoute={currentRoute}
+        gameState={gameState}
+        onTogglePause={this.handleTogglePause}
+      >
         {this.renderContent()}
       </Layout>
     )

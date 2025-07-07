@@ -210,6 +210,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   
   // Ref para acessar hiScore atual sem causar reexecução do useEffect
   const hiScoreRef = useRef(hiScore);
+
+  // Event listener para pausa global
+  useEffect(() => {
+    const handleTogglePause = () => {
+      if (gameState === 'playing') {
+        setGameState('paused');
+        // Pausar a cena do Phaser
+        if (gameRef.current) {
+          gameRef.current.scene.pause('GameScene');
+        }
+      } else if (gameState === 'paused') {
+        setGameState('playing');
+        // Retomar a cena do Phaser
+        if (gameRef.current) {
+          gameRef.current.scene.resume('GameScene');
+        }
+      }
+    };
+
+    window.addEventListener('toggleGamePause', handleTogglePause);
+    
+    return () => {
+      window.removeEventListener('toggleGamePause', handleTogglePause);
+    };
+  }, [gameState]);
+
+  // Sincronizar estado do jogo com outros componentes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('gameStateChange', { 
+      detail: { gameState } 
+    }));
+  }, [gameState]);
   
   // Atualizar ref sempre que hiScore mudar
   useEffect(() => {
