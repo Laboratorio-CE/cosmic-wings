@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
@@ -202,7 +201,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
   const [lives, setLives] = useState(3);
-  const [score, setScore] = useState(0);
+  const [, setScore] = useState(0);
   const [hiScore, setHiScore] = useState(0);
   const [wave, setWave] = useState(1);
   const [currentBackgroundSpeed, setCurrentBackgroundSpeed] = useState(backgroundSpeed);

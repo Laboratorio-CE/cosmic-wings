@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import React, { Component } from "react";
+import { Component } from "react";
 import imagemPlayer from '../assets/images/player/player-frame-1.png';
 
 // Props para receber função de navegação do componente pai
