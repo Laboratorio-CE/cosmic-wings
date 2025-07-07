@@ -3724,7 +3724,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       {isLoading && (
         <div className="absolute z-50 bg-black flex items-center justify-center border border-gray-600 rounded-lg" 
              style={{ width: '800px', height: '600px' }}>
-          <div className="text-center">
+          <div className="text-center flex flex-col items-center justify-center">
             <div className="text-white text-2xl mb-4">Carregando...</div>
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
