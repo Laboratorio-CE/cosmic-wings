@@ -54,7 +54,6 @@ export default class Path extends Component<Props, State> {
 
   // Função para alternar a pausa do jogo
   handleTogglePause = () => {
-    console.log('Path handleTogglePause called, dispatching event');
     // Dispatcha um evento customizado para o GameCanvas
     window.dispatchEvent(new CustomEvent('toggleGamePause'));
   }
@@ -68,8 +67,11 @@ export default class Path extends Component<Props, State> {
         return <Menu onNavigate={this.handleNavigate} />;
       
       case '/play':
-        // Reset do estado do jogo quando entrar na tela de jogo
-        if (this.state.gameState !== 'preparing') {
+        // Reset do estado do jogo apenas quando entrar na tela de jogo pela primeira vez
+        // Não resetar se o jogo já estiver rodando (playing/paused)
+        if (this.state.gameState !== 'preparing' && 
+            this.state.gameState !== 'playing' && 
+            this.state.gameState !== 'paused') {
           this.setState({ gameState: 'preparing' });
         }
         return <GameCanvas onNavigate={this.handleNavigate} />;
