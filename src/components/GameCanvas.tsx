@@ -656,6 +656,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do inimigo
+        this.scene.sound.play('enemy-shoot', { volume: 0.2 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -927,6 +930,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do inimigo
+        this.scene.sound.play('enemy-shoot', { volume: 0.2 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -1235,6 +1241,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do inimigo
+        this.scene.sound.play('enemy-shoot', { volume: 0.2 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -1496,6 +1505,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do boss (volume maior para diferenciá-lo dos inimigos)
+        this.scene.sound.play('enemy-shoot', { volume: 0.4 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -1856,6 +1868,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do boss (volume maior para diferenciá-lo dos inimigos)
+        this.scene.sound.play('enemy-shoot', { volume: 0.4 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -2272,6 +2287,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
       
       shoot() {
+        // Reproduzir som do tiro do boss (volume maior para diferenciá-lo dos inimigos)
+        this.scene.sound.play('enemy-shoot', { volume: 0.4 });
+        
         // Obter referência ao grupo de projéteis inimigos da scene
         const gameScene = this.scene as GameScene;
         if (!gameScene.enemyBullets) return;
@@ -2688,6 +2706,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Carregar áudios
         this.load.audio('player-shoot', playerShoot);
         this.load.audio('player-kill', playerKill);
+        this.load.audio('enemy-shoot', enemyShoot);
       }
 
       create() {
