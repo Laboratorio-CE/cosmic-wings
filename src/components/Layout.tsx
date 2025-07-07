@@ -27,7 +27,7 @@ export default class Layout extends Component<Props, State> {
         <OptionsToggle />
         
         {/* Conteúdo principal passado como children */}
-        <div className="relative z-10 w-full h-full flex flex-col">
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
           {children}
         </div>
       </div>
