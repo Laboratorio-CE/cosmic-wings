@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
 
+import Player from "../game/entities/Player";
+import SpawnSystem from "../game/systems/SpawnSystem";
+import WaveManager from "../game/systems/WaveManager";
+import LifeSystem from "../game/systems/LifeSystem";
+
 // Importar as imagens do player
 import playerFrame1 from '../assets/images/player/player-frame-1.png';
 import playerFrame2 from '../assets/images/player/player-frame-2.png';
@@ -81,141 +86,6 @@ interface GameCanvasProps {
   onNavigate?: (route: string, data?: { score?: number }) => void;
   showUI?: boolean;
 }
-
-interface BackgroundScrollProps {
-  speed: number;
-  width: number;
-  height: number;
-}
-
-interface StarData {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-  duration: number;
-  delay: number;
-  shouldTwinkle: boolean;
-}
-
-// Componente Star para o canvas
-const CanvasStar = React.memo(({ star }: { star: StarData }) => {
-  return (
-    <div
-      className={`absolute bg-white rounded-full ${star.shouldTwinkle ? 'animate-pulse' : ''}`}
-      style={{
-        left: `${star.x}px`,
-        top: `${star.y}px`,
-        width: `${star.size}px`,
-        height: `${star.size}px`,
-        opacity: star.opacity,
-        animationDuration: star.shouldTwinkle ? `${star.duration}s` : undefined,
-        animationDelay: star.shouldTwinkle ? `${star.delay}s` : undefined,
-      }}
-    />
-  );
-});
-
-CanvasStar.displayName = 'CanvasStar';
-
-// Background personalizado para o canvas do jogo
-const CanvasBackground: React.FC<{ width: number; height: number; starCount: number; seed?: number }> = ({ width, height, starCount, seed = 0 }) => {
-  const stars = React.useMemo(() => {
-    const starArray: StarData[] = [];
-    const maxAnimatedStars = Math.min(starCount * 0.3, 50);
-    
-    // Usar seed para gerar estrelas consistentes
-    const random = (index: number) => {
-      const x = Math.sin(seed + index * 12.9898) * 43758.5453;
-      return x - Math.floor(x);
-    };
-    
-    for (let i = 0; i < starCount; i++) {
-      const star: StarData = {
-        id: i,
-        x: random(i * 4) * width,
-        y: random(i * 4 + 1) * height,
-        size: random(i * 4 + 2) * 3 + 1,
-        opacity: random(i * 4 + 3) * 0.8 + 0.4,
-        duration: random(i * 4 + 4) * 4 + 2,
-        delay: random(i * 4 + 5) * 5,
-        shouldTwinkle: i < maxAnimatedStars,
-      };
-      
-      starArray.push(star);
-    }
-    
-    return starArray;
-  }, [starCount, width, height, seed]);
-
-  return (
-    <div 
-      className="absolute inset-0 overflow-hidden bg-(--cosmic-darkest)/80"
-    >
-      {stars.map((star) => (
-        <CanvasStar key={star.id} star={star} />
-      ))}
-    </div>
-  );
-};
-
-// Componente Background com scroll para o GameCanvas
-const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, height }) => {
-  const [offset, setOffset] = useState(0);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOffset(prev => prev + speed);
-    }, 16); // ~60fps
-    
-    return () => clearInterval(interval);
-  }, [speed]);
-  
-  // Calcular posições das três instâncias para scroll infinito suave
-  const firstY = offset % height;
-  const secondY = firstY - height;
-  const thirdY = firstY + height;
-  
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      {/* Três instâncias do background para scroll infinito suave */}
-      <div 
-        className="absolute"
-        style={{ 
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: `translateY(${firstY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
-      </div>
-      <div 
-        className="absolute"
-        style={{ 
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: `translateY(${secondY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
-      </div>
-      <div 
-        className="absolute"
-        style={{ 
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: `translateY(${thirdY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
-      </div>
-    </div>
-  );
-};
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate, showUI = true }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
