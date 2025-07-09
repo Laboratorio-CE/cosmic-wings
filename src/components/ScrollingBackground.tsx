@@ -1,3 +1,12 @@
+import React, { useEffect, useState } from 'react';
+import CanvasBackground from './Background';
+
+interface BackgroundScrollProps {
+  speed: number;
+  width: number;
+  height: number;
+}
+
 // Componente Background com scroll para o GameCanvas
 const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, height }) => {
   const [offset, setOffset] = useState(0);
@@ -27,7 +36,7 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
           transition: 'none'
         }}
       >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
+        <CanvasBackground starCount={100} />
       </div>
       <div 
         className="absolute"
@@ -38,7 +47,7 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
           transition: 'none'
         }}
       >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
+        <CanvasBackground starCount={100} />
       </div>
       <div 
         className="absolute"
@@ -49,8 +58,10 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
           transition: 'none'
         }}
       >
-        <CanvasBackground width={width} height={height} starCount={100} seed={1} />
+        <CanvasBackground starCount={100} />
       </div>
     </div>
   );
 };
+
+export default ScrollingBackground;
