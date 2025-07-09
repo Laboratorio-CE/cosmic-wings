@@ -11,6 +11,7 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
   public maxHp: number;
   public isDestroyed: boolean = false;
   public isInvulnerable: boolean = false;
+  public isKilledByPlayer: boolean = false; // Para tracking se foi morto pelo jogador ou saiu da tela
   
   // Sistema de movimento
   public speed: number;

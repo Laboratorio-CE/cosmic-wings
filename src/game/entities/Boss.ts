@@ -2,6 +2,16 @@ import Phaser from 'phaser';
 import Enemy from './Enemy';
 
 export default class Boss extends Enemy {
+  // Sistema de tiro
+  public shotsPerBurst: number = 3;
+  public maxShotsPerBurst: number = 10;
+  public totalShots: number = 30;
+  public maxTotalShots: number = 100;
+  public shotsFired: number = 0;
+  public movementsBeforeLeaving: number = 5;
+  public maxMovements: number = 10;
+  public isKilledByPlayer: boolean = false;
+  
   private flashEffect = false;
   
   constructor(scene: Phaser.Scene, x: number, y: number, target: Phaser.GameObjects.Sprite) {
@@ -50,5 +60,33 @@ export default class Boss extends Enemy {
     // Reproduzir som de morte do boss
     this.scene.sound.play('boss-kill', { volume: 0.5 });
     console.log(`Boss destroyed! Points: ${this.points}`);
+  }
+  
+  /** Método para criar animação de destruição */
+  protected createDeathAnimation(x: number, y: number, onComplete?: () => void): void {
+    // Criar sprite da animação de destruição
+    const deathSprite = this.scene.add.sprite(x, y, 'death-frame-1');
+    deathSprite.setScale(0.8);
+    
+    // Executar animação sequencial
+    let currentFrame = 1;
+    
+    const nextFrame = () => {
+      if (currentFrame <= 9) {
+        deathSprite.setTexture(`death-frame-${currentFrame}`);
+        currentFrame++;
+        
+        // Próximo frame após 80ms
+        this.scene.time.delayedCall(80, nextFrame);
+      } else {
+        // Animação concluída
+        deathSprite.destroy();
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    };
+    
+    nextFrame();
   }
 }
