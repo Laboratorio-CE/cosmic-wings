@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
 import ScoreSystem from "../game/systems/ScoreSystem";
+import PositionManager from "../game/systems/PositionManager";
 
 import EnemyTypeA from "../game/entities/EnemyTypeA";
 import EnemyTypeB from "../game/entities/EnemyTypeB";
@@ -323,8 +324,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       bossSpawnDelay = 5000; // 5 segundos
 
       // Sistema de controle de posições ocupadas
-      occupiedPositions: { x: number; y: number; enemyId: string }[] = [];
-      positionRadius = 60; // Raio mínimo entre inimigos parados
+      positionManager!: PositionManager;
 
       // Sistema de limpeza de projéteis
       lastCleanupTime = 0;
@@ -406,50 +406,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       // Reserva uma posição ocupada por um inimigo
       reservePosition(x: number, y: number, enemyId: string) {
-        this.occupiedPositions.push({ x, y, enemyId });
+        this.positionManager.reservePosition(x, y, enemyId);
       }
 
       // Libera uma posição ocupada por um inimigo
       releasePosition(enemyId: string) {
-        this.occupiedPositions = this.occupiedPositions.filter(
-          (pos) => pos.enemyId !== enemyId
-        );
+        this.positionManager.releasePosition(enemyId);
       }
 
       // Encontra uma posição livre próxima de (x, y) que não esteja ocupada
       findFreePosition(x: number, y: number): { x: number; y: number } {
-        const radius = this.positionRadius;
-        let tryCount = 0;
-        let found = false;
-        let newX = x;
-        let newY = y;
-
-        // Tentar encontrar uma posição livre até 20 tentativas
-        while (!found && tryCount < 20) {
-          found = true;
-          for (const pos of this.occupiedPositions) {
-            const dist = Phaser.Math.Distance.Between(newX, newY, pos.x, pos.y);
-            if (dist < radius) {
-              found = false;
-              break;
-            }
-          }
-          if (!found) {
-            // Tentar uma nova posição aleatória próxima
-            newX = Phaser.Math.Clamp(
-              x + Phaser.Math.Between(-radius, radius),
-              100,
-              700
-            );
-            newY = Phaser.Math.Clamp(
-              y + Phaser.Math.Between(-radius, radius),
-              80,
-              500
-            );
-            tryCount++;
-          }
-        }
-        return { x: newX, y: newY };
+        return this.positionManager.findFreePosition(x, y);
       }
 
       // Método para criar esmaecimento de game over
@@ -550,6 +517,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       create() {
         // Sinalizar que o preload foi concluído
         window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
+
+        // Instanciar o sistema de posições
+        this.positionManager = new PositionManager(800, 600);
 
         // Instanciar o sistema de pontuação
         this.scoreSystem = new ScoreSystem((score, hiScore) => {
@@ -1625,7 +1595,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.calculateMaxEnemiesForWave(this.currentWave);
 
         // Limpar posições ocupadas
-        this.occupiedPositions = [];
+        this.positionManager.clearAllPositions();
       }
 
       // Método para iniciar o jogo após a sequência de mensagens
