@@ -31,6 +31,11 @@ export default class EnemyTypeC extends AbstractEntity {
   private shotsFired = 0;
   public isKilledByPlayer = false;
 
+  // Sistema de animação de movimento
+  private lastMovingState = false;
+  private animationState: 'idle' | 'starting' | 'moving' | 'stopping' = 'idle';
+  private animationTimer = 0;
+
   // Getter para sprite (compatibilidade com GameCanvas)
   public get sprite(): Phaser.Physics.Arcade.Sprite {
     return this;
@@ -189,22 +194,70 @@ export default class EnemyTypeC extends AbstractEntity {
     this.shotsFired++;
   }
 
-  private updateMovementAnimation(directionX: number) {
-    // Atualizar frame baseado na direção do movimento
-    if (Math.abs(directionX) > 0.1) {
-      // Está se movendo horizontalmente - alternar entre frames 2 e 3
-      const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
-      this.setTexture(`enemy-C-frame-${frame}`);
-      
-      // Espelhar sprite baseado na direção
+  private updateMovementAnimation(directionX: number): void {
+    // Verificar se está se movendo (incluindo movimento vertical)
+    const directionY = this.targetY - this.y;
+    const isCurrentlyMoving = Math.abs(directionX) > 5 || Math.abs(directionY) > 5;
+    
+    // Detectar mudança de estado de movimento
+    if (isCurrentlyMoving !== this.lastMovingState) {
+      if (isCurrentlyMoving) {
+        // Começou a se mover
+        this.animationState = 'starting';
+        this.animationTimer = this.scene.time.now;
+      } else {
+        // Parou de se mover
+        this.animationState = 'stopping';
+        this.animationTimer = this.scene.time.now;
+      }
+      this.lastMovingState = isCurrentlyMoving;
+    }
+    
+    // Atualizar animação baseada no estado
+    const currentTime = this.scene.time.now;
+    
+    switch (this.animationState) {
+      case 'starting':
+        // Transição: frame 1 -> 2 -> 3
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('enemy-C-frame-1');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('enemy-C-frame-2');
+        } else {
+          this.setTexture('enemy-C-frame-3');
+          this.animationState = 'moving';
+        }
+        break;
+        
+      case 'moving':
+        // Manter frame 3 enquanto se move
+        this.setTexture('enemy-C-frame-3');
+        break;
+        
+      case 'stopping':
+        // Transição: frame 3 -> 2 -> 1
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('enemy-C-frame-3');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('enemy-C-frame-2');
+        } else {
+          this.setTexture('enemy-C-frame-1');
+          this.animationState = 'idle';
+        }
+        break;
+        
+      case 'idle':
+      default:
+        // Manter frame 1 quando parado
+        this.setTexture('enemy-C-frame-1');
+        break;
+    }
+    
+    // Espelhar sprite baseado na direção apenas quando em movimento
+    if (isCurrentlyMoving) {
       this.setFlipX(directionX > 0);
-    } else {
-      // Movimento apenas vertical ou parado - usar frame 1
-      this.setTexture('enemy-C-frame-1');
-      this.setFlipX(false);
     }
   }
-
   private resetShooting() {
     this.currentShots = 0;
     this.fireTimer = this.scene.time.now;
@@ -223,6 +276,47 @@ export default class EnemyTypeC extends AbstractEntity {
       this.setNextPosition();
       this.state = 'moving';
     }
+  }
+
+  private createDeathAnimation(): void {
+    // Criar sprite de explosão na posição atual
+    const explosion = this.scene.add.sprite(this.x, this.y, 'death-frame-1');
+    explosion.setScale(0.8);
+    explosion.setDepth(10); // Colocar acima de outros elementos
+    
+    // Criar animação de explosão usando os frames de morte
+    const deathFrames = [
+      'death-frame-1',
+      'death-frame-2', 
+      'death-frame-3',
+      'death-frame-4',
+      'death-frame-5',
+      'death-frame-6',
+      'death-frame-7',
+      'death-frame-8',
+      'death-frame-9'
+    ];
+    
+    let currentFrame = 0;
+    const frameDelay = 80; // 80ms entre frames
+    
+    const explosionTimer = this.scene.time.addEvent({
+      delay: frameDelay,
+      callback: () => {
+        if (currentFrame < deathFrames.length) {
+          explosion.setTexture(deathFrames[currentFrame]);
+          currentFrame++;
+        }
+        
+        // Verificar se a animação terminou após incrementar o frame
+        if (currentFrame >= deathFrames.length) {
+          // Animação terminou, destruir sprite de explosão
+          explosion.destroy();
+          explosionTimer.destroy();
+        }
+      },
+      repeat: deathFrames.length // Executar uma vez para cada frame
+    });
   }
 
   // Método tick obrigatório herdado de AbstractEntity
@@ -256,6 +350,7 @@ export default class EnemyTypeC extends AbstractEntity {
         break;
         
       case 'shooting':
+        this.updateMovementAnimation(0);
         // Executar rajada de tiros
         if (this.currentShots < this.shotsPerBurstC) {
           if (currentTime - this.fireTimer > this.fireRate) {
@@ -292,6 +387,12 @@ export default class EnemyTypeC extends AbstractEntity {
     // Marcar como morto pelo jogador se não saiu da tela
     if (this.state !== 'leaving') {
       this.isKilledByPlayer = true;
+      
+      // Criar animação de explosão apenas se foi morto pelo jogador
+      this.createDeathAnimation();
+      
+      // Reproduzir som de morte do inimigo
+      this.scene.sound.play('enemy-kill', { volume: 0.3 });
     }
     
     // Lógica específica quando o EnemyTypeC é destruído
