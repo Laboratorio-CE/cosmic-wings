@@ -29,6 +29,9 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
   // Sistema de timers
   protected timers: Map<string, number> = new Map();
   
+  // Callback para quando a entidade é destruída pelo jogador
+  private onKilledByPlayerCallback?: (entity: AbstractEntity) => void;
+  
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -79,6 +82,12 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
     if (this.isDestroyed) return;
     
     this.isDestroyed = true;
+    
+    // Se foi morto pelo jogador, chamar callback para pontuação
+    if (this.isKilledByPlayer && this.onKilledByPlayerCallback) {
+      this.onKilledByPlayerCallback(this);
+    }
+    
     this.onDestroy();
     
     // Limpar timers
@@ -86,6 +95,16 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
     
     // Destruir sprite do Phaser
     super.destroy();
+  }
+  
+  /** Marca que esta entidade foi morta pelo jogador */
+  public markAsKilledByPlayer(): void {
+    this.isKilledByPlayer = true;
+  }
+  
+  /** Define o callback para quando a entidade for morta pelo jogador */
+  public setOnKilledByPlayerCallback(callback: (entity: AbstractEntity) => void): void {
+    this.onKilledByPlayerCallback = callback;
   }
   
   /** Hook chamado quando a entidade é destruída */
