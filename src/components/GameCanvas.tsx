@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
+import ScoreSystem from "../game/systems/ScoreSystem";
 
 import EnemyTypeA from "../game/entities/EnemyTypeA";
 import EnemyTypeB from "../game/entities/EnemyTypeB";
@@ -93,6 +94,7 @@ interface GameCanvasProps {
 const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNavigate, showUI = true }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
+  const scoreSystemRef = useRef<ScoreSystem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [gameState, setGameState] = useState<'preparing' | 'playing' | 'paused' | 'gameOver'>('preparing');
   const [lives, setLives] = useState(3);
@@ -346,6 +348,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       currentMusicIndex = 0;
       musicVolume = 0.1;
       fadeOutDuration = 1000; // 1 segundo para fade out
+      
+      // Sistema de pontuação
+      scoreSystem: ScoreSystem | null = null;
       fadeInDuration = 1000; // 1 segundo para fade in
 
       playBackgroundMusic() {
@@ -546,6 +551,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Sinalizar que o preload foi concluído
         window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
 
+        // Instanciar o sistema de pontuação
+        this.scoreSystem = new ScoreSystem((score, hiScore) => {
+          setScore(score);
+          setHiScore(hiScore);
+        });
+        
+        // Armazenar referência no ref para acesso externo
+        scoreSystemRef.current = this.scoreSystem;
+
         // Criar o player no centro do fundo da tela
         this.player = this.add.sprite(400, 550, "player-frame-1");
         this.player.setScale(0.8); // Ajustar tamanho se necessário
@@ -589,7 +603,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // setGameState('playing') será chamado após as mensagens
 
         // Inicializar sistema de ondas (mas não iniciar ainda)
-        this.currentWave = 5;
+        this.currentWave = 1;
         this.calculateMaxEnemiesForWave(this.currentWave);
 
         // Aguardar evento para iniciar o jogo
@@ -1065,6 +1079,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         const enemy = new EnemyTypeA(this, x, y);
         enemy.adjustForWave(this.currentWave);
+        
+        // Configurar callback para pontuação quando morto pelo jogador
+        enemy.setOnKilledByPlayerCallback((entity) => {
+          if (this.scoreSystem) {
+            this.scoreSystem.addScoreForEnemyKilled(entity);
+          }
+        });
+        
         this.enemies.push(enemy);
 
         console.log(
@@ -1079,6 +1101,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         const enemy = new EnemyTypeB(this, x, y);
         enemy.adjustForWave(this.currentWave);
+        
+        // Configurar callback para pontuação quando morto pelo jogador
+        enemy.setOnKilledByPlayerCallback((entity) => {
+          if (this.scoreSystem) {
+            this.scoreSystem.addScoreForEnemyKilled(entity);
+          }
+        });
+        
         this.enemies.push(enemy);
 
         console.log(
@@ -1093,6 +1123,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         const enemy = new EnemyTypeC(this, x, y);
         enemy.adjustForWave(this.currentWave);
+        
+        // Configurar callback para pontuação quando morto pelo jogador
+        enemy.setOnKilledByPlayerCallback((entity) => {
+          if (this.scoreSystem) {
+            this.scoreSystem.addScoreForEnemyKilled(entity);
+          }
+        });
+        
         this.enemies.push(enemy);
 
         console.log(
@@ -1111,6 +1149,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           // Boss tipo A fixo para onda 1
           this.currentBoss = new BossTypeA(this, bossX, bossY);
           this.currentBoss.adjustForWave(this.currentWave);
+          // Configurar callback para pontuação quando morto pelo jogador
+          this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+            if (this.scoreSystem) {
+              this.scoreSystem.addScoreForEnemyKilled(entity);
+            }
+          });
           console.log(
             `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
           );
@@ -1118,6 +1162,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           // Boss tipo B fixo para onda 2
           this.currentBoss = new BossTypeB(this, bossX, bossY);
           this.currentBoss.adjustForWave(this.currentWave);
+          // Configurar callback para pontuação quando morto pelo jogador
+          this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+            if (this.scoreSystem) {
+              this.scoreSystem.addScoreForEnemyKilled(entity);
+            }
+          });
           console.log(
             `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
           );
@@ -1125,6 +1175,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           // Boss tipo C fixo para onda 3
           this.currentBoss = new BossTypeC(this, bossX, bossY);
           this.currentBoss.adjustForWave(this.currentWave);
+          // Configurar callback para pontuação quando morto pelo jogador
+          this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+            if (this.scoreSystem) {
+              this.scoreSystem.addScoreForEnemyKilled(entity);
+            }
+          });
           console.log(
             `Boss Type C spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
           );
@@ -1135,18 +1191,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           if (randomBossType === 1) {
             this.currentBoss = new BossTypeA(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
+            // Configurar callback para pontuação quando morto pelo jogador
+            this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+              if (this.scoreSystem) {
+                this.scoreSystem.addScoreForEnemyKilled(entity);
+              }
+            });
             console.log(
               `Boss Type A aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
             );
           } else if (randomBossType === 2) {
             this.currentBoss = new BossTypeB(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
+            // Configurar callback para pontuação quando morto pelo jogador
+            this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+              if (this.scoreSystem) {
+                this.scoreSystem.addScoreForEnemyKilled(entity);
+              }
+            });
             console.log(
               `Boss Type B aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
             );
           } else {
             this.currentBoss = new BossTypeC(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
+            // Configurar callback para pontuação quando morto pelo jogador
+            this.currentBoss.setOnKilledByPlayerCallback((entity) => {
+              if (this.scoreSystem) {
+                this.scoreSystem.addScoreForEnemyKilled(entity);
+              }
+            });
             console.log(
               `Boss Type C aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
             );
@@ -1180,6 +1254,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
 
+              // Marcar que foi morto pelo jogador antes de aplicar dano
+              enemy.markAsKilledByPlayer();
+
               // Inimigo recebe dano
               enemy.takeDamage(bulletSprite.getData("damage") || 1);
             }
@@ -1199,6 +1276,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               // Projétil atingiu boss
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
+
+              // Marcar que foi morto pelo jogador antes de aplicar dano
+              this.currentBoss.markAsKilledByPlayer();
 
               // Boss recebe dano
               this.currentBoss.takeDamage(bulletSprite.getData("damage") || 1);
@@ -1404,11 +1484,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
 
       addScore(points: number) {
-        // Incrementar pontuação usando o setter do React
-        setScore((prevScore) => prevScore + points);
-
-        // Atualizar hiScore como acumulador total (sempre crescente)
-        setHiScore((prevHiScore) => prevHiScore + points);
+        // Usar o ScoreSystem para adicionar pontos
+        if (this.scoreSystem) {
+          this.scoreSystem.addScore(points);
+        }
 
         // Atualizar onda no estado do React (comentado temporariamente para debug)
         setWave(this.currentWave);
@@ -1422,6 +1501,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         console.log(
           `Boss derrotado! Iniciando transição de onda. Pontos: ${points}`
         );
+
+        // Adicionar pontos do boss usando o ScoreSystem
+        if (this.scoreSystem) {
+          this.scoreSystem.addScoreForBossDefeated(points);
+        }
 
         // Parar o spawn de novos inimigos
         this.enemySpawnEnabled = false;
