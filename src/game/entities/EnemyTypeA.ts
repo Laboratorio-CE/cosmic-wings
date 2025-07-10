@@ -305,8 +305,6 @@ export default class EnemyTypeA extends AbstractEntity {
         
       case 'leaving':
         this.moveToTarget(dt);
-        // Forçar frame 1 durante a saída (descendo em linha reta)
-        this.setTexture('enemy-A-frame-1');
         break;
         
       case 'shooting':
