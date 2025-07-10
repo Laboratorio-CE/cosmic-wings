@@ -2,8 +2,11 @@ import Phaser from 'phaser';
 import AbstractEntity from './AbstractEntity';
 
 export default class EnemyTypeB extends AbstractEntity {
+  // Referência para o sistema de posições do GameCanvas
+  private positionManager: any = null;
+
   // Estados do inimigo
-  public state: 'entering' | 'initial_shooting' | 'moving_to_position' | 'position_shooting' | 'leaving' = 'entering';
+  public state: 'entering' | 'initial_shooting' | 'moving_to_position' | 'moving_to_next' | 'position_shooting' | 'leaving' = 'entering';
   
   // Sistema de disparo
   private shotsPerBurst: number = 2; // 2 tiros por rajada (um para cada lado)
@@ -20,13 +23,17 @@ export default class EnemyTypeB extends AbstractEntity {
   private maxMovements = 2;
   private movementCount = 0;
   private hasCompletedInitialShooting = false;
-  private positions: { x: number; y: number }[] = [];
   
   // Sistema de disparo com timers
   private burstCount = 0;
   private maxBursts = 1; // 1 rajada por posição
   private currentBurstShots = 0;
   private isInBurst = false;
+
+  // Sistema de animação de movimento
+  private lastMovingState = false;
+  private animationState: 'idle' | 'starting' | 'moving' | 'shooting' | 'stopping' = 'idle';
+  private animationTimer = 0;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'enemy-B-frame-1', undefined, 'enemyB');
@@ -43,82 +50,59 @@ export default class EnemyTypeB extends AbstractEntity {
     this.setData('enemyType', 'B');
     this.setData('hp', this.hp);
     
-    // Configurar animação
-    this.setAnimationFrames([
-      'enemy-B-frame-1',
-      'enemy-B-frame-2',
-      'enemy-B-frame-3'
-    ], 200);
-    
-    // Gerar 3 posições aleatórias que o inimigo visitará
-    this.generateRandomPositions();
+    // Obter referência para o sistema de posições
+    this.positionManager = (this.scene as any).positionManager;
     
     // Começar no estado de entrada (não atirando ainda)
     this.state = 'entering';
+    
+    this.setRandomTargetInUpperHalf();
   }
   
   // Método para ajustar stats baseado na onda
   adjustForWave(wave: number): void {
     // Aumentar shots per burst baseado na onda, até o máximo
     this.shotsPerBurst = Math.min(this.maxShotsPerBurst, this.shotsPerBurst + Math.floor(wave / 2));
-    
+
     // Aumentar total shots baseado na onda, até o máximo
     this.totalShots = Math.min(this.maxTotalShots, this.totalShots + wave);
-    
+
     // Aumentar movimentos baseado na onda, até o máximo
     this.movementsBeforeLeaving = Math.min(this.maxMovements, this.movementsBeforeLeaving + Math.floor(wave / 3));
-    
+
     // Aumentar velocidade baseado na onda, até o máximo
     this.speed = Math.min(this.maxSpeed, this.speed + (wave * 10));
+
+    // Aumentar rajadas por posição baseado na onda, até o máximo
+    this.maxBursts = Math.min(5, this.maxBursts + Math.floor(wave / 3));
   }
   
-  private generateRandomPositions(): void {
-    // Gerar 3 posições aleatórias na metade superior da tela
-    const basePositions = [];
-    
-    for (let i = 0; i < 3; i++) {
-      // Gerar posições em diferentes regiões da tela para variedade
-      let x: number, y: number;
+  private setRandomTargetInUpperHalf(): void {
+    if (this.positionManager) {
+      // Usar o sistema de posições para encontrar uma posição livre
+      const position = this.positionManager.getRandomUpperHalfPosition();
+      this.targetX = position.x;
+      this.targetY = position.y;
+    } else {
+      // Fallback para posições relativas à largura da tela
+      const screenWidth = this.scene.cameras.main.width;
+      const screenHeight = this.scene.cameras.main.height;
       
-      switch (i) {
-        case 0:
-          // Primeira posição: lado esquerdo a centro-esquerdo
-          x = Phaser.Math.Between(150, 350);
-          y = Phaser.Math.Between(120, 200);
-          break;
-        case 1:
-          // Segunda posição: centro-direita a direita
-          x = Phaser.Math.Between(450, 650);
-          y = Phaser.Math.Between(140, 220);
-          break;
-        case 2:
-          // Terceira posição: centro da tela
-          x = Phaser.Math.Between(300, 500);
-          y = Phaser.Math.Between(180, 260);
-          break;
-        default:
-          x = Phaser.Math.Between(200, 600);
-          y = Phaser.Math.Between(120, 250);
-      }
-      
-      basePositions.push({ x, y });
+      this.targetX = Phaser.Math.Between(screenWidth * 0.25, screenWidth * 0.75);
+      this.targetY = Phaser.Math.Between(screenHeight * 0.13, screenHeight * 0.42);
     }
-    
-    // Por enquanto usar posições diretas, implementação futura com sistema de posições livres
-    this.positions = basePositions;
-    
-    // Implementação futura para encontrar posições livres:
-    /*
-    const gameScene = this.scene as any; // GameScene
-    if (gameScene.findFreePosition) {
-      this.positions = basePositions.map((pos) => 
-        gameScene.findFreePosition(pos.x, pos.y)
-      );
-    }
-    */
+  }
+
+    private setExitTarget(): void {
+    // Definir ponto de saída (fora da tela, na parte inferior)
+    this.targetX = this.x; // Manter X atual
+    this.targetY = 700; // Sair pela parte inferior
   }
   
   private moveToTarget(dt: number): void {
+    // Calcular direção antes de mover
+    const directionX = this.targetX - this.x;
+    
     // Usar o método moveTowards do AbstractEntity
     const reachedTarget = this.moveTowards(this.targetX, this.targetY, this.moveSpeed, dt);
     
@@ -127,7 +111,6 @@ export default class EnemyTypeB extends AbstractEntity {
     }
     
     // Atualizar animação de movimento baseada na direção
-    const directionX = this.targetX - this.x;
     this.updateMovementAnimation(directionX);
   }
   
@@ -136,43 +119,27 @@ export default class EnemyTypeB extends AbstractEntity {
     this.state = 'position_shooting';
     this.resetShooting();
     
-    // Integração futura com sistema de reserva de posições:
-    /*
-    const gameScene = this.scene as any; // GameScene
-    if (gameScene.reservePosition) {
-      gameScene.reservePosition(this.x, this.y, this.id);
+    // Reservar a posição no sistema de posições
+    if (this.positionManager) {
+      this.positionManager.reservePosition(this.x, this.y, this.id);
     }
-    */
   }
   
   private setNextTarget(): void {
-    if (this.movementCount < this.maxMovements && this.movementCount < this.positions.length) {
-      // Usar próxima posição aleatória gerada
-      const targetPosition = this.positions[this.movementCount];
-      
-      this.targetX = targetPosition.x;
-      this.targetY = targetPosition.y;
+    if (this.movementCount < this.movementsBeforeLeaving) {
+      // Gerar nova posição aleatória para o próximo movimento
+      this.setRandomTargetInUpperHalf();
       this.movementCount++;
-      
-      // Implementação futura para verificar posição livre:
-      /*
-      const gameScene = this.scene as any; // GameScene
-      if (gameScene.findFreePosition) {
-        const freePosition = gameScene.findFreePosition(targetPosition.x, targetPosition.y);
-        this.targetX = freePosition.x;
-        this.targetY = freePosition.y;
-      }
-      */
     } else {
       // Completou todos os movimentos, sair da tela
-      this.targetX = this.x;
-      this.targetY = 700; // Sair pela parte inferior
+      this.setExitTarget();
     }
   }
   
   private resetShooting(): void {
-    this.burstCount = 0;
-    this.shotsFired = 0;
+    // NÃO resetar burstCount para manter progresso entre posições
+    this.currentBurstShots = 0;
+    this.isInBurst = false;
     this.setTimer('fire', 1500); // 1.5 segundos entre rajadas
     this.setTexture('enemy-B-frame-1'); // Frame de repouso
   }
@@ -180,12 +147,12 @@ export default class EnemyTypeB extends AbstractEntity {
   private shoot(): void {
     // Reproduzir som do tiro do inimigo
     this.scene.sound.play('enemy-shoot', { volume: 0.2 });
-    
-    // Disparar dois projéteis: um a 45° esquerda, outro a 45° direita
-    this.shootAngled(-45); // Esquerda
-    this.shootAngled(45);  // Direita
-    
-    this.shotsFired++;
+
+    // Disparar dois projéteis angulados
+    this.shootAngled(45); // 45º à direita
+    this.shootAngled(-45); // 45º à esquerda
+
+    this.shotsFired += 2; // Incrementar o contador de tiros
   }
   
   private shootAngled(angleDegrees: number): void {
@@ -193,7 +160,7 @@ export default class EnemyTypeB extends AbstractEntity {
     console.log(`EnemyTypeB shooting angled projectile at ${angleDegrees}° from position (${this.x}, ${this.y})`);
     
     // Exemplo de como seria a integração:
-    /*
+
     const gameScene = this.scene as any; // GameScene
     if (!gameScene.enemyBullets) return;
     
@@ -219,25 +186,118 @@ export default class EnemyTypeB extends AbstractEntity {
       bullet.setData('isEnemyBullet', true);
       bullet.setData('isAngled', true);
     }
-    */
+
   }
   
   private updateMovementAnimation(directionX: number): void {
-    // Atualizar frame baseado na direção do movimento
-    if (Math.abs(directionX) > 0.1) {
-      // Está se movendo horizontalmente - alternar entre frames 2 e 3
-      const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
-      this.setTexture(`enemy-B-frame-${frame}`);
-      
-      // Espelhar sprite baseado na direção
-      // Para movimento à direita, espelhar
-      this.setFlipX(directionX > 0);
-    } else {
-      // Movimento apenas vertical ou parado - usar frame 1
+    // Não aplicar animação de movimento durante estados específicos
+    if (this.state === 'entering' || this.state === 'initial_shooting' || this.state === 'position_shooting') {
       this.setTexture('enemy-B-frame-1');
-      this.setFlipX(false);
+      this.animationState = 'idle';
+      return;
+    }
+    
+    // Verificar se está se movendo (incluindo movimento vertical)
+    const directionY = this.targetY - this.y;
+    const isCurrentlyMoving = Math.abs(directionX) > 5 || Math.abs(directionY) > 5;
+    
+    // Detectar mudança de estado de movimento
+    if (isCurrentlyMoving !== this.lastMovingState) {
+      if (isCurrentlyMoving) {
+        // Começou a se mover
+        this.animationState = 'starting';
+        this.animationTimer = this.scene.time.now;
+      } else {
+        // Parou de se mover
+        this.animationState = 'stopping';
+        this.animationTimer = this.scene.time.now;
+      }
+      this.lastMovingState = isCurrentlyMoving;
+    }
+    
+    // Atualizar animação baseada no estado
+    const currentTime = this.scene.time.now;
+    
+    switch (this.animationState) {
+      case 'starting':
+        // Transição: frame 1 -> 2 -> 3
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('enemy-B-frame-1');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('enemy-B-frame-2');
+        } else {
+          this.setTexture('enemy-B-frame-3');
+          this.animationState = 'moving';
+        }
+        break;
+        
+      case 'moving':
+        // Manter frame 3 enquanto se move
+        this.setTexture('enemy-B-frame-3');
+        break;
+        
+      case 'stopping':
+        // Transição: frame 3 -> 2 -> 1
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('enemy-B-frame-3');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('enemy-B-frame-2');
+        } else {
+          this.setTexture('enemy-B-frame-1');
+          this.animationState = 'idle';
+        }
+        break;
+        
+      case 'idle':
+      default:
+        // Manter frame 1 quando parado
+        this.setTexture('enemy-B-frame-1');
+        break;
+    }
+    
+    // Espelhar sprite baseado na direção apenas quando em movimento
+    if (isCurrentlyMoving) {
+      this.setFlipX(directionX > 0);
     }
   }
+
+    private handleShooting(): void {
+    if (!this.isInBurst) {
+      // Verificar se é hora de iniciar uma nova rajada
+      if (this.isTimerExpired('fire') && this.burstCount < this.maxBursts) {
+        this.isInBurst = true;
+        this.currentBurstShots = 0;
+        this.setTimer('burst', 200); // 200ms para o primeiro tiro da rajada
+      }
+    } else {
+      // Executando rajada
+      if (this.isTimerExpired('burst') && this.currentBurstShots < this.shotsPerBurst) {
+        
+        this.shoot();
+        this.currentBurstShots++;
+        
+        // Verificar se rajada terminou
+        if (this.currentBurstShots >= this.shotsPerBurst) {
+          this.isInBurst = false;
+          this.burstCount++;
+          
+          // Só configurar próxima rajada se ainda não completou o limite
+          if (this.burstCount < this.maxBursts) {
+            this.setTimer('fire', 800); // Próxima rajada em 800ms
+          }
+        } else {
+          // Próximo tiro da mesma rajada em 300ms
+          this.setTimer('burst', 300);
+        }
+      }
+    }
+
+    // Verificar se completou todas as rajadas
+    if (this.burstCount >= this.maxBursts) {
+      this.onCompletedShooting();
+    }
+  }
+
   
   public tick(dt: number): void {
     // Chamar atualização base
@@ -261,12 +321,14 @@ export default class EnemyTypeB extends AbstractEntity {
         } else {
           // Continuar entrando (movimento para baixo)
           this.y += 100 * dt;
+          // Manter frame idle durante a entrada
+          this.setTexture('enemy-B-frame-1');
         }
         break;
         
       case 'initial_shooting':
         // Executar rajada inicial
-        this.executeShootingBehavior();
+        this.handleShooting();
         
         // Verificar se completou o tiro inicial
         if (this.burstCount >= this.maxBursts && !this.hasCompletedInitialShooting) {
@@ -282,20 +344,9 @@ export default class EnemyTypeB extends AbstractEntity {
         
       case 'position_shooting':
         // Executar rajada na posição
-        this.executeShootingBehavior();
+        this.handleShooting();
         
-        // Verificar se completou o tiro na posição
-        if (this.burstCount >= this.maxBursts) {
-          if (this.movementCount >= this.maxMovements) {
-            // Completou todos os movimentos, sair
-            this.setNextTarget(); // Define exit point
-            this.state = 'leaving';
-          } else {
-            // Ir para próxima posição
-            this.setNextTarget();
-            this.state = 'moving_to_position';
-          }
-        }
+        // Verificar se completou o tiro na posição (será tratado em onCompletedShooting)
         break;
         
       case 'leaving':
@@ -308,58 +359,88 @@ export default class EnemyTypeB extends AbstractEntity {
     }
   }
   
-  private executeShootingBehavior(): void {
-    if (!this.isInBurst) {
-      // Verificar se é hora de iniciar uma nova rajada
-      if (this.isTimerExpired('fire') && this.burstCount < this.maxBursts) {
-        this.isInBurst = true;
-        this.currentBurstShots = 0;
-        this.setTimer('burst', 400); // 400ms entre tiros da mesma rajada
-      } else if (this.burstCount >= this.maxBursts) {
-        // Completou o tiro na posição, ir para próxima
-        this.onCompletedShooting();
-      }
-    } else {
-      // Executando rajada
-      if (this.isTimerExpired('burst') && this.currentBurstShots < this.shotsPerBurst) {
-        this.shoot();
-        this.currentBurstShots++;
-        this.setTimer('burst', 400); // Próximo tiro em 400ms
-        
-        // Verificar se rajada terminou
-        if (this.currentBurstShots >= this.shotsPerBurst) {
-          this.isInBurst = false;
-          this.burstCount++;
-          this.setTimer('fire', 1500); // Próxima rajada em 1.5s
-        }
-      }
-    }
-  }
   
   private onCompletedShooting(): void {
-    if (this.movementCount < this.maxMovements) {
+    // Liberar posição atual
+    if (this.positionManager) {
+      this.positionManager.releasePosition(this.id);
+    }
+    
+    // Resetar estado de animação para garantir transição correta
+    this.lastMovingState = false;
+    this.animationState = 'idle';
+    
+    // Resetar contadores para próxima fase
+    this.burstCount = 0;
+    this.shotsFired = 0;
+    this.currentBurstShots = 0;
+    this.isInBurst = false;
+
+    // Verificar se ainda pode se mover para mais posições
+    if (this.movementCount < this.movementsBeforeLeaving) {
+      // Ir para próxima posição
       this.setNextTarget();
       this.state = 'moving_to_position';
     } else {
       // Completou todos os movimentos, sair da tela
-      this.targetX = this.x;
-      this.targetY = 700; // Sair pela parte inferior
+      this.setExitTarget();
       this.state = 'leaving';
     }
   }
   
   protected onDestroy(): void {
+    // Liberar posição se ainda estiver reservada
+    if (this.positionManager) {
+      this.positionManager.releasePosition(this.id);
+    }
+    
+    // Criar animação de explosão
+    this.createDeathAnimation();
+    
     // Reproduzir som de morte do inimigo
     this.scene.sound.play('enemy-kill', { volume: 0.3 });
     console.log(`EnemyTypeB destroyed! Points: ${this.points}`);
+  }
+  
+  private createDeathAnimation(): void {
+    // Criar sprite de explosão na posição atual
+    const explosion = this.scene.add.sprite(this.x, this.y, 'death-frame-1');
+    explosion.setScale(0.7);
+    explosion.setDepth(10); // Colocar acima de outros elementos
     
-    // Integração futura com sistema de liberação de posições:
-    /*
-    const gameScene = this.scene as any; // GameScene
-    if (gameScene.releasePosition) {
-      gameScene.releasePosition(this.id);
-    }
-    */
+    // Criar animação de explosão usando os frames de morte
+    const deathFrames = [
+      'death-frame-1',
+      'death-frame-2', 
+      'death-frame-3',
+      'death-frame-4',
+      'death-frame-5',
+      'death-frame-6',
+      'death-frame-7',
+      'death-frame-8',
+      'death-frame-9'
+    ];
+    
+    let currentFrame = 0;
+    const frameDelay = 80; // 80ms entre frames
+    
+    const explosionTimer = this.scene.time.addEvent({
+      delay: frameDelay,
+      callback: () => {
+        if (currentFrame < deathFrames.length) {
+          explosion.setTexture(deathFrames[currentFrame]);
+          currentFrame++;
+        }
+        
+        // Verificar se a animação terminou após incrementar o frame
+        if (currentFrame >= deathFrames.length) {
+          // Animação terminou, destruir sprite de explosão
+          explosion.destroy();
+          explosionTimer.destroy();
+        }
+      },
+      repeat: deathFrames.length // Executar uma vez para cada frame
+    });
   }
   
   // Método público para compatibilidade com GameCanvas
