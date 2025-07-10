@@ -27,6 +27,9 @@ export default class EnemyTypeA extends AbstractEntity {
   private currentBurstShots = 0;
   private isInBurst = false;
   
+  // Referência para o sistema de posições do GameCanvas
+  private positionManager: any = null;
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'enemy-A-frame-1', undefined, 'enemyA');
     
@@ -49,6 +52,9 @@ export default class EnemyTypeA extends AbstractEntity {
       'enemy-A-frame-3'
     ], 300);
     
+    // Obter referência para o sistema de posições
+    this.positionManager = (this.scene as any).positionManager;
+    
     // Definir primeira posição aleatória na metade superior da tela
     this.setRandomTargetInUpperHalf();
   }
@@ -69,38 +75,42 @@ export default class EnemyTypeA extends AbstractEntity {
   }
   
   private setRandomTargetInUpperHalf(): void {
-    // Posição aleatória inicial na metade superior da tela
-    const preferredX = Phaser.Math.Between(200, 600);
-    const preferredY = Phaser.Math.Between(100, 250);
-    
-    // Integração futura com sistema de posições do GameCanvas
-    // Por enquanto, usar posição direta
-    this.targetX = preferredX;
-    this.targetY = preferredY;
-    
-    // Implementação futura para encontrar posição livre:
-    /*
-    const gameScene = this.scene as any; // GameScene
-    if (gameScene.findFreePosition) {
-      const freePosition = gameScene.findFreePosition(preferredX, preferredY);
-      this.targetX = freePosition.x;
-      this.targetY = freePosition.y;
+    if (this.positionManager) {
+      // Usar o sistema de posições para encontrar uma posição livre
+      const position = this.positionManager.getRandomUpperHalfPosition();
+      this.targetX = position.x;
+      this.targetY = position.y;
+    } else {
+      // Fallback para posições relativas à largura da tela
+      const screenWidth = this.scene.cameras.main.width;
+      const screenHeight = this.scene.cameras.main.height;
+      
+      this.targetX = Phaser.Math.Between(screenWidth * 0.25, screenWidth * 0.75);
+      this.targetY = Phaser.Math.Between(screenHeight * 0.13, screenHeight * 0.42);
     }
-    */
   }
   
   private setRandomTargetForSecondPosition(): void {
-    // Segunda posição também na metade superior, mas diferente da primeira
-    const minDistance = 80;
-    let preferredX: number, preferredY: number;
-    
-    do {
-      preferredX = Phaser.Math.Between(200, 600);
-      preferredY = Phaser.Math.Between(100, 250);
-    } while (Phaser.Math.Distance.Between(this.targetX, this.targetY, preferredX, preferredY) < minDistance);
-    
-    this.targetX = preferredX;
-    this.targetY = preferredY;
+    if (this.positionManager) {
+      // Usar o sistema de posições para encontrar uma segunda posição livre
+      const position = this.positionManager.getRandomUpperHalfPosition();
+      this.targetX = position.x;
+      this.targetY = position.y;
+    } else {
+      // Fallback: Segunda posição também na metade superior, mas diferente da primeira
+      const screenWidth = this.scene.cameras.main.width;
+      const screenHeight = this.scene.cameras.main.height;
+      const minDistance = 80;
+      let preferredX: number, preferredY: number;
+      
+      do {
+        preferredX = Phaser.Math.Between(screenWidth * 0.25, screenWidth * 0.75);
+        preferredY = Phaser.Math.Between(screenHeight * 0.13, screenHeight * 0.42);
+      } while (Phaser.Math.Distance.Between(this.targetX, this.targetY, preferredX, preferredY) < minDistance);
+      
+      this.targetX = preferredX;
+      this.targetY = preferredY;
+    }
   }
   
   private setExitTarget(): void {
@@ -131,13 +141,10 @@ export default class EnemyTypeA extends AbstractEntity {
           this.state = 'shooting';
           this.resetShooting();
           
-          // Integração futura com sistema de reserva de posições:
-          /*
-          const gameScene = this.scene as any; // GameScene
-          if (gameScene.reservePosition) {
-            gameScene.reservePosition(this.x, this.y, this.id);
+          // Reservar a posição no sistema de posições
+          if (this.positionManager) {
+            this.positionManager.reservePosition(this.x, this.y, this.id);
           }
-          */
         }
         break;
       }
@@ -147,13 +154,10 @@ export default class EnemyTypeA extends AbstractEntity {
         this.state = 'shooting';
         this.resetShooting();
         
-        // Integração futura com sistema de reserva de posições:
-        /*
-        const gameScene = this.scene as any; // GameScene
-        if (gameScene.reservePosition) {
-          gameScene.reservePosition(this.x, this.y, this.id);
+        // Reservar a nova posição no sistema de posições
+        if (this.positionManager) {
+          this.positionManager.reservePosition(this.x, this.y, this.id);
         }
-        */
         break;
       }
         
@@ -167,7 +171,9 @@ export default class EnemyTypeA extends AbstractEntity {
   private resetShooting(): void {
     this.burstCount = 0;
     this.shotsFired = 0;
-    this.setTimer('fire', 800); // 800ms entre rajadas
+    this.currentBurstShots = 0;
+    this.isInBurst = false;
+    this.setTimer('fire', 800); // 800ms antes da primeira rajada
     this.setTexture('enemy-A-frame-1'); // Frame de repouso
   }
   
@@ -175,13 +181,7 @@ export default class EnemyTypeA extends AbstractEntity {
     // Reproduzir som do tiro do inimigo
     this.scene.sound.play('enemy-shoot', { volume: 0.2 });
     
-    // Criar projétil personalizado ou usar sistema de projéteis da scene
-    // Por enquanto, log para debug
-    console.log(`EnemyTypeA shooting from position (${this.x}, ${this.y})`);
-    
-    // Implementação futura: integrar com sistema de projéteis do GameCanvas
-    // Exemplo de como seria:
-    /*
+    // Criar projétil usando o sistema de projéteis da scene
     const gameScene = this.scene as any; // GameScene
     if (gameScene.enemyBullets) {
       let bullet = gameScene.enemyBullets.get(this.x, this.y + 30, 'enemy-fire');
@@ -194,7 +194,6 @@ export default class EnemyTypeA extends AbstractEntity {
         bullet.setData('isEnemyBullet', true);
       }
     }
-    */
     
     this.shotsFired++;
   }
@@ -254,32 +253,46 @@ export default class EnemyTypeA extends AbstractEntity {
   private handleShooting(): void {
     if (!this.isInBurst) {
       // Verificar se é hora de iniciar uma nova rajada
-      if (this.isTimerExpired('fire') && this.burstCount < this.maxBursts) {
+      if (this.isTimerExpired('fire') && this.burstCount < this.maxBursts && this.shotsFired < this.totalShots) {
         this.isInBurst = true;
         this.currentBurstShots = 0;
-        this.setTimer('burst', 300); // 300ms entre tiros da mesma rajada
-      } else if (this.burstCount >= this.maxBursts) {
+        this.setTimer('burst', 200); // 200ms para o primeiro tiro da rajada
+      } else if (this.burstCount >= this.maxBursts || this.shotsFired >= this.totalShots) {
         // Completou todas as rajadas nesta posição
         this.onCompletedShooting();
       }
     } else {
       // Executando rajada
-      if (this.isTimerExpired('burst') && this.currentBurstShots < this.shotsPerBurst) {
+      if (this.isTimerExpired('burst') && 
+          this.currentBurstShots < this.shotsPerBurst && 
+          this.shotsFired < this.totalShots) {
+        
         this.shoot();
         this.currentBurstShots++;
-        this.setTimer('burst', 300); // Próximo tiro em 300ms
         
         // Verificar se rajada terminou
         if (this.currentBurstShots >= this.shotsPerBurst) {
           this.isInBurst = false;
           this.burstCount++;
-          this.setTimer('fire', 800); // Próxima rajada em 800ms
+          
+          // Só configurar próxima rajada se ainda não completou o limite
+          if (this.burstCount < this.maxBursts && this.shotsFired < this.totalShots) {
+            this.setTimer('fire', 800); // Próxima rajada em 800ms
+          }
+        } else {
+          // Próximo tiro da mesma rajada em 300ms
+          this.setTimer('burst', 300);
         }
       }
     }
   }
   
   private onCompletedShooting(): void {
+    // Liberar posição atual
+    if (this.positionManager) {
+      this.positionManager.releasePosition(this.id);
+    }
+    
     if (!this.hasCompletedFirstShooting) {
       // Completou primeiro ciclo de tiros, ir para segunda posição
       this.hasCompletedFirstShooting = true;
@@ -293,17 +306,14 @@ export default class EnemyTypeA extends AbstractEntity {
   }
   
   protected onDestroy(): void {
+    // Liberar posição se ainda estiver reservada
+    if (this.positionManager) {
+      this.positionManager.releasePosition(this.id);
+    }
+    
     // Reproduzir som de morte do inimigo
     this.scene.sound.play('enemy-kill', { volume: 0.3 });
     console.log(`EnemyTypeA destroyed! Points: ${this.points}`);
-    
-    // Integração futura com sistema de liberação de posições:
-    /*
-    const gameScene = this.scene as any; // GameScene
-    if (gameScene.releasePosition) {
-      gameScene.releasePosition(this.id);
-    }
-    */
   }
   
   // Método público para compatibilidade com GameCanvas
