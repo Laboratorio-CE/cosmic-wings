@@ -194,9 +194,15 @@ export default class EnemyTypeA extends AbstractEntity {
         bullet.setActive(true);
         bullet.setVisible(true);
         bullet.setScale(0.7);
+        bullet.setData('velocityX', 0);
+        bullet.setData('velocityY', 300); // Garantir direção vertical
         bullet.setData('speed', 300);
         bullet.setData('damage', 1);
         bullet.setData('isEnemyBullet', true);
+        // Resetar física do Phaser se necessário
+        if (bullet.body) {
+          bullet.body.setVelocity(0, 300); // Garantir que vai reto para baixo
+        }
       }
     }
     
@@ -294,8 +300,13 @@ export default class EnemyTypeA extends AbstractEntity {
         
       case 'moving_to_position':
       case 'moving_to_next':
+        this.moveToTarget(dt);
+        break;
+        
       case 'leaving':
         this.moveToTarget(dt);
+        // Forçar frame 1 durante a saída (descendo em linha reta)
+        this.setTexture('enemy-A-frame-1');
         break;
         
       case 'shooting':
