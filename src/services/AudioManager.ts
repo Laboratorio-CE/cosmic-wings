@@ -86,6 +86,7 @@ class AudioManager {
   // Construtor privado para implementar Singleton
   private constructor() {
     if (AudioManager.instance) {
+      // Se já existe instância, retorna ela
       return AudioManager.instance;
     }
     this.preloadSoundEffects();
@@ -245,44 +246,70 @@ class AudioManager {
     }
   }
 
-  // Para música de fundo com fade out (usado para mudança de tela)
+  /**
+   * Para música de fundo com fade out (usado para transição de tela).
+   * Use na transição do menu para o gamecanvas.
+   */
   stopBackgroundMusic(): void {
+    this.stopBackgroundMusicAsync();
+  }
+
+  /**
+   * Versão assíncrona para aguardar fade out.
+   * Use para garantir que a música do menu pare suavemente antes de iniciar a do gamecanvas.
+   */
+  async stopBackgroundMusicAsync(fadeOutDuration: number = 1000): Promise<void> {
     if (!this.backgroundMusic) return;
-
-    // Limpar listeners de autoplay ativos
     this.removeAutoplayListeners();
-
-    // Limpar fade anterior se existir
     if (this.fadeInterval) {
       clearInterval(this.fadeInterval);
       this.fadeInterval = null;
     }
-
-    const fadeOutDuration = 1000; // 1 segundo
     const fadeSteps = 20;
     const volumeStep = this.backgroundMusic.volume / fadeSteps;
     const stepDuration = fadeOutDuration / fadeSteps;
-
-    this.fadeInterval = setInterval(() => {
-      if (this.backgroundMusic && this.backgroundMusic.volume > volumeStep) {
-        this.backgroundMusic.volume -= volumeStep;
-      } else {
-        if (this.fadeInterval) {
-          clearInterval(this.fadeInterval);
-          this.fadeInterval = null;
+    return new Promise<void>((resolve) => {
+      let steps = 0;
+      this.fadeInterval = setInterval(() => {
+        if (this.backgroundMusic && this.backgroundMusic.volume > volumeStep) {
+          this.backgroundMusic.volume -= volumeStep;
+        } else {
+          if (this.fadeInterval) {
+            clearInterval(this.fadeInterval);
+            this.fadeInterval = null;
+          }
+          if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic = null;
+          }
+          this.currentTrack = null;
+          resolve();
         }
-        if (this.backgroundMusic) {
-          this.backgroundMusic.pause();
-          this.backgroundMusic.currentTime = 0;
-          this.backgroundMusic = null;
+        steps++;
+        if (steps >= fadeSteps) {
+          // Garante que não fique preso
+          if (this.fadeInterval) {
+            clearInterval(this.fadeInterval);
+            this.fadeInterval = null;
+          }
+          if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic = null;
+          }
+          this.currentTrack = null;
+          resolve();
         }
-        this.currentTrack = null; // Só resetar quando realmente parar
-      }
-    }, stepDuration);
+      }, stepDuration);
+    });
   }
 
-  // Para música imediatamente (usado para mute)
-  private pauseBackgroundMusic(): void {
+  /**
+   * Pausa imediatamente a música de fundo.
+   * Use no momento do gameover para evitar sobreposição.
+   */
+  public pauseBackgroundMusic(): void {
     if (this.backgroundMusic && !this.backgroundMusic.paused) {
       this.backgroundMusic.pause();
     }
@@ -299,17 +326,19 @@ class AudioManager {
 
   // Reproduz efeito sonoro com logs para depuração
   playSoundEffect(effect: SoundEffect): void {
+    // Proteção extra: se o Map estiver vazio, tenta re-preload
+    if (this.soundEffects.size === 0) {
+      console.warn('Map de efeitos sonoros vazio, tentando recarregar...');
+      this.preloadSoundEffects();
+    }
     console.log(`Tentando reproduzir efeito sonoro: ${effect}`);
     console.log('Efeitos disponíveis:', Array.from(this.soundEffects.keys()));
     console.log('Efeito existe no Map:', this.soundEffects.has(effect));
-    
     this.markUserInteraction();
-
     if (this.soundMuted) {
       console.warn('Efeitos sonoros estão mutados.');
       return;
     }
-
     const audio = this.soundEffects.get(effect);
     if (audio) {
       try {
@@ -317,7 +346,6 @@ class AudioManager {
         // Reset para permitir múltiplas reproduções
         audio.currentTime = 0;
         const playPromise = audio.play();
-
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
