@@ -1,6 +1,14 @@
 import Phaser from 'phaser';
 import AbstractEntity from './AbstractEntity';
 
+interface GameCanvas extends Phaser.Scene {
+  findFreePosition: (x: number, y: number) => { x: number; y: number };
+  reservePosition: (x: number, y: number, id: string) => void;
+  releasePosition: (x: number, y: number) => void;
+  enemyBullets: Phaser.Physics.Arcade.Group;
+  player: Phaser.Physics.Arcade.Sprite;
+}
+
 export default class EnemyTypeB extends AbstractEntity {
   // Referência para o sistema de posições do GameCanvas
   private positionManager: any = null;
@@ -389,17 +397,24 @@ export default class EnemyTypeB extends AbstractEntity {
   }
   
   protected onDestroy(): void {
-    // Liberar posição se ainda estiver reservada
-    if (this.positionManager) {
-      this.positionManager.releasePosition(this.id);
+    super.onDestroy();
+    
+    // Marcar como morto pelo jogador se não saiu da tela
+    if (this.state !== 'leaving') {
+      this.isKilledByPlayer = true;
+      
+      // Criar animação de explosão apenas se foi morto pelo jogador
+      this.createDeathAnimation();
+      
+      // Reproduzir som de morte do inimigo
+      this.scene.sound.play('enemy-kill', { volume: 0.3 });
     }
     
-    // Criar animação de explosão
-    this.createDeathAnimation();
-    
-    // Reproduzir som de morte do inimigo
-    this.scene.sound.play('enemy-kill', { volume: 0.3 });
-    console.log(`EnemyTypeB destroyed! Points: ${this.points}`);
+    // Lógica específica quando o EnemyTypeC é destruído
+    const gameScene = this.scene as GameCanvas;
+    if (gameScene.releasePosition) {
+      gameScene.releasePosition(this.x, this.y);
+    }
   }
   
   private createDeathAnimation(): void {
