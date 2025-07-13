@@ -125,13 +125,22 @@ const GameUI: React.FC<GameUIProps> = ({
       <div className="absolute top-4 left-4 flex items-center pointer-events-auto">
         <div className="flex">{renderLives()}</div>
       </div>
-
-      {/* Pontuação - Canto superior direito */}
-      <div className="absolute top-4 right-4 flex items-center pointer-events-auto">
-        <span className="text-cyan-400 font-mono text-lg font-bold tracking-wider">
-          {formatScore(score)}
-        </span>
-      </div>
+      {/* Pontuação */}
+      {isMobileDevice() ? (
+        // Em dispositivos móveis, centraliza no topo
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center pointer-events-auto">
+          <span className="text-cyan-400 font-mono text-lg font-bold tracking-wider">
+        {formatScore(score)}
+          </span>
+        </div>
+      ) : (
+        // Em desktop, canto superior direito
+        <div className="absolute top-4 right-4 flex items-center pointer-events-auto">
+          <span className="text-cyan-400 font-mono text-lg font-bold tracking-wider">
+        {formatScore(score)}
+          </span>
+        </div>
+      )}
 
       {/* Mensagem Central - "PREPARAR" e "ONDA #" */}
       {showMessage && (
