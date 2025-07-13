@@ -2,6 +2,9 @@ export default class ScoreSystem {
   private currentScore: number = 0;
   private hiScore: number = 0;
   private onScoreUpdateCallback?: (score: number, hiScore: number) => void;
+  private onExtraLifeCallback?: () => void;
+  private lastExtraLifeScore: number = 0;
+  private extraLifeThreshold: number = 1000000; // 1 milhão de pontos
 
   constructor(onScoreUpdate?: (score: number, hiScore: number) => void) {
     this.onScoreUpdateCallback = onScoreUpdate;
@@ -18,6 +21,9 @@ export default class ScoreSystem {
     this.hiScore += points;
 
     console.log(`Pontos adicionados: ${points}. Score atual: ${this.currentScore}, HiScore: ${this.hiScore}`);
+
+    // Verificar se deve dar vida extra
+    this.checkForExtraLife();
 
     // Chamar callback para atualizar a UI
     if (this.onScoreUpdateCallback) {
@@ -62,10 +68,35 @@ export default class ScoreSystem {
    */
   public resetCurrentScore(): void {
     this.currentScore = 0;
+    this.lastExtraLifeScore = 0; // Resetar contador de vida extra
     
     if (this.onScoreUpdateCallback) {
       this.onScoreUpdateCallback(this.currentScore, this.hiScore);
     }
+  }
+
+  /**
+   * Verifica se o jogador deve ganhar uma vida extra
+   */
+  private checkForExtraLife(): void {
+    const currentThreshold = Math.floor(this.currentScore / this.extraLifeThreshold);
+    const lastThreshold = Math.floor(this.lastExtraLifeScore / this.extraLifeThreshold);
+
+    if (currentThreshold > lastThreshold) {
+      console.log(`Vida extra ganha! Score: ${this.currentScore}`);
+      this.lastExtraLifeScore = this.currentScore;
+      
+      if (this.onExtraLifeCallback) {
+        this.onExtraLifeCallback();
+      }
+    }
+  }
+
+  /**
+   * Define o callback para quando uma vida extra é ganha
+   */
+  public setOnExtraLifeCallback(callback: () => void): void {
+    this.onExtraLifeCallback = callback;
   }
 
   /**
@@ -74,6 +105,7 @@ export default class ScoreSystem {
   public resetAll(): void {
     this.currentScore = 0;
     this.hiScore = 0;
+    this.lastExtraLifeScore = 0;
     
     if (this.onScoreUpdateCallback) {
       this.onScoreUpdateCallback(this.currentScore, this.hiScore);
