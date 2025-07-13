@@ -136,22 +136,18 @@ class AudioManager {
       return;
     }
 
-    // Se é uma música diferente, parar a atual
-    if (this.currentTrack !== track) {
-      this.stopBackgroundMusic();
+    // Parar música atual se existir
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.currentTime = 0;
+      this.backgroundMusic = null;
     }
 
-    // Definir a track atual sempre
+    // Definir a track atual
     this.currentTrack = track;
 
-    // Não iniciar se estiver mutado, mas manter a track definida
+    // Não iniciar se estiver mutado
     if (this.musicMuted) {
-      return;
-    }
-
-    // Se já existe backgroundMusic para esta track e está pausada, apenas retomar
-    if (this.backgroundMusic && this.backgroundMusic.paused) {
-      this.resumeBackgroundMusic();
       return;
     }
 
@@ -161,30 +157,13 @@ class AudioManager {
       this.backgroundMusic.volume = this.originalMusicVolume;
       this.backgroundMusic.loop = true;
 
-      // Aguardar carregamento
-      await new Promise<void>((resolve, reject) => {
-        const handleCanPlay = () => {
-          this.backgroundMusic?.removeEventListener('canplay', handleCanPlay);
-          this.backgroundMusic?.removeEventListener('error', handleError);
-          resolve();
-        };
-
-        const handleError = (error: Event) => {
-          this.backgroundMusic?.removeEventListener('canplay', handleCanPlay);
-          this.backgroundMusic?.removeEventListener('error', handleError);
-          reject(error);
-        };
-
-        this.backgroundMusic?.addEventListener('canplay', handleCanPlay);
-        this.backgroundMusic?.addEventListener('error', handleError);
-      });
-
-      // Tentar reproduzir imediatamente com diferentes estratégias
-      if (this.backgroundMusic) {
-        await this.attemptAutoplay();
-      }
+      // Tentar reproduzir imediatamente
+      await this.backgroundMusic.play();
+      console.log(`Música ${track} iniciada com sucesso`);
     } catch (error) {
       console.error(`Erro ao reproduzir música ${track}:`, error);
+      // Tentar novamente após interação do usuário
+      this.setupAutoplayListeners();
     }
   }
 
@@ -252,11 +231,19 @@ class AudioManager {
   }
 
   /**
-   * Para música de fundo com fade out (usado para transição de tela).
-   * Use na transição do menu para o gamecanvas.
+   * Para música de fundo imediatamente (usado para transição de música).
    */
   stopBackgroundMusic(): void {
-    this.stopBackgroundMusicAsync();
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.currentTime = 0;
+      this.backgroundMusic = null;
+    }
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    this.removeAutoplayListeners();
   }
 
   /**
@@ -445,13 +432,15 @@ class AudioManager {
 
   // Método para obter track baseada na onda
   private getTrackForWave(wave: number): MusicTrack {
-    const trackIndex = Math.floor((wave - 1) / 5) % 3;
+    // Ondas 1-5: wave-1, Ondas 6-10: wave-2, Ondas 11-15: wave-3, depois repete
+    const trackIndex = ((Math.floor((wave - 1) / 5) % 3));
     return ['wave-1', 'wave-2', 'wave-3'][trackIndex] as MusicTrack;
   }
 
   // Método público para tocar música baseada na onda
   async playWaveMusic(wave: number): Promise<void> {
     const track = this.getTrackForWave(wave);
+    console.log(`Tocando música da onda ${wave}: ${track}`);
     await this.playBackgroundMusic(track);
   }
 
