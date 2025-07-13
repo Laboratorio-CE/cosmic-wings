@@ -73,7 +73,7 @@ export default class BossTypeA extends Boss {
     // Definir primeira posição aleatória na metade superior (mas só será usado após entrar na tela)
     this.setRandomTarget();
     
-    console.log(`Boss Type A criado com ${this.hp} HP no centro da tela`);
+
   }
   
   // Método para calcular pontos baseado na onda
@@ -91,7 +91,7 @@ export default class BossTypeA extends Boss {
     this.speed = Math.min(this.maxSpeed, 120 + (wave * 5));
     this.moveSpeed = this.speed;
     
-    console.log(`Boss ajustado para onda ${wave}: ${this.shotsPerBurst} tiros/rajada, ${this.points} pontos`);
+
   }
   
   private setRandomTarget() {
@@ -141,7 +141,7 @@ export default class BossTypeA extends Boss {
         this.state = 'shooting';
         this.resetShooting();
         this.positionsVisited++;
-        console.log('Boss A chegou na posição inicial, iniciando rajadas');
+
         break;
         
       case 'moving':
@@ -149,7 +149,7 @@ export default class BossTypeA extends Boss {
         this.state = 'shooting';
         this.resetShooting();
         this.positionsVisited++;
-        console.log(`Boss A chegou na posição ${this.positionsVisited}, iniciando rajadas`);
+
         break;
     }
   }
@@ -279,7 +279,7 @@ export default class BossTypeA extends Boss {
   // Sobrescrever método takeDamage para adicionar efeito de flash
   takeDamage(damage: number) {
     this.hp -= damage;
-    console.log(`Boss levou ${damage} de dano. HP restante: ${this.hp}/${this.maxHp}`);
+
     
     // Ativar efeito de flash
     this.activateFlash();
@@ -293,7 +293,6 @@ export default class BossTypeA extends Boss {
     if (this.isFlashing) return; // Evitar múltiplos flashes simultâneos
     
     this.isFlashing = true;
-    console.log('Boss piscando!'); // Debug temporário
     
     // Mudar para cor branca (flash) - usando tint mais intenso
     this.setTintFill(0xffffff);
@@ -302,7 +301,7 @@ export default class BossTypeA extends Boss {
     this.scene.time.delayedCall(50, () => {
       if (this && !this.isDestroyed) {
         this.clearTint();
-        console.log('Flash do boss terminado'); // Debug temporário
+
       }
       this.isFlashing = false;
     });
@@ -318,7 +317,7 @@ export default class BossTypeA extends Boss {
     // Reproduzir som de morte do boss
     AudioManager.getInstance().playSoundEffect('boss-kill');
     
-    console.log(`Boss Type A destruído! Pontuação: ${this.points}`);
+
     
     // Fazer o sprite do boss desaparecer imediatamente
     this.setVisible(false);
@@ -376,7 +375,7 @@ export default class BossTypeA extends Boss {
         const screenHeight = this.getScreenHeight();
         if (this.y >= screenHeight * 0.167) { // ~100px numa tela de 600px
           this.state = 'moving_to_position';
-          console.log('Boss A entrou na tela, movendo para posição inicial');
+  
         }
         break;
         
@@ -417,10 +416,10 @@ export default class BossTypeA extends Boss {
   
   private onCompletedShooting() {
     // Boss nunca vai embora, sempre move para nova posição
-    console.log(`Boss A completou rajadas na posição ${this.positionsVisited}, movendo para nova posição`);
+
     this.setRandomTarget();
     this.state = 'moving';
-    console.log(`Boss A indo para nova posição: (${this.targetX.toFixed(0)}, ${this.targetY.toFixed(0)})`);
+
   }
   
   // Método update para compatibilidade com GameCanvas

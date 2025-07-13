@@ -20,7 +20,7 @@ export default class ScoreSystem {
     this.currentScore += points;
     this.hiScore += points;
 
-    console.log(`Pontos adicionados: ${points}. Score atual: ${this.currentScore}, HiScore: ${this.hiScore}`);
+
 
     // Verificar se deve dar vida extra
     this.checkForExtraLife();
@@ -36,7 +36,7 @@ export default class ScoreSystem {
    * @param entity - A entidade destruída (para obter os pontos)
    */
   public addScoreForEnemyKilled(entity: { points: number; entityType: string }): void {
-    console.log(`${entity.entityType} destruído! Pontos: ${entity.points}`);
+
     this.addScore(entity.points);
   }
 
@@ -45,7 +45,7 @@ export default class ScoreSystem {
    * @param points - Quantidade de pontos do boss
    */
   public addScoreForBossDefeated(points: number): void {
-    console.log(`Boss derrotado! Pontos: ${points}`);
+
     this.addScore(points);
   }
 
@@ -83,7 +83,7 @@ export default class ScoreSystem {
     const lastThreshold = Math.floor(this.lastExtraLifeScore / this.extraLifeThreshold);
 
     if (currentThreshold > lastThreshold) {
-      console.log(`Vida extra ganha! Score: ${this.currentScore}`);
+
       this.lastExtraLifeScore = this.currentScore;
       
       if (this.onExtraLifeCallback) {

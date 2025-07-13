@@ -380,7 +380,7 @@ export default class EnemyTypeC extends AbstractEntity {
     this.speed = Math.min(this.maxSpeed, 120 + (wave * 5));
     this.moveSpeed = Math.min(180, this.moveSpeed + (wave * 3));
     
-    console.log(`Enemy C ajustado para onda ${wave}: ${this.shotsPerBurstC} tiros/rajada, ${this.points} pontos`);
+
   }
 
   // Hook sobrescrito para quando o inimigo é destruído

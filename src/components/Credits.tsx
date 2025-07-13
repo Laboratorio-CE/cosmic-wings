@@ -17,7 +17,7 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
     try {
       audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao reproduzir som de confirmação:', error);
+      // Erro ao reproduzir som de confirmação
     }
   };
 

@@ -32,17 +32,25 @@ class AudioManager {
     // Tenta reproduzir e pausar rapidamente todos os efeitos e música para desbloquear contexto
     if (this.backgroundMusic) {
       try {
-        this.backgroundMusic.play().then(() => {
-          this.backgroundMusic?.pause();
-        }).catch(() => {});
-      } catch {}
+      this.backgroundMusic.play().then(() => {
+        this.backgroundMusic?.pause();
+      }).catch((error) => {
+        console.warn('Erro ao desbloquear contexto de áudio da música:', error);
+      });
+      } catch (error) {
+      console.warn('Erro ao tentar desbloquear contexto de áudio da música:', error);
+      }
     }
     this.soundEffects.forEach(audio => {
       try {
-        audio.play().then(() => {
-          audio.pause();
-        }).catch(() => {});
-      } catch {}
+      audio.play().then(() => {
+        audio.pause();
+      }).catch((error) => {
+        console.warn('Erro ao desbloquear contexto de áudio do efeito:', error);
+      });
+      } catch (error) {
+      console.warn('Erro ao tentar desbloquear contexto de áudio do efeito:', error);
+      }
     });
     // Marca que o usuário interagiu para liberar tentativas futuras
     this.userInteracted = true;
@@ -103,24 +111,22 @@ class AudioManager {
 
   // Pré-carrega todos os efeitos sonoros com logs para depuração
   private preloadSoundEffects(): void {
-    console.log('Iniciando pré-carregamento de efeitos sonoros...');
-    console.log('Arquivos disponíveis:', this.soundEffectFiles);
+
+
     
     Object.entries(this.soundEffectFiles).forEach(([effect, file]) => {
       try {
-        console.log(`Carregando efeito sonoro: ${effect} de ${file}`);
+
         const audio = new Audio(file);
         audio.preload = 'auto';
         audio.volume = this.originalSoundVolume; // Volume moderado para efeitos
         this.soundEffects.set(effect as SoundEffect, audio);
-        console.log(`Efeito sonoro carregado com sucesso: ${effect}`);
+
       } catch (error) {
         console.warn(`Erro ao pré-carregar efeito sonoro ${effect}:`, error);
       }
     });
-    
-    console.log('Map de efeitos sonoros carregados:', this.soundEffects);
-    console.log('Efeitos disponíveis:', Array.from(this.soundEffects.keys()));
+
   }
 
   // Reproduz música de fundo
@@ -190,10 +196,10 @@ class AudioManager {
     try {
       await this.backgroundMusic.play();
       this.userInteracted = true;
-      console.log('Música iniciada automaticamente');
+
       return;
     } catch (error) {
-      console.log('Autoplay bloqueado pelo navegador, aguardando interação do usuário');
+      console.warn('Erro ao tentar autoplay da música:', error);
     }
 
     // Estratégia 2: Configurar para tentar novamente em eventos específicos
@@ -210,11 +216,10 @@ class AudioManager {
       try {
         await this.backgroundMusic.play();
         this.userInteracted = true;
-        console.log('Música iniciada após interação do usuário');
+
         this.removeAutoplayListeners();
       } catch (error) {
-        // Ainda não conseguiu, listeners continuam ativos
-        console.log('Tentativa de reprodução falhou, aguardando próxima interação');
+        console.warn('Erro ao tentar autoplay da música após interação:', error);
       }
     };
 
@@ -328,29 +333,27 @@ class AudioManager {
   playSoundEffect(effect: SoundEffect): void {
     // Proteção extra: se o Map estiver vazio, tenta re-preload
     if (this.soundEffects.size === 0) {
-      console.warn('Map de efeitos sonoros vazio, tentando recarregar...');
+
       this.preloadSoundEffects();
     }
-    console.log(`Tentando reproduzir efeito sonoro: ${effect}`);
-    console.log('Efeitos disponíveis:', Array.from(this.soundEffects.keys()));
-    console.log('Efeito existe no Map:', this.soundEffects.has(effect));
+
+
+
     this.markUserInteraction();
     if (this.soundMuted) {
-      console.warn('Efeitos sonoros estão mutados.');
+
       return;
     }
     const audio = this.soundEffects.get(effect);
     if (audio) {
       try {
-        console.log(`Reproduzindo efeito sonoro: ${effect}`);
+
         // Reset para permitir múltiplas reproduções
         audio.currentTime = 0;
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise
-            .then(() => {
-              console.log(`Efeito sonoro ${effect} reproduzido com sucesso`);
-            })
+
             .catch(error => {
               console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
             });
@@ -359,8 +362,8 @@ class AudioManager {
         console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
       }
     } else {
-      console.error(`Efeito sonoro não encontrado: ${effect}`);
-      console.error('Efeitos disponíveis no Map:', Array.from(this.soundEffects.keys()));
+
+
     }
   }
 
@@ -412,7 +415,7 @@ class AudioManager {
     if (this.currentTrack && !this.musicMuted) {
       try {
         await this.playBackgroundMusic(this.currentTrack);
-        console.log('Música pendente iniciada com sucesso');
+
       } catch (error) {
         console.error('Erro ao iniciar música pendente:', error);
         // Reset do estado para permitir nova tentativa
@@ -428,7 +431,7 @@ class AudioManager {
       // Se há uma música definida e não está mutada, tentar tocar
       if (this.currentTrack && !this.musicMuted) {
         this.playBackgroundMusic(this.currentTrack).catch(error => {
-          console.warn('Erro ao iniciar música após marcação de interação:', error);
+          console.error('Erro ao tentar tocar música após interação do usuário:', error);
         });
       }
     }

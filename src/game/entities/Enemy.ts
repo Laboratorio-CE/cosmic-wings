@@ -44,6 +44,6 @@ export default class Enemy extends AbstractEntity {
   protected onDestroy(): void {
     // Reproduzir som de morte do inimigo
     this.scene.sound.play('enemy-kill', { volume: 0.3 });
-    console.log(`Enemy destroyed! Points: ${this.points}`);
+
   }
 }

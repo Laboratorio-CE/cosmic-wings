@@ -166,7 +166,7 @@ export default class EnemyTypeB extends AbstractEntity {
   
   private shootAngled(angleDegrees: number): void {
     // Implementação futura para integração com sistema de projéteis
-    console.log(`EnemyTypeB shooting angled projectile at ${angleDegrees}° from position (${this.x}, ${this.y})`);
+
     
     // Exemplo de como seria a integração:
 

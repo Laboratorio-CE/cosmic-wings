@@ -59,7 +59,7 @@ export default class Boss extends Enemy {
   protected onDestroy(): void {
     // Reproduzir som de morte do boss
     this.scene.sound.play('boss-kill', { volume: 0.5 });
-    console.log(`Boss destroyed! Points: ${this.points}`);
+
   }
   
   /** Método para criar animação de destruição */

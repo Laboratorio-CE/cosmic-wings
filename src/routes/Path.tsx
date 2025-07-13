@@ -39,7 +39,7 @@ export default class Path extends Component<Props, State> {
     
     // Tentar iniciar música do menu imediatamente
     this.audioManager.playBackgroundMusic('menu').catch(() => {
-      console.log('Música será reproduzida após primeira interação do usuário');
+
     });
 
     // Adicionar listener para tentar iniciar música em qualquer interação inicial
@@ -80,14 +80,14 @@ export default class Path extends Component<Props, State> {
       try {
         await this.audioManager.playBackgroundMusic('menu');
       } catch (error) {
-        console.log('Erro ao iniciar música na navegação:', error);
+
       }
     } else if (route !== '/play' && this.state.currentRoute !== '/play') {
       // Garantir que a música do menu esteja tocando em todas as telas de menu
       try {
         await this.audioManager.playBackgroundMusic('menu');
       } catch (error) {
-        console.log('Erro ao manter música do menu:', error);
+
       }
     }
 

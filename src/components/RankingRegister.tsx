@@ -29,7 +29,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
     try {
       audioManager.playSoundEffect('menu-navigate');
     } catch (error) {
-      console.log('Erro ao reproduzir som de navegação:', error);
+      // Erro ao reproduzir som de navegação
     }
   };
 
@@ -38,7 +38,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
     try {
       audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao reproduzir som de confirmação:', error);
+      // Erro ao reproduzir som de confirmação
     }
   };
 

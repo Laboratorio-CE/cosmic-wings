@@ -73,7 +73,7 @@ export default class BossTypeC extends Boss {
     // Definir primeira posição aleatória
     this.setNextPosition();
     
-    console.log(`Boss Type C criado com ${this.hp} HP`);
+
   }
   
   // Sobrescrever método para calcular pontos baseado na onda
@@ -91,7 +91,7 @@ export default class BossTypeC extends Boss {
     this.speed = Math.min(this.maxSpeed, 180 + (wave * 5));
     this.moveSpeed = this.speed;
     
-    console.log(`Boss C ajustado para onda ${wave}: ${this.shotsPerBurstC} tiros/rajada, ${this.points} pontos`);
+
   }
   
   private setNextPosition() {
@@ -307,7 +307,7 @@ export default class BossTypeC extends Boss {
   // Sobrescrever método takeDamage para adicionar efeito de flash
   takeDamage(damage: number) {
     this.hp -= damage;
-    console.log(`Boss C levou ${damage} de dano. HP restante: ${this.hp}/${this.maxHp}`);
+
     
     // Ativar efeito de flash
     this.activateFlash();
@@ -321,7 +321,6 @@ export default class BossTypeC extends Boss {
     if (this.isFlashing) return; // Evitar múltiplos flashes simultâneos
     
     this.isFlashing = true;
-    console.log('Boss C piscando!');
     
     // Mudar para cor branca (flash)
     this.setTintFill(0xffffff);
@@ -330,7 +329,7 @@ export default class BossTypeC extends Boss {
     this.scene.time.delayedCall(50, () => {
       if (this && !this.isDestroyed) {
         this.clearTint();
-        console.log('Flash do boss C terminado');
+
       }
       this.isFlashing = false;
     });
@@ -346,7 +345,7 @@ export default class BossTypeC extends Boss {
     // Reproduzir som de morte do boss
     AudioManager.getInstance().playSoundEffect('boss-kill');
     
-    console.log(`Boss Type C destruído! Pontuação: ${this.points}`);
+
     
     // Fazer o sprite do boss desaparecer imediatamente
     this.setVisible(false);

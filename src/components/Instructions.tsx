@@ -30,7 +30,7 @@ export default class Instructions extends Component<Props, State> {
     try {
       this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao reproduzir som de confirmação:', error);
+      // Erro ao reproduzir som de confirmação
     }
   }
 
