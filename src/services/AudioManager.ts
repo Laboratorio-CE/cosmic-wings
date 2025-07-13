@@ -27,7 +27,29 @@ export interface AudioState {
 
 // Singleton para gerenciar todo o sistema de áudio
 class AudioManager {
-  private static instance: AudioManager;
+  // Desbloqueia contexto de áudio para todos os elementos de áudio
+  unlockAudioContext(): void {
+    // Tenta reproduzir e pausar rapidamente todos os efeitos e música para desbloquear contexto
+    if (this.backgroundMusic) {
+      try {
+        this.backgroundMusic.play().then(() => {
+          this.backgroundMusic?.pause();
+        }).catch(() => {});
+      } catch {}
+    }
+    this.soundEffects.forEach(audio => {
+      try {
+        audio.play().then(() => {
+          audio.pause();
+        }).catch(() => {});
+      } catch {}
+    });
+    // Marca que o usuário interagiu para liberar tentativas futuras
+    this.userInteracted = true;
+    // Remove listeners de autoplay se existirem
+    this.removeAutoplayListeners();
+  }
+  private static instance: AudioManager | undefined;
   private backgroundMusic: HTMLAudioElement | null = null;
   private soundEffects: Map<SoundEffect, HTMLAudioElement> = new Map();
   private musicMuted: boolean = false;
@@ -63,7 +85,11 @@ class AudioManager {
 
   // Construtor privado para implementar Singleton
   private constructor() {
+    if (AudioManager.instance) {
+      return AudioManager.instance;
+    }
     this.preloadSoundEffects();
+    AudioManager.instance = this;
   }
 
   // Método estático para obter a instância única
@@ -74,35 +100,51 @@ class AudioManager {
     return AudioManager.instance;
   }
 
-  // Pré-carrega todos os efeitos sonoros
+  // Pré-carrega todos os efeitos sonoros com logs para depuração
   private preloadSoundEffects(): void {
+    console.log('Iniciando pré-carregamento de efeitos sonoros...');
+    console.log('Arquivos disponíveis:', this.soundEffectFiles);
+    
     Object.entries(this.soundEffectFiles).forEach(([effect, file]) => {
       try {
+        console.log(`Carregando efeito sonoro: ${effect} de ${file}`);
         const audio = new Audio(file);
         audio.preload = 'auto';
         audio.volume = this.originalSoundVolume; // Volume moderado para efeitos
         this.soundEffects.set(effect as SoundEffect, audio);
+        console.log(`Efeito sonoro carregado com sucesso: ${effect}`);
       } catch (error) {
         console.warn(`Erro ao pré-carregar efeito sonoro ${effect}:`, error);
       }
     });
+    
+    console.log('Map de efeitos sonoros carregados:', this.soundEffects);
+    console.log('Efeitos disponíveis:', Array.from(this.soundEffects.keys()));
   }
 
   // Reproduz música de fundo
   async playBackgroundMusic(track: MusicTrack): Promise<void> {
     // Se a mesma música já está tocando, não fazer nada
-    if (this.currentTrack === track && this.backgroundMusic && !this.backgroundMusic.paused) {
+    if (this.currentTrack === track && this.backgroundMusic && !this.backgroundMusic.paused && !this.musicMuted) {
       return;
     }
 
-    // Parar música atual se existir
-    this.stopBackgroundMusic();
+    // Se é uma música diferente, parar a atual
+    if (this.currentTrack !== track) {
+      this.stopBackgroundMusic();
+    }
 
-    // Definir a track atual sempre, mesmo se mutado
+    // Definir a track atual sempre
     this.currentTrack = track;
 
-    // Não iniciar se estiver mutado
+    // Não iniciar se estiver mutado, mas manter a track definida
     if (this.musicMuted) {
+      return;
+    }
+
+    // Se já existe backgroundMusic para esta track e está pausada, apenas retomar
+    if (this.backgroundMusic && this.backgroundMusic.paused) {
+      this.resumeBackgroundMusic();
       return;
     }
 
@@ -203,7 +245,7 @@ class AudioManager {
     }
   }
 
-  // Para música de fundo com fade out
+  // Para música de fundo com fade out (usado para mudança de tela)
   stopBackgroundMusic(): void {
     if (!this.backgroundMusic) return;
 
@@ -234,56 +276,82 @@ class AudioManager {
           this.backgroundMusic.currentTime = 0;
           this.backgroundMusic = null;
         }
-        this.currentTrack = null;
+        this.currentTrack = null; // Só resetar quando realmente parar
       }
     }, stepDuration);
   }
 
-  // Reproduz efeito sonoro
+  // Para música imediatamente (usado para mute)
+  private pauseBackgroundMusic(): void {
+    if (this.backgroundMusic && !this.backgroundMusic.paused) {
+      this.backgroundMusic.pause();
+    }
+  }
+
+  // Retoma música pausada (usado para unmute)
+  private resumeBackgroundMusic(): void {
+    if (this.backgroundMusic && this.backgroundMusic.paused) {
+      this.backgroundMusic.play().catch(error => {
+        console.warn('Erro ao retomar música:', error);
+      });
+    }
+  }
+
+  // Reproduz efeito sonoro com logs para depuração
   playSoundEffect(effect: SoundEffect): void {
-    if (this.soundMuted) return;
+    console.log(`Tentando reproduzir efeito sonoro: ${effect}`);
+    console.log('Efeitos disponíveis:', Array.from(this.soundEffects.keys()));
+    console.log('Efeito existe no Map:', this.soundEffects.has(effect));
+    
+    this.markUserInteraction();
+
+    if (this.soundMuted) {
+      console.warn('Efeitos sonoros estão mutados.');
+      return;
+    }
 
     const audio = this.soundEffects.get(effect);
     if (audio) {
       try {
+        console.log(`Reproduzindo efeito sonoro: ${effect}`);
         // Reset para permitir múltiplas reproduções
         audio.currentTime = 0;
         const playPromise = audio.play();
-        
+
         if (playPromise !== undefined) {
-          playPromise.then(() => {
-            // Marcar como interagido se conseguir reproduzir
-            this.userInteracted = true;
-          }).catch(error => {
-            // Se falhar por falta de interação, não fazer nada especial
-            if (!this.userInteracted) {
-              console.log(`Efeito ${effect} aguardando primeira interação`);
-            } else {
+          playPromise
+            .then(() => {
+              console.log(`Efeito sonoro ${effect} reproduzido com sucesso`);
+            })
+            .catch(error => {
               console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
-            }
-          });
+            });
         }
       } catch (error) {
         console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
       }
+    } else {
+      console.error(`Efeito sonoro não encontrado: ${effect}`);
+      console.error('Efeitos disponíveis no Map:', Array.from(this.soundEffects.keys()));
     }
   }
 
   // Toggle música de fundo
   async toggleMusic(): Promise<void> {
+    // Marcar interação do usuário
+    this.markUserInteraction();
+    
     this.musicMuted = !this.musicMuted;
 
     if (this.musicMuted) {
-      // Setar volume para 0 em vez de pausar
-      if (this.backgroundMusic) {
-        this.backgroundMusic.volume = 0;
-      }
+      // Pausar música em vez de zerar volume
+      this.pauseBackgroundMusic();
     } else {
-      // Retomar volume original
+      // Se há música carregada, retomar
       if (this.backgroundMusic) {
-        this.backgroundMusic.volume = this.originalMusicVolume;
-      } else if (this.currentTrack && this.userInteracted) {
-        // Se não há música tocando mas deveria ter, iniciar
+        this.resumeBackgroundMusic();
+      } else if (this.currentTrack) {
+        // Se não há música carregada mas há uma track definida, iniciar
         try {
           await this.playBackgroundMusic(this.currentTrack);
         } catch (error) {
@@ -295,6 +363,9 @@ class AudioManager {
 
   // Toggle efeitos sonoros
   toggleSound(): void {
+    // Marcar interação do usuário
+    this.markUserInteraction();
+    
     this.soundMuted = !this.soundMuted;
     
     // Setar volume para 0 ou volume original para todos os efeitos sonoros
@@ -310,14 +381,27 @@ class AudioManager {
     this.userInteracted = true;
     
     // Tentar iniciar música se houver uma pendente
-    if (this.currentTrack && !this.musicMuted && this.backgroundMusic && this.backgroundMusic.paused) {
+    if (this.currentTrack && !this.musicMuted) {
       try {
-        await this.backgroundMusic.play();
+        await this.playBackgroundMusic(this.currentTrack);
         console.log('Música pendente iniciada com sucesso');
       } catch (error) {
         console.error('Erro ao iniciar música pendente:', error);
         // Reset do estado para permitir nova tentativa
         this.userInteracted = false;
+      }
+    }
+  }
+
+  // Método para forçar interação do usuário (chamado pelos botões)
+  markUserInteraction(): void {
+    if (!this.userInteracted) {
+      this.userInteracted = true;
+      // Se há uma música definida e não está mutada, tentar tocar
+      if (this.currentTrack && !this.musicMuted) {
+        this.playBackgroundMusic(this.currentTrack).catch(error => {
+          console.warn('Erro ao iniciar música após marcação de interação:', error);
+        });
       }
     }
   }

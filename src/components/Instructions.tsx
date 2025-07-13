@@ -202,7 +202,10 @@ export default class Instructions extends Component<Props, State> {
         {this.props.onNavigate && (
           <div className="text-center mt-6">
             <button
-              onClick={() => this.animatePress()}
+              onClick={() => {
+                this.playConfirmSound();
+                this.animatePress();
+              }}
               className={`
                 relative flex items-center justify-center w-56 p-2 font-bold text-base transition-all duration-200 cursor-pointer mx-auto text-yellow-300
                 ${this.state.isPressed ? "scale-105" : "scale-100"}

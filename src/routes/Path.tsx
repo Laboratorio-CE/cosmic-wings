@@ -41,6 +41,19 @@ export default class Path extends Component<Props, State> {
     this.audioManager.playBackgroundMusic('menu').catch(() => {
       console.log('Música será reproduzida após primeira interação do usuário');
     });
+
+    // Adicionar listener para tentar iniciar música em qualquer interação inicial
+    const handleFirstInteraction = () => {
+      this.audioManager.markUserInteraction();
+      // Remover listeners após primeira interação
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction, { once: true });
+    document.addEventListener('keydown', handleFirstInteraction, { once: true });
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
   }
 
   componentWillUnmount() {

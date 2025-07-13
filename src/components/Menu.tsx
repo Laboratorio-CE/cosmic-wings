@@ -162,7 +162,8 @@ export default class Menu extends Component<Props, State> {
                 onClick={() => {
                   // Tentar iniciar música na primeira interação
                   this.handleFirstInteraction();
-                  
+                  // Reproduzir som de confirmação
+                  this.playConfirmSound();
                   // Em mobile, apenas seleciona se for diferente do atual
                   if (window.innerWidth < 640) { // sm breakpoint
                     if (selectedIndex !== index) {
