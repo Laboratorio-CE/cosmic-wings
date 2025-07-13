@@ -96,7 +96,7 @@ export default class EnemyTypeB extends AbstractEntity {
     private setExitTarget(): void {
     // Definir ponto de saída (fora da tela, na parte inferior)
     this.targetX = this.x; // Manter X atual
-    this.targetY = 700; // Sair pela parte inferior
+    this.targetY = this.getScreenHeight() + 100; // Sair pela parte inferior
   }
   
   private moveToTarget(dt: number): void {
@@ -352,7 +352,7 @@ export default class EnemyTypeB extends AbstractEntity {
       case 'leaving':
         this.moveToTarget(dt);
         // Verificar se saiu da tela
-        if (this.y > 650) {
+        if (this.y > this.getScreenHeight()) {
           this.destroy();
         }
         break;

@@ -69,8 +69,10 @@ export default class EnemyTypeC extends AbstractEntity {
 
   private setNextPosition() {
     // Gerar posição aleatória inicial na área de jogo
-    const preferredX = Phaser.Math.Between(150, 650);
-    const preferredY = Phaser.Math.Between(120, 250);
+    const screenWidth = this.getScreenWidth();
+    const screenHeight = this.getScreenHeight();
+    const preferredX = Phaser.Math.Between(screenWidth * 0.1875, screenWidth * 0.8125); // 150/800 = 0.1875, 650/800 = 0.8125
+    const preferredY = Phaser.Math.Between(screenHeight * 0.2, screenHeight * 0.417); // 120/600 = 0.2, 250/600 = 0.417
     
     // Encontrar posição livre
     const gameScene = this.scene as GameCanvas;

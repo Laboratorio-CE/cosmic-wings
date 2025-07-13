@@ -304,7 +304,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       invulnerabilityDuration = 5000; // 5 segundos de invencibilidade
       invulnerabilityStartTime = 0;
       respawnDelay = 2000; // 2 segundos para respawn
-      originalPlayerPosition = { x: 400, y: 550 };
+      
+      // Inicializar posição do jogador como dinâmica
+      originalPlayerPosition = { x: 0, y: 0 };
 
       // Sistema de sub-ondas
       currentSubWave = 1;
@@ -426,7 +428,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isGameOver = true;
 
         // Criar retângulo preto que cobre toda a tela
-        this.gameOverOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000);
+        const gameWidth = this.cameras.main.width;
+        const gameHeight = this.cameras.main.height;
+        this.gameOverOverlay = this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x000000);
         this.gameOverOverlay.setAlpha(0); // Começa transparente
         this.gameOverOverlay.setDepth(1000); // Garantir que fique acima de tudo
 
@@ -519,7 +523,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
 
         // Instanciar o sistema de posições
-        this.positionManager = new PositionManager(800, 600);
+        const canvasWidth = this.cameras.main.width;
+        const canvasHeight = this.cameras.main.height;
+        this.positionManager = new PositionManager(canvasWidth, canvasHeight);
 
         // Instanciar o sistema de pontuação
         this.scoreSystem = new ScoreSystem((score, hiScore) => {
@@ -531,8 +537,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         scoreSystemRef.current = this.scoreSystem;
 
         // Criar o player no centro do fundo da tela
-        this.player = this.add.sprite(400, 550, "player-frame-1");
+        const playerAreaWidth = this.cameras.main.width;
+        const playerAreaHeight = this.cameras.main.height;
+        const playerX = playerAreaWidth / 2;
+        const playerY = playerAreaHeight - 50; // 50px da borda inferior
+        
+        this.player = this.add.sprite(playerX, playerY, "player-frame-1");
         this.player.setScale(0.8); // Ajustar tamanho se necessário
+        
+        // Atualizar posição original do jogador
+        this.originalPlayerPosition = { x: playerX, y: playerY };
 
         // Criar grupo de projéteis do jogador
         this.playerBullets = this.add.group({
@@ -563,10 +577,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Definir os limites do player dentro do canvas
         if (this.player) {
+          const boundsWidth = this.cameras.main.width;
+          const boundsHeight = this.cameras.main.height;
+          
           this.player.setData("minX", this.player.width * 0.4);
-          this.player.setData("maxX", 800 - this.player.width * 0.4);
+          this.player.setData("maxX", boundsWidth - this.player.width * 0.4);
           this.player.setData("minY", this.player.height * 0.4);
-          this.player.setData("maxY", 600 - this.player.height * 0.4);
+          this.player.setData("maxY", boundsHeight - this.player.height * 0.4);
         }
 
         // Não iniciar o jogo imediatamente - aguardar sequência de mensagens
@@ -790,11 +807,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             }
 
             // Remover projétil se sair da tela (área expandida para garantir limpeza completa)
+            const gameWidth = this.cameras.main.width;
+            const gameHeight = this.cameras.main.height;
+            
             if (
-              sprite.y > 650 ||
+              sprite.y > gameHeight + 50 ||
               sprite.y < -50 ||
               sprite.x < -50 ||
-              sprite.x > 850
+              sprite.x > gameWidth + 50
             ) {
               sprite.setActive(false);
               sprite.setVisible(false);
@@ -821,12 +841,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Limpeza agressiva de projéteis dos inimigos
         this.enemyBullets.children.entries.forEach((bullet) => {
           const sprite = bullet as Phaser.GameObjects.Sprite;
+          const cleanupWidth = this.cameras.main.width;
+          const cleanupHeight = this.cameras.main.height;
+          
           if (
             sprite.active &&
-            (sprite.y > 700 ||
+            (sprite.y > cleanupHeight + 100 ||
               sprite.y < -100 ||
               sprite.x < -100 ||
-              sprite.x > 900)
+              sprite.x > cleanupWidth + 100)
           ) {
             sprite.setActive(false);
             sprite.setVisible(false);
@@ -1044,7 +1067,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       spawnEnemyA() {
         // Spawnar inimigo do tipo A no topo da tela, posição aleatória
-        const x = Phaser.Math.Between(100, 700);
+        const screenWidth = this.cameras.main.width;
+        const x = Phaser.Math.Between(screenWidth * 0.125, screenWidth * 0.875); // Entre 12.5% e 87.5% da largura
         const y = -50; // Fora da tela, no topo
 
         const enemy = new EnemyTypeA(this, x, y);
@@ -1066,7 +1090,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       spawnEnemyB() {
         // Spawnar inimigo do tipo B no topo da tela, posição aleatória
-        const x = Phaser.Math.Between(200, 600); // Posição mais centralizada para a curva
+        const screenWidth = this.cameras.main.width;
+        const x = Phaser.Math.Between(screenWidth * 0.25, screenWidth * 0.75); // Posição mais centralizada para a curva (25%-75%)
         const y = -50; // Fora da tela, no topo
 
         const enemy = new EnemyTypeB(this, x, y);
@@ -1088,7 +1113,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       spawnEnemyC() {
         // Spawnar inimigo do tipo C no topo da tela, posição aleatória
-        const x = Phaser.Math.Between(250, 550); // Posição centralizada
+        const screenWidth = this.cameras.main.width;
+        const x = Phaser.Math.Between(screenWidth * 0.31, screenWidth * 0.69); // Posição centralizada (31%-69%)
         const y = -50; // Fora da tela, no topo
 
         const enemy = new EnemyTypeC(this, x, y);
@@ -1112,7 +1138,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         console.log(`Spawnando Boss Type B para onda ${this.currentWave}`);
 
         // Spawnar boss no centro superior da tela
-        const bossX = 400; // Centro da tela
+        const bossX = this.cameras.main.width / 2; // Centro da tela dinamicamente
         const bossY = -100; // Fora da tela, no topo
 
         if (this.currentWave === 1) {
@@ -1386,7 +1412,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Posicionar jogador fora da tela (parte inferior)
         if (this.player) {
           this.player.x = this.originalPlayerPosition.x;
-          this.player.y = 700; // Fora da tela, embaixo
+          this.player.y = this.cameras.main.height + 100; // Fora da tela, embaixo
           this.player.setVisible(true);
           this.player.setTexture("player-frame-1");
           this.player.setFlipX(false);
@@ -1515,8 +1541,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       movePlayerToCenter() {
         if (!this.player) return;
 
-        const targetX = 400; // Centro da tela
-        const targetY = 550; // Posição inferior original
+        const targetX = this.cameras.main.width / 2; // Centro da tela dinamicamente
+        const targetY = this.cameras.main.height - 50; // Posição inferior baseada na altura da tela
 
         // Criar tween para movimento suave
         this.tweens.add({
@@ -1611,6 +1637,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     }
 
     // Configuração do Phaser
+    // Detectar se é dispositivo móvel
+    const isMobile = window.innerWidth < 640;
+    
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       backgroundColor: "rgba(0,0,0,0)",
@@ -1619,7 +1648,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       // ↓ ScaleManager assume o tamanho do contêiner
       scale: {
         parent: canvasRef.current!, // div ref
-        mode: Phaser.Scale.RESIZE, // adapta sem distorcer
+        mode: isMobile ? Phaser.Scale.FIT : Phaser.Scale.RESIZE, // FIT em mobile mantém proporção
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 800, // referência interna
         height: 600,
@@ -1706,8 +1735,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         <div className="absolute inset-0 z-0">
           <ScrollingBackground
             speed={currentBackgroundSpeed}
-            width={800}
-            height={600}
           />
         </div>
         {/* Game UI overlay - restrita ao canvas */}

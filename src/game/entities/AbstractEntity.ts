@@ -209,4 +209,13 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
     this.updateAnimation(dt);
     this.updateInvulnerability();
   }
+  
+  /** Métodos auxiliares para obter dimensões da tela dinamicamente */
+  protected getScreenWidth(): number {
+    return this.scene.cameras.main.width;
+  }
+  
+  protected getScreenHeight(): number {
+    return this.scene.cameras.main.height;
+  }
 }
