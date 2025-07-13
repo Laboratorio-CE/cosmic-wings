@@ -79,8 +79,13 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
         return;
       }
 
-      // Previne o comportamento padrão apenas para teclas de navegação
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 's', 'S', 'a', 'A', 'd', 'D'].includes(event.key)) {
+      // Previne o comportamento padrão apenas para teclas de navegação quando o input NÃO está em foco
+      // (já garantido pelo if acima)
+      if ([
+        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'w', 'W', 's', 'S', 'a', 'A', 'd', 'D',
+        'f', 'F', '5', ' ', 'Numpad5'
+      ].includes(event.key)) {
         event.preventDefault();
       }
 
