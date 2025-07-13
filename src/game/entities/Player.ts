@@ -39,7 +39,7 @@ export default class Player extends AbstractEntity {
   
   protected onTakeDamage(damage: number): void {
     // Aplicar efeito visual ou sonoro quando o player toma dano
-    console.log(`Player took ${damage} damage, HP: ${this.hp}/${this.maxHp}`);
+
     
     // Tornar invulnerável por um curto período
     this.makeInvulnerable(1000); // 1 segundo de invulnerabilidade
@@ -48,6 +48,6 @@ export default class Player extends AbstractEntity {
   protected onDestroy(): void {
     // Reproduzir som de morte do player
     this.scene.sound.play('player-kill', { volume: 0.5 });
-    console.log('Player destroyed!');
+
   }
 }

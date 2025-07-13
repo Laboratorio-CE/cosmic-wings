@@ -115,26 +115,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   // Event listener para pausa global
   useEffect(() => {
     const handleTogglePause = () => {
-      console.log('Toggle pause called, current gameState:', gameState);
+  
       
       if (gameState === 'playing') {
-        console.log('Pausing game...');
+
         setGameState('paused');
         // Pausar o background
         setCurrentBackgroundSpeed(0);
         // Pausar o jogo Phaser completamente
         if (gameRef.current) {
-          console.log('Pausing Phaser game');
+
           gameRef.current.scene.pause('MainGameScene');
         }
       } else if (gameState === 'paused') {
-        console.log('Resuming game...');
+
         setGameState('playing');
         // Retomar o background
         setCurrentBackgroundSpeed(backgroundSpeed);
         // Retomar o jogo Phaser
         if (gameRef.current) {
-          console.log('Resuming Phaser game');
+
           gameRef.current.scene.resume('MainGameScene');
         }
       }
@@ -151,7 +151,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        console.log('ESC key pressed, dispatching toggleGamePause');
+
         // Dispatchar evento de pausa/retomada
         window.dispatchEvent(new CustomEvent('toggleGamePause'));
       }
@@ -193,7 +193,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     };
 
     const handlePhaserPreloadComplete = () => {
-      console.log('Phaser preload concluído, iniciando sequência de mensagens');
+
       setIsLoading(false);
       
       // Sequência de mensagens: "Preparar" (1s) → "Onda 1" (1s) → iniciar jogo
@@ -404,7 +404,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           duration: 2000, // 2 segundos para fazer o fade
           ease: "Power2",
           onComplete: () => {
-            console.log("Fade de game over completo - tela 100% preta");
+
           },
         });
       }
@@ -504,7 +504,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           // Tocar som de powerup
           audioManager.playSoundEffect('powerup');
           
-          console.log(`Vida extra! Vidas totais: ${this.playerLives}`);
+
         });
         
         // Armazenar referência no ref para acesso externo
@@ -516,8 +516,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         const playerX = playerAreaWidth / 2;
         const playerY = playerAreaHeight - 50; // 50px da borda inferior
         
-        console.log(`Dimensões iniciais da câmera: ${playerAreaWidth}x${playerAreaHeight}`);
-        console.log(`Posição inicial do jogador: (${playerX}, ${playerY})`);
+
+
         
         this.player = this.add.sprite(playerX, playerY, "player-frame-1");
         this.player.setScale(0.8); // Ajustar tamanho se necessário
@@ -836,16 +836,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           }
         });
 
-        // Log para debug (remover em produção)
-        const activePlayerBullets = this.playerBullets.children.entries.filter(
-          (b) => (b as Phaser.GameObjects.Sprite).active
-        ).length;
-        const activeEnemyBullets = this.enemyBullets.children.entries.filter(
-          (b) => (b as Phaser.GameObjects.Sprite).active
-        ).length;
-        console.log(
-          `Projéteis ativos - Jogador: ${activePlayerBullets}, Inimigos: ${activeEnemyBullets}`
-        );
       }
 
       updateEnemies() {
@@ -876,16 +866,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             this.currentBoss.update();
           } else {
             this.currentBoss = null;
-            console.log("Boss foi derrotado!");
           }
         }
 
         // Atualizar contador de inimigos derrotados apenas com os que foram mortos pelo jogador
         if (enemiesKilledByPlayer > 0) {
           this.enemiesDefeated += enemiesKilledByPlayer;
-          console.log(
-            `${enemiesKilledByPlayer} inimigo(s) derrotado(s) pelo jogador. Total derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
-          );
           this.lastEnemyKilledTime = this.time.now;
         }
 
@@ -893,9 +879,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         const enemiesThatLeft =
           previousEnemyCount - this.enemies.length - enemiesKilledByPlayer;
         if (enemiesThatLeft > 0) {
-          console.log(
-            `${enemiesThatLeft} inimigo(s) saíram da tela (não contabilizados como derrotados)`
-          );
+
         }
 
         // Verificar se deve spawnar boss (apenas se não estivermos em transição de onda)
@@ -905,9 +889,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           !this.shouldSpawnBoss &&
           !this.isInWaveTransition
         ) {
-          console.log(
-            "Todos os inimigos da onda foram derrotados. Boss spawnará em 5 segundos..."
-          );
+
           this.shouldSpawnBoss = true;
           this.bossSpawnTimer = this.time.now;
         }
@@ -942,10 +924,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
 
       spawnSubWave(subWave: number) {
-        console.log(
-          `DEBUG - spawnSubWave chamada com subWave=${subWave}, currentWave=${this.currentWave}`
-        );
-        console.log(`Spawning sub-onda ${subWave} da onda ${this.currentWave}`);
+
+
 
         // Primeiras 5 sub-ondas da onda 1 são fixas
         if (this.currentWave === 1 && subWave <= 5) {
@@ -996,9 +976,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           const increment = Phaser.Math.Between(5, 10);
           this.maxEnemiesInWave = previousMax + increment;
         }
-        console.log(
-          `Onda ${wave}: Máximo de ${this.maxEnemiesInWave} inimigos`
-        );
+
       }
 
       spawnMultipleEnemiesTypeA(count: number) {
@@ -1024,9 +1002,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         let enemiesToSpawn = 5 + Math.floor((this.currentWave - 1) / 2);
         enemiesToSpawn = Math.min(enemiesToSpawn, 15); // Máximo de 15 inimigos por spawn
 
-        console.log(
-          `Spawning ${enemiesToSpawn} inimigos aleatórios (derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave})`
-        );
+
 
         for (let i = 0; i < enemiesToSpawn; i++) {
           const enemyType = Phaser.Math.Between(1, 3);
@@ -1063,9 +1039,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         this.enemies.push(enemy);
 
-        console.log(
-          `Enemy A spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
-        );
+
       }
 
       spawnEnemyB() {
@@ -1086,9 +1060,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         this.enemies.push(enemy);
 
-        console.log(
-          `Enemy B spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
-        );
+
       }
 
       spawnEnemyC() {
@@ -1109,13 +1081,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         
         this.enemies.push(enemy);
 
-        console.log(
-          `Enemy C spawnado. Derrotados: ${this.enemiesDefeated}/${this.maxEnemiesInWave}`
-        );
+
       }
 
       spawnBoss() {
-        console.log(`Spawnando Boss Type B para onda ${this.currentWave}`);
+
 
         // Spawnar boss no centro superior da tela
         const bossX = this.cameras.main.width / 2; // Centro da tela dinamicamente
@@ -1131,9 +1101,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               this.scoreSystem.addScoreForEnemyKilled(entity);
             }
           });
-          console.log(
-            `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-          );
+
         } else if (this.currentWave === 2) {
           // Boss tipo B fixo para onda 2
           this.currentBoss = new BossTypeB(this, bossX, bossY);
@@ -1144,9 +1112,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               this.scoreSystem.addScoreForEnemyKilled(entity);
             }
           });
-          console.log(
-            `Boss Type B spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-          );
+
         } else if (this.currentWave === 3) {
           // Boss tipo C fixo para onda 3
           this.currentBoss = new BossTypeC(this, bossX, bossY);
@@ -1157,9 +1123,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               this.scoreSystem.addScoreForEnemyKilled(entity);
             }
           });
-          console.log(
-            `Boss Type C spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-          );
+
         } else {
           // Da onda 4 em diante: spawnar boss aleatório
           const randomBossType = Phaser.Math.Between(1, 3);
@@ -1173,9 +1137,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
                 this.scoreSystem.addScoreForEnemyKilled(entity);
               }
             });
-            console.log(
-              `Boss Type A aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-            );
+
           } else if (randomBossType === 2) {
             this.currentBoss = new BossTypeB(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
@@ -1185,9 +1147,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
                 this.scoreSystem.addScoreForEnemyKilled(entity);
               }
             });
-            console.log(
-              `Boss Type B aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-            );
+
           } else {
             this.currentBoss = new BossTypeC(this, bossX, bossY);
             this.currentBoss.adjustForWave(this.currentWave);
@@ -1197,9 +1157,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
                 this.scoreSystem.addScoreForEnemyKilled(entity);
               }
             });
-            console.log(
-              `Boss Type C aleatório spawnado com ${this.currentBoss.hp} HP e ${this.currentBoss.points} pontos`
-            );
+
           }
         }
       }
@@ -1286,9 +1244,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               bulletSprite.setActive(false);
               bulletSprite.setVisible(false);
 
-              // Dano diferente baseado no tipo de projétil
-              const damage = bulletSprite.getData("damage") || 1;
-              console.log(`Jogador atingido por projétil! Dano: ${damage}`);
               this.playerTakeDamage();
             }
           });
@@ -1307,7 +1262,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
             if (distance < 35) {
               // Raio de colisão para nave vs nave
-              console.log("Jogador colidiu com inimigo!");
+
               this.playerTakeDamage();
               // Destruir o inimigo também na colisão
               enemy.destroy();
@@ -1325,7 +1280,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
             if (distance < 60) {
               // Raio de colisão maior para o boss
-              console.log("Jogador colidiu com boss!");
+
               this.playerTakeDamage();
             }
           }
@@ -1336,7 +1291,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       playerTakeDamage() {
         if (this.isPlayerDead || this.isPlayerInvulnerable) return;
 
-        console.log("Jogador tomou dano!");
+
         this.playerDie();
       }
 
@@ -1350,14 +1305,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.playerControlsEnabled = false;
         this.playerLives--;
 
-        console.log(`Jogador morreu! Vidas restantes: ${this.playerLives}`);
+
 
         // Atualizar vidas na UI
         setLives(this.playerLives);
 
         if (this.playerLives <= 0) {
           // Game Over
-          console.log("Game Over!");
+
 
           // Fazer transição imediata da música para evitar sobreposição
           this.audioManager.transitionToMenuMusic();
@@ -1393,7 +1348,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       respawnPlayer() {
         if (!this.isPlayerDead) return;
 
-        console.log("Respawnando jogador...");
+
 
         // Posicionar jogador fora da tela (parte inferior)
         if (this.player) {
@@ -1418,7 +1373,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             // Ativar invencibilidade por 15 segundos
             this.startInvulnerability();
 
-            console.log("Jogador respawnou com sucesso!");
+
           },
         });
       }
@@ -1427,7 +1382,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isPlayerInvulnerable = true;
         this.invulnerabilityStartTime = this.time.now;
 
-        console.log("Invencibilidade ativada por 15 segundos");
+
 
         // Efeito visual de piscar durante invencibilidade
         this.tweens.add({
@@ -1461,7 +1416,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             this.player.setAlpha(1);
           }
 
-          console.log("Invencibilidade removida");
+
         }
       }
 
@@ -1480,9 +1435,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       // Método chamado quando um boss é derrotado
       onBossDefeated(points: number) {
-        console.log(
-          `Boss derrotado! Iniciando transição de onda. Pontos: ${points}`
-        );
+
 
         // Adicionar pontos do boss usando o ScoreSystem
         if (this.scoreSystem) {
@@ -1507,7 +1460,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isPlayerInvulnerable = true;
         this.invulnerabilityStartTime = this.time.now;
 
-        console.log("Iniciando transição de onda com invulnerabilidade...");
+
 
         // Reproduzir áudio de boost no início da transição
         audioManager.playSoundEffect('engine');
@@ -1564,8 +1517,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           this.audioManager.playWaveMusic(this.currentWave);
         }
         
-        console.log(`Avançando para onda ${this.currentWave}`);
-        console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
+
+
 
         // Atualizar onda no estado React (comentado temporariamente para debug)
         // setWave(this.currentWave);
@@ -1599,15 +1552,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           }
         });
 
-        console.log(
-          `Transição de onda completa. Iniciando onda ${this.currentWave}`
-        );
+
 
         // Preparar nova onda - resetar dados DEPOIS de confirmar a onda
         this.resetWaveData();
-        console.log(
-          `Dados da nova onda - maxEnemies: ${this.maxEnemiesInWave}, enemiesDefeated: ${this.enemiesDefeated}`
-        );
+
 
         // Trocar música a cada 5 ondas
         if ((this.currentWave - 1) % 5 === 0) {
@@ -1616,7 +1565,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Começar nova onda - definir sub-onda 1 e spawnar
         this.currentSubWave = 1;
-        console.log(`Spawnando primeira sub-onda da onda ${this.currentWave}`);
+
         this.spawnSubWave(this.currentSubWave);
       }
 
@@ -1656,12 +1605,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.player.setData("minY", this.player.height * 0.4);
         this.player.setData("maxY", actualHeight - this.player.height * 0.4);
         
-        console.log(`Posição do jogador recalculada: (${playerX}, ${playerY}) para dimensões ${actualWidth}x${actualHeight}`);
+
       }
 
       // Método para iniciar o jogo após a sequência de mensagens
       startGame() {
-        console.log("Iniciando jogo após sequência de mensagens");
+
         
         // Recalcular posição do jogador com as dimensões reais
         this.recalculatePlayerPosition();

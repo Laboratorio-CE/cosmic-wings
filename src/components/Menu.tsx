@@ -42,7 +42,7 @@ export default class Menu extends Component<Props, State> {
     try {
       this.audioManager.playSoundEffect('menu-navigate');
     } catch (error) {
-      console.log('Erro ao reproduzir som de navegação:', error);
+      // Erro ao reproduzir som de navegação
     }
   }
 
@@ -51,7 +51,7 @@ export default class Menu extends Component<Props, State> {
     try {
       this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao reproduzir som de confirmação:', error);
+      // Erro ao reproduzir som de confirmação
     }
   }
 
