@@ -13,10 +13,19 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed }) => {
   // Detectar mudanças de tamanho do container
   useEffect(() => {
     const updateDimensions = () => {
-      setDimensions({
-        width: window.innerWidth < 640 ? window.innerWidth : 800,
-        height: window.innerWidth < 640 ? window.innerHeight * 0.85 : 600
-      });
+      if (window.innerWidth < 640) {
+        // Mobile: usar toda a viewport
+        setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      } else {
+        // Desktop: usar dimensões fixas
+        setDimensions({
+          width: 800,
+          height: 600
+        });
+      }
     };
     
     updateDimensions();
@@ -34,13 +43,13 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed }) => {
   }, [speed]);
   
   // Calcular posições das três instâncias para scroll infinito suave
-  const { width, height } = dimensions;
+  const { height } = dimensions;
   const firstY = offset % height;
   const secondY = firstY - height;
   const thirdY = firstY + height;
   
   return (
-    <div className="absolute inset-0 overflow-hidden bg-(--cosmic-dark)/60">
+    <div className="absolute inset-0 overflow-hidden bg-(--cosmic-darkest)/80">
       {/* Três instâncias do background para scroll infinito suave */}
       <div 
         className="absolute w-full"

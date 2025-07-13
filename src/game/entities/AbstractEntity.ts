@@ -161,7 +161,7 @@ export default abstract class AbstractEntity extends Phaser.Physics.Arcade.Sprit
     return (
       this.x < -margin ||
       this.x > this.scene.cameras.main.width + margin ||
-      this.y < -margin ||
+      this.y < -200 || // Permitir spawn mais distante no topo (para inimigos)
       this.y > this.scene.cameras.main.height + margin
     );
   }
