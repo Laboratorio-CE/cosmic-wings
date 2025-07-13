@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import CanvasBackground from './Background';
 
 interface BackgroundScrollProps {
@@ -9,6 +9,10 @@ interface BackgroundScrollProps {
 const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed }) => {
   const [offset, setOffset] = useState(0);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [currentSpeed, setCurrentSpeed] = useState(speed);
+  const targetSpeedRef = useRef(speed);
+  const animationRef = useRef<number | undefined>(undefined);
+  const lastTimeRef = useRef<number>(performance.now());
   
   // Detectar mudanças de tamanho do container
   useEffect(() => {
@@ -34,53 +38,73 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed }) => {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
   
+  // Atualizar a velocidade alvo quando o prop muda
   useEffect(() => {
-    const interval = setInterval(() => {
-      setOffset(prev => prev + speed);
-    }, 16); // ~60fps
-    
-    return () => clearInterval(interval);
+    targetSpeedRef.current = speed;
   }, [speed]);
+  
+  // Loop de animação com interpolação suave de velocidade
+  useEffect(() => {
+    const animate = (currentTime: number) => {
+      const deltaTime = (currentTime - lastTimeRef.current) / 1000; // em segundos
+      lastTimeRef.current = currentTime;
+      
+      // Interpolar suavemente para a velocidade alvo
+      const speedDifference = targetSpeedRef.current - currentSpeed;
+      const lerpFactor = Math.min(deltaTime * 5, 1); // Velocidade de interpolação (5x por segundo)
+      
+      if (Math.abs(speedDifference) > 0.01) {
+        const newSpeed = currentSpeed + speedDifference * lerpFactor;
+        setCurrentSpeed(newSpeed);
+      } else {
+        setCurrentSpeed(targetSpeedRef.current);
+      }
+      
+      // Atualizar offset baseado na velocidade atual
+      setOffset(prev => prev + currentSpeed * deltaTime * 60); // Normalizar para ~60fps
+      
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [currentSpeed]);
   
   // Calcular posições das três instâncias para scroll infinito suave
   const { height } = dimensions;
-  const firstY = offset % height;
-  const secondY = firstY - height;
-  const thirdY = firstY + height;
+  
+  // Usar módulo simples mas garantir que as instâncias se sobreponham corretamente
+  const baseOffset = offset % height;
+  
+  // Posicionar as três instâncias de forma escalonada para cobrir toda a área visível
+  // A instância que "sai" por cima é reposicionada embaixo, criando loop infinito
+  const positions = [
+    baseOffset - height,           // Instância que está saindo por cima
+    baseOffset,                    // Instância principal visível
+    baseOffset + height            // Instância que está entrando por baixo
+  ];
   
   return (
     <div className="absolute inset-0 overflow-hidden bg-(--cosmic-darkest)/80">
-      {/* Três instâncias do background para scroll infinito suave */}
-      <div 
-        className="absolute w-full"
-        style={{ 
-          height: `${height}px`,
-          transform: `translateY(${firstY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground starCount={100} />
-      </div>
-      <div 
-        className="absolute w-full"
-        style={{ 
-          height: `${height}px`,
-          transform: `translateY(${secondY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground starCount={100} />
-      </div>
-      <div 
-        className="absolute w-full"
-        style={{ 
-          height: `${height}px`,
-          transform: `translateY(${thirdY}px)`,
-          transition: 'none'
-        }}
-      >
-        <CanvasBackground starCount={100} />
-      </div>
+      {/* Três instâncias idênticas do background para scroll infinito suave */}
+      {positions.map((yPos, index) => (
+        <div 
+          key={index}
+          className="absolute w-full"
+          style={{ 
+            height: `${height}px`,
+            transform: `translateY(${yPos}px)`,
+            transition: 'none'
+          }}
+        >
+          <CanvasBackground starCount={100} seed={12345} />
+        </div>
+      ))}
     </div>
   );
 };

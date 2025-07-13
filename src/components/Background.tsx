@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import React from "react";
 
 interface BackgroundProps {
   starCount?: number;
+  seed?: number; // Seed para gerar estrelas consistentes
 }
 
 interface StarData {
@@ -15,6 +16,12 @@ interface StarData {
   delay: number;
   shouldTwinkle: boolean;
 }
+
+// Função para gerar números pseudo-aleatórios com seed
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
 
 // Componente Star otimizado e memorizado
 const Star = React.memo(({ star }: { star: StarData }) => {
@@ -37,19 +44,24 @@ const Star = React.memo(({ star }: { star: StarData }) => {
 
 Star.displayName = 'Star';
 
-const Background = ({ starCount = 150 }: BackgroundProps) => {
+const Background = ({ starCount = 150, seed = 12345 }: BackgroundProps) => {
   const [dimensions, setDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   });
 
+  // Usar ref para manter dimensões estáveis e evitar re-gerações desnecessárias
+  const stableDimensionsRef = useRef(dimensions);
+  
   // Debounced resize handler
   const handleResize = useCallback(() => {
     const timeoutId = setTimeout(() => {
-      setDimensions({
+      const newDimensions = {
         width: window.innerWidth,
         height: window.innerHeight,
-      });
+      };
+      setDimensions(newDimensions);
+      stableDimensionsRef.current = newDimensions;
     }, 100);
 
     return () => clearTimeout(timeoutId);
@@ -62,22 +74,28 @@ const Background = ({ starCount = 150 }: BackgroundProps) => {
     };
   }, [handleResize]);
 
-  // Gerar estrelas otimizadas com memo
+  // Gerar estrelas otimizadas com memo e seed para consistência
   const stars = useMemo(() => {
     const starArray: StarData[] = [];
     
     // Limitar animações para melhor performance
     const maxAnimatedStars = Math.min(starCount * 0.3, 100);
     
+    // Usar dimensões estáveis para evitar re-gerações durante animações
+    const { width, height } = stableDimensionsRef.current;
+    
     for (let i = 0; i < starCount; i++) {
+      // Usar seed + index para gerar valores consistentes
+      const baseSeed = seed + i;
+      
       const star: StarData = {
         id: i,
-        x: Math.random() * dimensions.width,
-        y: Math.random() * dimensions.height,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.7 + 0.3,
-        duration: Math.random() * 4 + 2,
-        delay: Math.random() * 5,
+        x: seededRandom(baseSeed) * width,
+        y: seededRandom(baseSeed + 1000) * height,
+        size: seededRandom(baseSeed + 2000) * 2 + 1,
+        opacity: seededRandom(baseSeed + 3000) * 0.7 + 0.3,
+        duration: seededRandom(baseSeed + 4000) * 4 + 2,
+        delay: seededRandom(baseSeed + 5000) * 5,
         shouldTwinkle: i < maxAnimatedStars, // Apenas algumas estrelas piscam
       };
       
@@ -85,7 +103,7 @@ const Background = ({ starCount = 150 }: BackgroundProps) => {
     }
     
     return starArray;
-  }, [starCount, dimensions.width, dimensions.height]);
+  }, [starCount, seed]); // Removido dimensions da dependência para estabilidade
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
