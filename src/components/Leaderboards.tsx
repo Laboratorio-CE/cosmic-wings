@@ -1,9 +1,7 @@
 import { Component } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import { find } from "../services/supabaseService";
-
-// Importar arquivo de áudio
-import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+import AudioManager from '../services/AudioManager';
 
 type Props = {
   onNavigate?: (route: string) => void;
@@ -23,22 +21,25 @@ type State = {
 };
 
 export default class Leaderboards extends Component<Props, State> {
+  private audioManager: AudioManager;
+
   state: State = {
     isPressed: true,
     leaderboard: [],
     loading: true
   };
 
+  constructor(props: Props) {
+    super(props);
+    this.audioManager = AudioManager.getInstance();
+  }
+
   // Método para reproduzir som de confirmação
   private playConfirmSound = () => {
     try {
-      const audio = new Audio(menuConfirmSound);
-      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de confirmação:', error);
-      });
+      this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao criar áudio de confirmação:', error);
+      console.log('Erro ao reproduzir som de confirmação:', error);
     }
   }
 

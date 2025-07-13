@@ -34,6 +34,10 @@ class AudioManager {
   private soundMuted: boolean = false;
   private currentTrack: MusicTrack | null = null;
   private fadeInterval: NodeJS.Timeout | null = null;
+  private userInteracted: boolean = false;
+  private originalMusicVolume: number = 0.1;
+  private originalSoundVolume: number = 0.3;
+  private autoplayListeners: { tryPlay: () => Promise<void> } | null = null;
 
   // Mapeamento dos arquivos de música
   private musicTracks: Record<MusicTrack, string> = {
@@ -76,7 +80,7 @@ class AudioManager {
       try {
         const audio = new Audio(file);
         audio.preload = 'auto';
-        audio.volume = 0.3; // Volume moderado para efeitos
+        audio.volume = this.originalSoundVolume; // Volume moderado para efeitos
         this.soundEffects.set(effect as SoundEffect, audio);
       } catch (error) {
         console.warn(`Erro ao pré-carregar efeito sonoro ${effect}:`, error);
@@ -94,18 +98,19 @@ class AudioManager {
     // Parar música atual se existir
     this.stopBackgroundMusic();
 
+    // Definir a track atual sempre, mesmo se mutado
+    this.currentTrack = track;
+
     // Não iniciar se estiver mutado
     if (this.musicMuted) {
-      this.currentTrack = track;
       return;
     }
 
     try {
       const musicFile = this.musicTracks[track];
       this.backgroundMusic = new Audio(musicFile);
-      this.backgroundMusic.volume = 0.1; // Volume baixo para música de fundo
+      this.backgroundMusic.volume = this.originalMusicVolume;
       this.backgroundMusic.loop = true;
-      this.currentTrack = track;
 
       // Aguardar carregamento
       await new Promise<void>((resolve, reject) => {
@@ -125,18 +130,85 @@ class AudioManager {
         this.backgroundMusic?.addEventListener('error', handleError);
       });
 
-      // Reproduzir se ainda não estiver mutado
-      if (!this.musicMuted && this.backgroundMusic) {
-        await this.backgroundMusic.play();
+      // Tentar reproduzir imediatamente com diferentes estratégias
+      if (this.backgroundMusic) {
+        await this.attemptAutoplay();
       }
     } catch (error) {
       console.error(`Erro ao reproduzir música ${track}:`, error);
     }
   }
 
+  // Método para tentar autoplay com diferentes estratégias
+  private async attemptAutoplay(): Promise<void> {
+    if (!this.backgroundMusic || this.musicMuted) return;
+
+    // Estratégia 1: Tentar reproduzir diretamente
+    try {
+      await this.backgroundMusic.play();
+      this.userInteracted = true;
+      console.log('Música iniciada automaticamente');
+      return;
+    } catch (error) {
+      console.log('Autoplay bloqueado pelo navegador, aguardando interação do usuário');
+    }
+
+    // Estratégia 2: Configurar para tentar novamente em eventos específicos
+    this.setupAutoplayListeners();
+  }
+
+  // Configura listeners para tentar autoplay em eventos específicos
+  private setupAutoplayListeners(): void {
+    if (this.userInteracted || !this.backgroundMusic || this.autoplayListeners) return;
+
+    const tryPlay = async () => {
+      if (this.userInteracted || !this.backgroundMusic || this.musicMuted) return;
+      
+      try {
+        await this.backgroundMusic.play();
+        this.userInteracted = true;
+        console.log('Música iniciada após interação do usuário');
+        this.removeAutoplayListeners();
+      } catch (error) {
+        // Ainda não conseguiu, listeners continuam ativos
+        console.log('Tentativa de reprodução falhou, aguardando próxima interação');
+      }
+    };
+
+    // Adicionar listeners para diferentes tipos de interação
+    document.addEventListener('click', tryPlay, { once: false });
+    document.addEventListener('keydown', tryPlay, { once: false });
+    document.addEventListener('touchstart', tryPlay, { once: false });
+    document.addEventListener('mousedown', tryPlay, { once: false });
+    
+    // Também tentar em eventos de visibilidade
+    document.addEventListener('visibilitychange', tryPlay, { once: false });
+    window.addEventListener('focus', tryPlay, { once: false });
+
+    // Armazenar referência para remoção posterior
+    this.autoplayListeners = { tryPlay };
+  }
+
+  // Remove listeners de autoplay
+  private removeAutoplayListeners(): void {
+    if (this.autoplayListeners) {
+      const { tryPlay } = this.autoplayListeners;
+      document.removeEventListener('click', tryPlay);
+      document.removeEventListener('keydown', tryPlay);
+      document.removeEventListener('touchstart', tryPlay);
+      document.removeEventListener('mousedown', tryPlay);
+      document.removeEventListener('visibilitychange', tryPlay);
+      window.removeEventListener('focus', tryPlay);
+      this.autoplayListeners = null;
+    }
+  }
+
   // Para música de fundo com fade out
   stopBackgroundMusic(): void {
     if (!this.backgroundMusic) return;
+
+    // Limpar listeners de autoplay ativos
+    this.removeAutoplayListeners();
 
     // Limpar fade anterior se existir
     if (this.fadeInterval) {
@@ -176,9 +248,21 @@ class AudioManager {
       try {
         // Reset para permitir múltiplas reproduções
         audio.currentTime = 0;
-        audio.play().catch(error => {
-          console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
-        });
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            // Marcar como interagido se conseguir reproduzir
+            this.userInteracted = true;
+          }).catch(error => {
+            // Se falhar por falta de interação, não fazer nada especial
+            if (!this.userInteracted) {
+              console.log(`Efeito ${effect} aguardando primeira interação`);
+            } else {
+              console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
+            }
+          });
+        }
       } catch (error) {
         console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
       }
@@ -190,13 +274,16 @@ class AudioManager {
     this.musicMuted = !this.musicMuted;
 
     if (this.musicMuted) {
-      // Pausar música atual
-      if (this.backgroundMusic && !this.backgroundMusic.paused) {
-        this.backgroundMusic.pause();
+      // Setar volume para 0 em vez de pausar
+      if (this.backgroundMusic) {
+        this.backgroundMusic.volume = 0;
       }
     } else {
-      // Retomar música se havia uma tocando
-      if (this.currentTrack) {
+      // Retomar volume original
+      if (this.backgroundMusic) {
+        this.backgroundMusic.volume = this.originalMusicVolume;
+      } else if (this.currentTrack && this.userInteracted) {
+        // Se não há música tocando mas deveria ter, iniciar
         try {
           await this.playBackgroundMusic(this.currentTrack);
         } catch (error) {
@@ -210,10 +297,35 @@ class AudioManager {
   toggleSound(): void {
     this.soundMuted = !this.soundMuted;
     
-    // Mutar/desmutar todos os efeitos sonoros
+    // Setar volume para 0 ou volume original para todos os efeitos sonoros
     this.soundEffects.forEach(audio => {
-      audio.muted = this.soundMuted;
+      audio.volume = this.soundMuted ? 0 : this.originalSoundVolume;
     });
+  }
+
+  // Método para tentar iniciar música após interação do usuário
+  async tryStartPendingMusic(): Promise<void> {
+    if (this.userInteracted) return; // Já foi iniciado
+    
+    this.userInteracted = true;
+    
+    // Tentar iniciar música se houver uma pendente
+    if (this.currentTrack && !this.musicMuted && this.backgroundMusic && this.backgroundMusic.paused) {
+      try {
+        await this.backgroundMusic.play();
+        console.log('Música pendente iniciada com sucesso');
+      } catch (error) {
+        console.error('Erro ao iniciar música pendente:', error);
+        // Reset do estado para permitir nova tentativa
+        this.userInteracted = false;
+      }
+    }
+  }
+
+  // Método para resetar estado de interação (usado principalmente para debugging/testes)
+  resetUserInteraction(): void {
+    this.userInteracted = false;
+    this.removeAutoplayListeners();
   }
 
   // Getters para estado atual
@@ -241,6 +353,9 @@ class AudioManager {
   dispose(): void {
     // Parar música
     this.stopBackgroundMusic();
+
+    // Limpar listeners de autoplay
+    this.removeAutoplayListeners();
 
     // Limpar efeitos sonoros
     this.soundEffects.forEach(audio => {

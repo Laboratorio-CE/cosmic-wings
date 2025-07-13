@@ -2,9 +2,7 @@ import React, { useState, useEffect } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import banner from "../assets/images/credits/Banner.jpg";
 import avatar from "../assets/images/credits/avatar.png";
-
-// Importar arquivo de áudio
-import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+import AudioManager from '../services/AudioManager';
 
 interface CreditsProps {
   onNavigateToMenu: () => void;
@@ -12,17 +10,14 @@ interface CreditsProps {
 
 const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
   const [selectedButton, setSelectedButton] = useState(0);
+  const audioManager = AudioManager.getInstance();
 
   // Função para reproduzir som de confirmação
   const playConfirmSound = () => {
     try {
-      const audio = new Audio(menuConfirmSound);
-      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de confirmação:', error);
-      });
+      audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao criar áudio de confirmação:', error);
+      console.log('Erro ao reproduzir som de confirmação:', error);
     }
   };
 
