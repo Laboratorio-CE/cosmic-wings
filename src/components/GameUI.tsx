@@ -16,7 +16,9 @@ interface GameUIProps {
   showWaveMessage?: boolean;
   waveMessageText?: string;
   onMobileControl?: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onMobileControlStop?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onMobileAction?: () => void;
+  onMobileActionStop?: () => void;
   onNavigateToMenu?: () => void;
   onNavigateToRankingRegister?: () => void;
 }
@@ -29,7 +31,9 @@ const GameUI: React.FC<GameUIProps> = ({
   showWaveMessage = false,
   waveMessageText = '',
   onMobileControl,
+  onMobileControlStop,
   onMobileAction,
+  onMobileActionStop,
   onNavigateToRankingRegister
 }) => {
   // Estado para controlar a exibição das mensagens
@@ -37,6 +41,30 @@ const GameUI: React.FC<GameUIProps> = ({
   const [messageText, setMessageText] = useState('');
   // Estado para controlar a exibição do game over com delay
   const [showGameOver, setShowGameOver] = useState(false);
+
+  // Funções para controles móveis diretos
+  const handleMobileStart = (direction: 'up' | 'down' | 'left' | 'right') => {
+    onMobileControl?.(direction);
+  };
+
+  const handleMobileStop = (direction: 'up' | 'down' | 'left' | 'right') => {
+    onMobileControlStop?.(direction);
+  };
+
+  const handleActionStart = () => {
+    onMobileAction?.();
+  };
+
+  const handleActionStop = () => {
+    onMobileActionStop?.();
+  };
+
+  // Limpar intervalos quando componente desmontar - removido pois não usa mais intervalos
+  useEffect(() => {
+    return () => {
+      // Limpeza se necessário
+    };
+  }, []);
 
   // Efeito para controlar as mensagens de preparação e onda
   useEffect(() => {
@@ -177,7 +205,11 @@ const GameUI: React.FC<GameUIProps> = ({
             <div className="relative w-24 h-24">
               {/* Botão Cima */}
               <button
-                onTouchStart={() => onMobileControl?.("up")}
+                onTouchStart={() => handleMobileStart("up")}
+                onTouchEnd={() => handleMobileStop("up")}
+                onMouseDown={() => handleMobileStart("up")}
+                onMouseUp={() => handleMobileStop("up")}
+                onMouseLeave={() => handleMobileStop("up")}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-8 h-8 flex items-center justify-center
@@ -188,7 +220,11 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Esquerda */}
               <button
-                onTouchStart={() => onMobileControl?.("left")}
+                onTouchStart={() => handleMobileStart("left")}
+                onTouchEnd={() => handleMobileStop("left")}
+                onMouseDown={() => handleMobileStart("left")}
+                onMouseUp={() => handleMobileStop("left")}
+                onMouseLeave={() => handleMobileStop("left")}
                 className="absolute top-1/2 left-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-8 h-8 flex items-center justify-center
@@ -199,7 +235,11 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Direita */}
               <button
-                onTouchStart={() => onMobileControl?.("right")}
+                onTouchStart={() => handleMobileStart("right")}
+                onTouchEnd={() => handleMobileStop("right")}
+                onMouseDown={() => handleMobileStart("right")}
+                onMouseUp={() => handleMobileStop("right")}
+                onMouseLeave={() => handleMobileStop("right")}
                 className="absolute top-1/2 right-0 transform -translate-y-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-8 h-8 flex items-center justify-center
@@ -210,7 +250,11 @@ const GameUI: React.FC<GameUIProps> = ({
 
               {/* Botão Baixo */}
               <button
-                onTouchStart={() => onMobileControl?.("down")}
+                onTouchStart={() => handleMobileStart("down")}
+                onTouchEnd={() => handleMobileStop("down")}
+                onMouseDown={() => handleMobileStart("down")}
+                onMouseUp={() => handleMobileStop("down")}
+                onMouseLeave={() => handleMobileStop("down")}
                 className="absolute bottom-0 left-1/2 transform -translate-x-1/2
                           bg-cyan-400/20 hover:bg-cyan-400/40 border-2 border-cyan-400 
                           rounded-full w-8 h-8 flex items-center justify-center
@@ -224,16 +268,17 @@ const GameUI: React.FC<GameUIProps> = ({
           {/* Botão de Ação - Canto inferior direito */}
           <div className="absolute bottom-4 right-4 pointer-events-auto">
             <button
-              onTouchStart={() => onMobileAction?.()}
+              onTouchStart={handleActionStart}
+              onTouchEnd={handleActionStop}
+              onMouseDown={handleActionStart}
+              onMouseUp={handleActionStop}
+              onMouseLeave={handleActionStop}
               className="bg-red-500/20 hover:bg-red-500/40 border-2 border-red-500 
                         rounded-full w-12 h-12 flex items-center justify-center
                         transition-all duration-150 active:scale-95"
             >
               <FaCircle className="text-red-500 text-lg" />
             </button>
-            <span className="block text-center text-cyan-400 text-xs mt-1 font-mono">
-              ATIRAR
-            </span>
           </div>
         </>
       )}

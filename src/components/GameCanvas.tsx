@@ -355,6 +355,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       scoreSystem: ScoreSystem | null = null;
       fadeInDuration = 1000; // 1 segundo para fade in
 
+      // Controles móveis - estado das "teclas virtuais"
+      mobileControls = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        fire: false
+      };
+
       playBackgroundMusic() {
         if (this.currentBackgroundMusic) return; // já tocando
         const key = this.musicTracks[this.currentMusicIndex];
@@ -622,25 +631,28 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Verificar input de movimento apenas se controles estão habilitados
         if (this.playerControlsEnabled) {
-          if (this.cursors.left.isDown || this.wasd?.A?.isDown) {
+          // Movimento horizontal - teclado ou controles móveis
+          if (this.cursors.left.isDown || this.wasd?.A?.isDown || this.mobileControls.left) {
             velocityX = -1;
-          } else if (this.cursors.right.isDown || this.wasd?.D?.isDown) {
+          } else if (this.cursors.right.isDown || this.wasd?.D?.isDown || this.mobileControls.right) {
             velocityX = 1;
           }
 
-          if (this.cursors.up.isDown || this.wasd?.W?.isDown) {
+          // Movimento vertical - teclado ou controles móveis
+          if (this.cursors.up.isDown || this.wasd?.W?.isDown || this.mobileControls.up) {
             velocityY = -1;
-          } else if (this.cursors.down.isDown || this.wasd?.S?.isDown) {
+          } else if (this.cursors.down.isDown || this.wasd?.S?.isDown || this.mobileControls.down) {
             velocityY = 1;
           }
 
-          // Verificar input de disparo
+          // Verificar input de disparo - teclado ou controles móveis
           const currentTime = this.time.now;
           if (
             this.fireKeys &&
             (this.fireKeys.SPACE?.isDown ||
               this.fireKeys.F?.isDown ||
-              this.fireKeys.NUMPAD_FIVE?.isDown)
+              this.fireKeys.NUMPAD_FIVE?.isDown ||
+              this.mobileControls.fire)
           ) {
             if (currentTime - this.lastFireTime > this.fireRate) {
               this.fireBullet();
@@ -1682,6 +1694,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.spawnSubWave(1);
         this.playBackgroundMusic();
       }
+
+      // Métodos para controles móveis
+      setMobileControl(direction: 'up' | 'down' | 'left' | 'right', active: boolean) {
+        this.mobileControls[direction] = active;
+      }
+
+      setMobileAction(active: boolean) {
+        this.mobileControls.fire = active;
+      }
     }
 
     // Configuração do Phaser
@@ -1735,13 +1756,46 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   }, [setLives]); // Manter apenas dependências que não mudam durante o jogo
 
   const handleMobileControl = (direction: 'up' | 'down' | 'left' | 'right') => {
-    // Implementar controles móveis posteriormente
-    console.log('Mobile control:', direction);
+    // Implementar controles móveis usando o sistema de "teclas virtuais"
+    if (!gameRef.current) return;
+    
+    const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+    if (!scene || !scene.player || !scene.playerControlsEnabled) return;
+
+    // Ativar a direção específica
+    scene.setMobileControl(direction, true);
   };
 
   const handleMobileAction = () => {
-    // Implementar ação móvel posteriormente
-    console.log('Mobile action');
+    // Implementar disparo móvel usando o sistema de "teclas virtuais"
+    if (!gameRef.current) return;
+    
+    const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+    if (!scene || !scene.player || !scene.playerControlsEnabled) return;
+
+    // Ativar disparo
+    scene.setMobileAction(true);
+  };
+
+  // Funções para parar controles móveis
+  const stopMobileControl = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!gameRef.current) return;
+    
+    const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+    if (!scene) return;
+
+    // Desativar a direção específica
+    scene.setMobileControl(direction, false);
+  };
+
+  const stopMobileAction = () => {
+    if (!gameRef.current) return;
+    
+    const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+    if (!scene) return;
+
+    // Desativar disparo
+    scene.setMobileAction(false);
   };
 
   const handleNavigateToMenu = () => {
@@ -1793,7 +1847,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               showWaveMessage={showWaveMessage}
               waveMessageText={waveMessageText}
               onMobileControl={handleMobileControl}
+              onMobileControlStop={stopMobileControl}
               onMobileAction={handleMobileAction}
+              onMobileActionStop={stopMobileAction}
               onNavigateToMenu={handleNavigateToMenu}
               onNavigateToRankingRegister={handleNavigateToRankingRegister}
             />
