@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import AbstractEntity from './AbstractEntity';
+import AudioManager from '../../services/AudioManager';
 
 interface GameCanvas extends Phaser.Scene {
   findFreePosition: (x: number, y: number) => { x: number; y: number };
@@ -154,7 +155,7 @@ export default class EnemyTypeB extends AbstractEntity {
   
   private shoot(): void {
     // Reproduzir som do tiro do inimigo
-    this.scene.sound.play('enemy-shoot', { volume: 0.2 });
+    AudioManager.getInstance().playSoundEffect('enemy-fire');
 
     // Disparar dois projéteis angulados
     this.shootAngled(45); // 45º à direita
@@ -407,7 +408,7 @@ export default class EnemyTypeB extends AbstractEntity {
       this.createDeathAnimation();
       
       // Reproduzir som de morte do inimigo
-      this.scene.sound.play('enemy-kill', { volume: 0.3 });
+      AudioManager.getInstance().playSoundEffect('enemy-kill');
     }
     
     // Lógica específica quando o EnemyTypeC é destruído

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import AbstractEntity from './AbstractEntity';
+import AudioManager from '../../services/AudioManager';
 
 // Interface para compatibilidade com GameCanvas
 interface GameCanvas extends Phaser.Scene {
@@ -135,7 +136,7 @@ export default class EnemyTypeC extends AbstractEntity {
 
   private shoot() {
     // Reproduzir som do tiro do inimigo
-    this.scene.sound.play('enemy-shoot', { volume: 0.2 });
+    AudioManager.getInstance().playSoundEffect('enemy-fire');
     
     // Obter referência ao grupo de projéteis inimigos da scene
     const gameScene = this.scene as GameCanvas;
@@ -394,7 +395,7 @@ export default class EnemyTypeC extends AbstractEntity {
       this.createDeathAnimation();
       
       // Reproduzir som de morte do inimigo
-      this.scene.sound.play('enemy-kill', { volume: 0.3 });
+      AudioManager.getInstance().playSoundEffect('enemy-kill');
     }
     
     // Lógica específica quando o EnemyTypeC é destruído
