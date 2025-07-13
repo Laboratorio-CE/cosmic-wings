@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import GameUI from "./GameUI";
 import ScoreSystem from "../game/systems/ScoreSystem";
 import PositionManager from "../game/systems/PositionManager";
+import AudioManager from "../services/AudioManager";
+import type { MusicTrack, SoundEffect } from "../services/AudioManager";
 
 import EnemyTypeA from "../game/entities/EnemyTypeA";
 import EnemyTypeB from "../game/entities/EnemyTypeB";
@@ -108,6 +110,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   
   // Ref para acessar hiScore atual não causar reexecução do useEffect
   const hiScoreRef = useRef(hiScore);
+
+  // Instância do AudioManager
+  const audioManager = AudioManager.getInstance();
 
   // Event listener para pausa global
   useEffect(() => {
@@ -280,7 +285,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     class GameScene extends Phaser.Scene {
       constructor() {
         super({ key: "MainGameScene" });
+        // Inicializar o AudioManager
+        this.audioManager = AudioManager.getInstance();
       }
+
+      // Sistema de áudio centralizado
+      audioManager: AudioManager;
 
       player: Phaser.GameObjects.Sprite | null = null;
       cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
@@ -548,7 +558,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           setLives(this.playerLives);
           
           // Tocar som de powerup
-          this.sound.play("powerup", { volume: 0.3 });
+          audioManager.playSoundEffect('powerup');
           
           console.log(`Vida extra! Vidas totais: ${this.playerLives}`);
         });
@@ -761,7 +771,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         if (!this.player || !this.playerBullets) return;
 
         // Reproduzir som do tiro do jogador
-        this.sound.play("player-shoot", { volume: 0.3 });
+        audioManager.playSoundEffect('player-fire');
 
         // Criar projétil na posição do jogador
         const bullet = this.playerBullets.get(
@@ -1390,7 +1400,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         if (this.isPlayerDead) return;
 
         // Reproduzir som da morte do jogador
-        this.sound.play("player-kill", { volume: 0.5 });
+        audioManager.playSoundEffect('player-kill');
 
         this.isPlayerDead = true;
         this.playerControlsEnabled = false;
@@ -1546,11 +1556,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         console.log("Iniciando transição de onda...");
 
         // Reproduzir áudio de boost no início da transição
-        this.sound.play("engine", { volume: 0.4 });
+        audioManager.playSoundEffect('engine');
 
         // Reproduzir áudio de engine após 1 segundo
         this.time.delayedCall(1000, () => {
-          this.sound.play("boost", { volume: 0.4 });
+          audioManager.playSoundEffect('boost');
         });
 
         // Aumentar velocidade do background para 50 (via callback para o React)

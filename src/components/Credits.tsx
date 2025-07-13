@@ -117,7 +117,6 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
         {/* Botão Voltar */}
         <button
           onClick={() => {
-            // Reproduzir som de confirmação
             playConfirmSound();
             onNavigateToMenu();
           }}

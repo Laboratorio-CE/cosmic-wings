@@ -212,7 +212,10 @@ export default class Leaderboards extends Component<Props, State> {
           <div className="flex-shrink-0 flex items-center justify-center border-t border-cyan-400/30 px-4 py-4">
             {this.props.onNavigate && (
               <button
-                onClick={() => this.animatePress()}
+                onClick={() => {
+                  this.playConfirmSound();
+                  this.animatePress();
+                }}
                 className={`
                   relative flex items-center justify-center w-full max-w-56 p-2 font-bold text-sm sm:text-base transition-all duration-200 cursor-pointer text-yellow-300
                   ${this.state.isPressed ? "scale-105" : "scale-100"}

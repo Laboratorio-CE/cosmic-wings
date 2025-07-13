@@ -39,6 +39,8 @@ const OptionsToggle: React.FC<Props> = ({ currentRoute, gameState, onTogglePause
 
   const toggleMusic = async () => {
     try {
+      // Reproduzir efeito sonoro de confirmação
+      audioManager.playSoundEffect('menu-confirm');
       await audioManager.toggleMusic();
       setMusicMuted(audioManager.isMusicMuted);
     } catch (error) {
@@ -48,6 +50,10 @@ const OptionsToggle: React.FC<Props> = ({ currentRoute, gameState, onTogglePause
 
   const toggleSound = () => {
     try {
+      // Reproduzir efeito sonoro de confirmação antes de mutar
+      if (!audioManager.isSoundMuted) {
+        audioManager.playSoundEffect('menu-confirm');
+      }
       audioManager.toggleSound();
       setSoundMuted(audioManager.isSoundMuted);
     } catch (error) {
@@ -73,6 +79,7 @@ const OptionsToggle: React.FC<Props> = ({ currentRoute, gameState, onTogglePause
           <button
             key={`pause-button-${isPaused ? 'paused' : 'playing'}`}
             onClick={() => {
+              audioManager.playSoundEffect('menu-confirm');
               onTogglePause?.();
             }}
             className="relative w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-red-500 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95"
