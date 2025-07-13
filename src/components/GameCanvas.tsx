@@ -1503,7 +1503,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.isInWaveTransition = true;
         this.playerControlsEnabled = false;
 
-        console.log("Iniciando transição de onda...");
+        // Ativar invulnerabilidade durante a transição
+        this.isPlayerInvulnerable = true;
+        this.invulnerabilityStartTime = this.time.now;
+
+        console.log("Iniciando transição de onda com invulnerabilidade...");
 
         // Reproduzir áudio de boost no início da transição
         audioManager.playSoundEffect('engine');
@@ -1585,6 +1589,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.playerControlsEnabled = true;
         this.enemySpawnEnabled = true;
         this.isInWaveTransition = false;
+
+        // Remover invulnerabilidade após 2 segundos do início da transição
+        this.time.delayedCall(2000 - (this.time.now - this.invulnerabilityStartTime), () => {
+          this.isPlayerInvulnerable = false;
+          if (this.player) {
+            this.tweens.killTweensOf(this.player);
+            this.player.setAlpha(1);
+          }
+        });
 
         console.log(
           `Transição de onda completa. Iniciando onda ${this.currentWave}`
