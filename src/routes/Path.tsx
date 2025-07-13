@@ -37,9 +37,9 @@ export default class Path extends Component<Props, State> {
     // Event listener para sincronizar estado do jogo
     window.addEventListener('gameStateChange', this.handleGameStateChange as EventListener);
     
-    // Iniciar música do menu
-    this.audioManager.playBackgroundMusic('menu').catch(error => {
-      console.log('Erro ao iniciar música inicial:', error);
+    // Tentar iniciar música do menu imediatamente
+    this.audioManager.playBackgroundMusic('menu').catch(() => {
+      console.log('Música será reproduzida após primeira interação do usuário');
     });
   }
 

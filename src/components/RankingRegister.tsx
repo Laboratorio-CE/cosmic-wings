@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 import { create } from "../services/supabaseService";
-
-// Importar arquivos de áudio
-import menuNavigateSound from '../assets/audios/sfx/menu-navigate.wav';
-import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+import AudioManager from '../services/AudioManager';
 
 interface RankingRegisterProps {
   score: number;
@@ -17,6 +14,8 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
   onNavigateToMenu,
   onNavigateToLeaderboards
 }) => {
+  const audioManager = AudioManager.getInstance();
+
   // Estados para o formulário de nome
   const [playerName, setPlayerName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,26 +27,18 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
   // Função para reproduzir som de navegação
   const playNavigateSound = () => {
     try {
-      const audio = new Audio(menuNavigateSound);
-      audio.volume = 0.3; // Volume baixo para não incomodar
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de navegação:', error);
-      });
+      audioManager.playSoundEffect('menu-navigate');
     } catch (error) {
-      console.log('Erro ao criar áudio de navegação:', error);
+      console.log('Erro ao reproduzir som de navegação:', error);
     }
   };
 
   // Função para reproduzir som de confirmação
   const playConfirmSound = () => {
     try {
-      const audio = new Audio(menuConfirmSound);
-      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de confirmação:', error);
-      });
+      audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao criar áudio de confirmação:', error);
+      console.log('Erro ao reproduzir som de confirmação:', error);
     }
   };
 

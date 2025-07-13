@@ -1,9 +1,6 @@
 import { Component } from "react";
 import imagemPlayer from '../assets/images/player/player-frame-1.png';
-
-// Importar arquivos de áudio
-import menuNavigateSound from '../assets/audios/sfx/menu-navigate.wav';
-import menuConfirmSound from '../assets/audios/sfx/menu-confirm.wav';
+import AudioManager from '../services/AudioManager';
 
 // Props para receber função de navegação do componente pai
 type Props = {
@@ -28,35 +25,39 @@ export default class Menu extends Component<Props, State> {
     { label: "CRÉDITOS", route: "/credits" }
   ];
 
+  private audioManager: AudioManager;
+
   state: State = {
     selectedIndex: 0,
     isPressed: false // Inicializa como false
   }
 
+  constructor(props: Props) {
+    super(props);
+    this.audioManager = AudioManager.getInstance();
+  }
+
   // Método para reproduzir som de navegação
   private playNavigateSound = () => {
     try {
-      const audio = new Audio(menuNavigateSound);
-      audio.volume = 0.3; // Volume baixo para não incomodar
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de navegação:', error);
-      });
+      this.audioManager.playSoundEffect('menu-navigate');
     } catch (error) {
-      console.log('Erro ao criar áudio de navegação:', error);
+      console.log('Erro ao reproduzir som de navegação:', error);
     }
   }
 
   // Método para reproduzir som de confirmação
   private playConfirmSound = () => {
     try {
-      const audio = new Audio(menuConfirmSound);
-      audio.volume = 0.4; // Volume um pouco mais alto para confirmação
-      audio.play().catch(error => {
-        console.log('Erro ao reproduzir som de confirmação:', error);
-      });
+      this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      console.log('Erro ao criar áudio de confirmação:', error);
+      console.log('Erro ao reproduzir som de confirmação:', error);
     }
+  }
+
+  // Método para tentar iniciar música após primeira interação
+  private handleFirstInteraction = () => {
+    this.audioManager.tryStartPendingMusic();
   }
 
   componentDidMount() {
@@ -70,6 +71,9 @@ export default class Menu extends Component<Props, State> {
   }
 
   handleKeyDown = (event: KeyboardEvent) => {
+    // Tentar iniciar música na primeira interação
+    this.handleFirstInteraction();
+    
     const { selectedIndex } = this.state;
     const maxIndex = this.menuOptions.length - 1;
 
@@ -131,6 +135,9 @@ export default class Menu extends Component<Props, State> {
   }
 
   handleMouseEnter = (index: number) => {
+    // Tentar iniciar música na primeira interação
+    this.handleFirstInteraction();
+    
     // Só reproduzir som se a opção realmente mudou
     if (this.state.selectedIndex !== index) {
       this.playNavigateSound();
@@ -153,6 +160,9 @@ export default class Menu extends Component<Props, State> {
               <button
                 key={index}
                 onClick={() => {
+                  // Tentar iniciar música na primeira interação
+                  this.handleFirstInteraction();
+                  
                   // Em mobile, apenas seleciona se for diferente do atual
                   if (window.innerWidth < 640) { // sm breakpoint
                     if (selectedIndex !== index) {
