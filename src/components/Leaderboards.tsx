@@ -124,19 +124,17 @@ export default class Leaderboards extends Component<Props, State> {
 
   render() {
     return (
-      <div className="flex justify-center items-center h-screen sm:min-h-screen p-0 sm:p-4">
-        <div 
-          className="bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 w-full h-full sm:w-[800px] sm:h-[600px]"
-        >
+      <div className="w-full max-w-4xl mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 h-screen md:h-[600px] overflow-y-auto scrollbar-hide">
+        <div className="h-full flex flex-col">
           {/* Título - 10% da altura */}
-          <div className="h-[10%] flex items-center justify-center border-b border-cyan-400/30 px-4 sm:px-4">
-            <h2 className="text-cyan-400 text-xl sm:text-3xl font-bold tracking-widest cursor-default text-center pt-12 sm:pt-5">
+          <div className="flex-shrink-0 flex items-center justify-center border-b border-cyan-400/30 px-4 py-4">
+            <h2 className="text-cyan-400 text-xl sm:text-3xl font-bold tracking-widest cursor-default text-center">
               LEADERBOARDS
             </h2>
           </div>
 
-          {/* Lista - 80% da altura */}
-          <div className="h-[80%] p-4 sm:p-4 overflow-y-auto scrollbar-hide cursor-default">
+          {/* Lista - conteúdo flexível */}
+          <div className="flex-1 p-4 overflow-y-auto scrollbar-hide cursor-default min-h-0">
             <div className="overflow-hidden rounded-lg border border-cyan-400/20">
               {/* Cabeçalho da tabela */}
               <div className="bg-cyan-400/10 border-b border-cyan-400/30 p-2 sm:p-2 grid grid-cols-4 gap-2 sm:gap-4 text-cyan-400 font-bold text-xs sm:text-sm">
@@ -209,8 +207,8 @@ export default class Leaderboards extends Component<Props, State> {
             </div>
           </div>
 
-          {/* Botão - 10% da altura */}
-          <div className="h-[10%] flex items-center justify-center border-t border-cyan-400/30 px-4 sm:px-4">
+          {/* Botão - rodapé fixo */}
+          <div className="flex-shrink-0 flex items-center justify-center border-t border-cyan-400/30 px-4 py-4">
             {this.props.onNavigate && (
               <button
                 onClick={() => this.animatePress()}
