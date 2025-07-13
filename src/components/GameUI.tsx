@@ -103,20 +103,14 @@ const GameUI: React.FC<GameUIProps> = ({
     return currentScore.toString().padStart(7, '0');
   };
 
-  // Renderiza as vidas como ícones de nave
+  // Renderiza as vidas como uma imagem + "x" + número
   const renderLives = () => {
-    const lifeIcons = [];
-    for (let i = 0; i < lives; i++) {
-      lifeIcons.push(
-        <div
-          key={i}
-          >
-          <img src={imagemPlayer} alt="Imagem das vidas do jogador" className="w-5 h-5"/>
-          </div>
-          
-      );
-    }
-    return lifeIcons;
+    return (
+      <div className="flex items-center">
+        <img src={imagemPlayer} alt="Imagem das vidas do jogador" className="w-5 h-5 mr-1"/>
+        <span className="text-cyan-400 font-mono text-lg font-bold">x{lives}</span>
+      </div>
+    );
   };
 
   return (

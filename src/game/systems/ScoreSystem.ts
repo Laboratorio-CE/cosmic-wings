@@ -4,7 +4,7 @@ export default class ScoreSystem {
   private onScoreUpdateCallback?: (score: number, hiScore: number) => void;
   private onExtraLifeCallback?: () => void;
   private lastExtraLifeScore: number = 0;
-  private extraLifeThreshold: number = 1000000; // 1 milhão de pontos
+  private extraLifeThreshold: number = 1000; // 1 milhão de pontos
 
   constructor(onScoreUpdate?: (score: number, hiScore: number) => void) {
     this.onScoreUpdateCallback = onScoreUpdate;
