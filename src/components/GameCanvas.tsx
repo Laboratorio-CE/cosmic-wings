@@ -4,8 +4,6 @@ import GameUI from "./GameUI";
 import ScoreSystem from "../game/systems/ScoreSystem";
 import PositionManager from "../game/systems/PositionManager";
 import AudioManager from "../services/AudioManager";
-import type { MusicTrack, SoundEffect } from "../services/AudioManager";
-
 import EnemyTypeA from "../game/entities/EnemyTypeA";
 import EnemyTypeB from "../game/entities/EnemyTypeB";
 import EnemyTypeC from "../game/entities/EnemyTypeC";
@@ -354,12 +352,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       gameOverOverlay: Phaser.GameObjects.Rectangle | null = null;
       isGameOver = false;
 
-      // Sistema de música de fundo
-      currentBackgroundMusic: Phaser.Sound.BaseSound | null = null;
-      musicTracks = ["ost-wave-1", "ost-wave-2", "ost-wave-3"];
-      currentMusicIndex = 0;
-      musicVolume = 0.1;
-      fadeOutDuration = 1000; // 1 segundo para fade out
+      // Sistema de música removido - usando AudioManager centralizado
       
       // Sistema de pontuação
       scoreSystem: ScoreSystem | null = null;
@@ -374,56 +367,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         fire: false
       };
 
-      playBackgroundMusic() {
-        if (this.currentBackgroundMusic) return; // já tocando
-        const key = this.musicTracks[this.currentMusicIndex];
-        this.currentBackgroundMusic = this.sound.add(key, {
-          volume: this.musicVolume,
-          loop: true,
-        });
-        this.currentBackgroundMusic.play();
-      }
 
-      switchToNextTrack() {
-        const nextIndex =
-          (this.currentMusicIndex + 1) % this.musicTracks.length;
-        const nextKey = this.musicTracks[nextIndex];
-
-        if (this.currentBackgroundMusic) {
-          this.tweens.add({
-            targets: this.currentBackgroundMusic,
-            volume: 0,
-            duration: this.fadeOutDuration,
-            onComplete: () => {
-              this.currentBackgroundMusic!.stop();
-              this.currentBackgroundMusic!.destroy();
-
-              this.currentMusicIndex = nextIndex;
-              this.currentBackgroundMusic = this.sound.add(nextKey, {
-                volume: 0,
-                loop: true,
-              });
-              this.currentBackgroundMusic.play();
-
-              this.tweens.add({
-                targets: this.currentBackgroundMusic,
-                volume: this.musicVolume,
-                duration: this.fadeInDuration,
-              });
-            },
-          });
-        } else {
-          // caso não houvesse música ainda
-          this.currentMusicIndex = nextIndex;
-          this.playBackgroundMusic();
-        }
-      }
-
-      updateMusicForWave() {
-        if (this.currentWave > 1 && (this.currentWave - 1) % 5 === 0) {
-          this.switchToNextTrack();
-        }
-      }
 
       // Reserva uma posição ocupada por um inimigo
       reservePosition(x: number, y: number, enemyId: string) {
@@ -1414,6 +1358,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         if (this.playerLives <= 0) {
           // Game Over
           console.log("Game Over!");
+
+          // Fazer transição imediata da música para evitar sobreposição
+          this.audioManager.transitionToMenuMusic();
+
           setGameState("gameOver");
 
           // Criar animação de morte na posição atual do jogador (última vida)
@@ -1424,6 +1372,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
           // Criar esmaecimento para preto
           this.createGameOverFade();
+
+
 
           return;
         }
@@ -1603,7 +1553,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Incrementar número da onda
         this.currentWave++;
-        this.updateMusicForWave();
+        
+        // Trocar música a cada 5 ondas
+        if (this.currentWave % 5 === 0) {
+          this.audioManager.stopBackgroundMusic();
+          this.audioManager.playWaveMusic(this.currentWave);
+        }
+        
         console.log(`Avançando para onda ${this.currentWave}`);
         console.log(`DEBUG - currentWave após incremento: ${this.currentWave}`);
 
@@ -1639,6 +1595,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         console.log(
           `Dados da nova onda - maxEnemies: ${this.maxEnemiesInWave}, enemiesDefeated: ${this.enemiesDefeated}`
         );
+
+        // Trocar música a cada 5 ondas
+        if ((this.currentWave - 1) % 5 === 0) {
+          this.audioManager.playWaveMusic(this.currentWave);
+        }
 
         // Começar nova onda - definir sub-onda 1 e spawnar
         this.currentSubWave = 1;
@@ -1702,7 +1663,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         // Iniciar com sub-onda 1 (inimigo tipo A)
         this.spawnSubWave(1);
-        this.playBackgroundMusic();
+        
+        // Iniciar música baseada na onda atual
+        this.audioManager.playWaveMusic(this.currentWave);
       }
 
       // Métodos para controles móveis
@@ -1815,6 +1778,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   const handleNavigateToRankingRegister = () => {
     onNavigate?.('/ranking-register', { score: hiScore });
   };
+
+
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">

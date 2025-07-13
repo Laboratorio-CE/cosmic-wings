@@ -52,10 +52,10 @@ export default class BossTypeB extends Boss {
     
     // Stats específicos do Boss Type B
     this.hp = 60;
-    this.maxHp = 120;
+    this.maxHp = 60;
     this.speed = 100;
     this.maxSpeed = 150;
-    this.shotsPerBurst = 3; // 3 tiros por rajada (cada tiro = 3 projéteis)
+    this.shotsPerBurst = 1; // 3 tiros por rajada (cada tiro = 3 projéteis)
     this.maxShotsPerBurst = 6;
     this.totalShots = 30; // Será ajustado pela onda
     this.maxTotalShots = 100;

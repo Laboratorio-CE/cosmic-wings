@@ -82,6 +82,13 @@ export default class Path extends Component<Props, State> {
       } catch (error) {
         console.log('Erro ao iniciar música na navegação:', error);
       }
+    } else if (route !== '/play' && this.state.currentRoute !== '/play') {
+      // Garantir que a música do menu esteja tocando em todas as telas de menu
+      try {
+        await this.audioManager.playBackgroundMusic('menu');
+      } catch (error) {
+        console.log('Erro ao manter música do menu:', error);
+      }
     }
 
     if (route === '/ranking-register' && data?.score) {
