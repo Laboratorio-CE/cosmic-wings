@@ -533,6 +533,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           setHiScore(hiScore);
         });
         
+        // Configurar callback para vida extra
+        this.scoreSystem.setOnExtraLifeCallback(() => {
+          this.playerLives++;
+          setLives(this.playerLives);
+          
+          // Tocar som de powerup
+          this.sound.play("powerup", { volume: 0.3 });
+          
+          console.log(`Vida extra! Vidas totais: ${this.playerLives}`);
+        });
+        
         // Armazenar referência no ref para acesso externo
         scoreSystemRef.current = this.scoreSystem;
 
