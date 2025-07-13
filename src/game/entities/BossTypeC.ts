@@ -12,7 +12,7 @@ interface GameScene extends Phaser.Scene {
 
 export default class BossTypeC extends Boss {
   // Estados do chefe (baseado no Enemy Type C)
-  public state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' | 'leaving' = 'entering';
+  public state: 'entering' | 'moving_to_position' | 'shooting' | 'moving' = 'entering';
   
   // Sistema de disparo
   private fireTimer = 0;
@@ -31,6 +31,11 @@ export default class BossTypeC extends Boss {
   
   // Sistema de dano visual
   private isFlashing = false;
+  
+  // Sistema de animação de movimento
+  private lastMovingState = false;
+  private animationState: 'idle' | 'starting' | 'moving' | 'stopping' = 'idle';
+  private animationTimer = 0;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Criar um target dummy para o Enemy, mas o boss não precisa usar
@@ -89,9 +94,11 @@ export default class BossTypeC extends Boss {
   }
   
   private setNextPosition() {
-    // Gerar posição aleatória inicial na área de jogo
-    const preferredX = Phaser.Math.Between(150, 650);
-    const preferredY = Phaser.Math.Between(120, 250);
+    // Gerar posição aleatória inicial na área de jogo (metade superior da tela)
+    const screenWidth = this.getScreenWidth();
+    const screenHeight = this.getScreenHeight();
+    const preferredX = Phaser.Math.Between(screenWidth * 0.1875, screenWidth * 0.8125); // 150/800 = 0.1875, 650/800 = 0.8125
+    const preferredY = Phaser.Math.Between(screenHeight * 0.2, screenHeight * 0.417); // 120/600 = 0.2, 250/600 = 0.417
     
     // Boss não precisa verificar posições ocupadas (ele tem prioridade)
     this.targetX = preferredX;
@@ -107,7 +114,10 @@ export default class BossTypeC extends Boss {
     const distance = Math.sqrt(directionX * directionX + directionY * directionY);
     
     // Se chegou perto o suficiente do alvo
-    if (distance < 15) {
+    if (distance < 10) {
+      // Posicionar exatamente no alvo para evitar "vibração"
+      this.x = this.targetX;
+      this.y = this.targetY;
       this.onReachedTarget();
       return;
     }
@@ -120,7 +130,7 @@ export default class BossTypeC extends Boss {
     this.y += normalizedY * this.moveSpeed * deltaTime;
     
     // Atualizar animação de movimento
-    this.updateMovementAnimation(normalizedX);
+    this.updateMovementAnimation(directionX);
   }
   
   private onReachedTarget() {
@@ -148,12 +158,6 @@ export default class BossTypeC extends Boss {
         }
         break;
       }
-
-      case "leaving":
-        // Saiu da tela
-        this.isDestroyed = true;
-        // Não marcar isKilledByPlayer como true - inimigo saiu da tela
-        break;
     }
   }
   
@@ -221,28 +225,71 @@ export default class BossTypeC extends Boss {
     this.shotsFired++;
   }
   
-  private updateMovementAnimation(directionX: number) {
-    // Atualizar frame baseado na direção do movimento (apenas se não estiver em flash)
+  private updateMovementAnimation(directionX: number): void {
+    // Verificar se está se movendo (incluindo movimento vertical)
+    const directionY = this.targetY - this.y;
+    const isCurrentlyMoving = Math.abs(directionX) > 2 || Math.abs(directionY) > 2;
+    
+    // Detectar mudança de estado de movimento
+    if (isCurrentlyMoving !== this.lastMovingState) {
+      if (isCurrentlyMoving) {
+        // Começou a se mover
+        this.animationState = 'starting';
+        this.animationTimer = this.scene.time.now;
+      } else {
+        // Parou de se mover
+        this.animationState = 'stopping';
+        this.animationTimer = this.scene.time.now;
+      }
+      this.lastMovingState = isCurrentlyMoving;
+    }
+    
+    // Não atualizar animação se estiver em flash
     if (this.isFlashing) return;
     
-    if (Math.abs(directionX) > 0.1) {
-      // Está se movendo horizontalmente - alternar entre frames 2 e 3
-      const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
-      const newTexture = `boss-C-frame-${frame}`;
-      
-      // Só mudar textura se for diferente da atual
-      if (this.texture.key !== newTexture) {
-        this.setTexture(newTexture);
-      }
-      
-      // Espelhar sprite baseado na direção
-      this.setFlipX(directionX > 0);
-    } else {
-      // Movimento apenas vertical ou parado - usar frame 1
-      if (this.texture.key !== 'boss-C-frame-1') {
+    // Atualizar animação baseada no estado
+    const currentTime = this.scene.time.now;
+    
+    switch (this.animationState) {
+      case 'starting':
+        // Transição: frame 1 -> 2 -> 3
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('boss-C-frame-1');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('boss-C-frame-2');
+        } else {
+          this.setTexture('boss-C-frame-3');
+          this.animationState = 'moving';
+        }
+        break;
+        
+      case 'moving':
+        // Manter frame 3 enquanto se move
+        this.setTexture('boss-C-frame-3');
+        break;
+        
+      case 'stopping':
+        // Transição: frame 3 -> 2 -> 1
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('boss-C-frame-3');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('boss-C-frame-2');
+        } else {
+          this.setTexture('boss-C-frame-1');
+          this.animationState = 'idle';
+        }
+        break;
+        
+      case 'idle':
+      default:
+        // Manter frame 1 quando parado
         this.setTexture('boss-C-frame-1');
-      }
-      this.setFlipX(false);
+        break;
+    }
+    
+    // Espelhar sprite baseado na direção apenas quando em movimento
+    if (isCurrentlyMoving) {
+      this.setFlipX(directionX > 0);
     }
   }
   
@@ -300,6 +347,9 @@ export default class BossTypeC extends Boss {
     
     console.log(`Boss Type C destruído! Pontuação: ${this.points}`);
     
+    // Fazer o sprite do boss desaparecer imediatamente
+    this.setVisible(false);
+    
     // Criar 9 animações de destruição: centro + 8 ao redor
     const centerX = this.x;
     const centerY = this.y;
@@ -340,8 +390,8 @@ export default class BossTypeC extends Boss {
   }
   
   tick(dt: number) {
-    // Chamar tick da classe pai
-    super.tick(dt);
+    // Chamar apenas a atualização base do AbstractEntity, sem o comportamento de movimento do Enemy
+    this.baseUpdate(dt);
     
     if (this.isDestroyed) return;
     

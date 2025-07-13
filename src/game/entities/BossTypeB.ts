@@ -34,6 +34,11 @@ export default class BossTypeB extends Boss {
   // Sistema de dano visual
   private isFlashing = false;
   
+  // Sistema de animação de movimento
+  private lastMovingState = false;
+  private animationState: 'idle' | 'starting' | 'moving' | 'stopping' = 'idle';
+  private animationTimer = 0;
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Criar um target dummy para o Enemy, mas o boss não precisa usar
     const dummyTarget = scene.add.sprite(400, 550, 'player-frame-1');
@@ -93,28 +98,31 @@ export default class BossTypeB extends Boss {
     // Gerar 3 posições aleatórias na metade superior da tela (similar ao Enemy B)
     const basePositions = [];
     
+    const screenWidth = this.getScreenWidth();
+    const screenHeight = this.getScreenHeight();
+    
     for (let i = 0; i < 3; i++) {
       let x: number, y: number;
       
       switch (i) {
         case 0:
           // Primeira posição: lado esquerdo a centro-esquerdo
-          x = Phaser.Math.Between(150, 350);
-          y = Phaser.Math.Between(120, 200);
+          x = Phaser.Math.Between(screenWidth * 0.1875, screenWidth * 0.4375); // 150/800 = 0.1875, 350/800 = 0.4375
+          y = Phaser.Math.Between(screenHeight * 0.2, screenHeight * 0.333); // 120/600 = 0.2, 200/600 = 0.333
           break;
         case 1:
           // Segunda posição: centro-direita a direita
-          x = Phaser.Math.Between(450, 650);
-          y = Phaser.Math.Between(140, 220);
+          x = Phaser.Math.Between(screenWidth * 0.5625, screenWidth * 0.8125); // 450/800 = 0.5625, 650/800 = 0.8125
+          y = Phaser.Math.Between(screenHeight * 0.233, screenHeight * 0.367); // 140/600 = 0.233, 220/600 = 0.367
           break;
         case 2:
           // Terceira posição: centro da tela
-          x = Phaser.Math.Between(300, 500);
-          y = Phaser.Math.Between(180, 260);
+          x = Phaser.Math.Between(screenWidth * 0.375, screenWidth * 0.625); // 300/800 = 0.375, 500/800 = 0.625
+          y = Phaser.Math.Between(screenHeight * 0.3, screenHeight * 0.433); // 180/600 = 0.3, 260/600 = 0.433
           break;
         default:
-          x = Phaser.Math.Between(200, 600);
-          y = Phaser.Math.Between(120, 250);
+          x = Phaser.Math.Between(screenWidth * 0.25, screenWidth * 0.75); // 200/800 = 0.25, 600/800 = 0.75
+          y = Phaser.Math.Between(screenHeight * 0.2, screenHeight * 0.417); // 120/600 = 0.2, 250/600 = 0.417
       }
       
       basePositions.push({ x, y });
@@ -133,7 +141,10 @@ export default class BossTypeB extends Boss {
     const distance = Math.sqrt(directionX * directionX + directionY * directionY);
     
     // Se chegou perto o suficiente do alvo
-    if (distance < 15) {
+    if (distance < 10) {
+      // Posicionar exatamente no alvo para evitar "vibração"
+      this.x = this.targetX;
+      this.y = this.targetY;
       this.onReachedTarget();
       return;
     }
@@ -146,7 +157,7 @@ export default class BossTypeB extends Boss {
     this.y += normalizedY * this.moveSpeed * deltaTime;
     
     // Atualizar animação de movimento
-    this.updateMovementAnimation(normalizedX);
+    this.updateMovementAnimation(directionX);
   }
   
   private onReachedTarget() {
@@ -262,28 +273,71 @@ export default class BossTypeB extends Boss {
     }
   }
   
-  private updateMovementAnimation(directionX: number) {
-    // Atualizar frame baseado na direção do movimento (apenas se não estiver em flash)
+  private updateMovementAnimation(directionX: number): void {
+    // Verificar se está se movendo (incluindo movimento vertical)
+    const directionY = this.targetY - this.y;
+    const isCurrentlyMoving = Math.abs(directionX) > 2 || Math.abs(directionY) > 2;
+    
+    // Detectar mudança de estado de movimento
+    if (isCurrentlyMoving !== this.lastMovingState) {
+      if (isCurrentlyMoving) {
+        // Começou a se mover
+        this.animationState = 'starting';
+        this.animationTimer = this.scene.time.now;
+      } else {
+        // Parou de se mover
+        this.animationState = 'stopping';
+        this.animationTimer = this.scene.time.now;
+      }
+      this.lastMovingState = isCurrentlyMoving;
+    }
+    
+    // Não atualizar animação se estiver em flash
     if (this.isFlashing) return;
     
-    if (Math.abs(directionX) > 0.1) {
-      // Está se movendo horizontalmente - alternar entre frames 2 e 3
-      const frame = (this.scene.time.now % 600 < 300) ? 2 : 3;
-      const newTexture = `boss-B-frame-${frame}`;
-      
-      // Só mudar textura se for diferente da atual
-      if (this.texture.key !== newTexture) {
-        this.setTexture(newTexture);
-      }
-      
-      // Espelhar sprite baseado na direção
-      this.setFlipX(directionX > 0);
-    } else {
-      // Movimento apenas vertical ou parado - usar frame 1
-      if (this.texture.key !== 'boss-B-frame-1') {
+    // Atualizar animação baseada no estado
+    const currentTime = this.scene.time.now;
+    
+    switch (this.animationState) {
+      case 'starting':
+        // Transição: frame 1 -> 2 -> 3
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('boss-B-frame-1');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('boss-B-frame-2');
+        } else {
+          this.setTexture('boss-B-frame-3');
+          this.animationState = 'moving';
+        }
+        break;
+        
+      case 'moving':
+        // Manter frame 3 enquanto se move
+        this.setTexture('boss-B-frame-3');
+        break;
+        
+      case 'stopping':
+        // Transição: frame 3 -> 2 -> 1
+        if (currentTime - this.animationTimer < 150) {
+          this.setTexture('boss-B-frame-3');
+        } else if (currentTime - this.animationTimer < 300) {
+          this.setTexture('boss-B-frame-2');
+        } else {
+          this.setTexture('boss-B-frame-1');
+          this.animationState = 'idle';
+        }
+        break;
+        
+      case 'idle':
+      default:
+        // Manter frame 1 quando parado
         this.setTexture('boss-B-frame-1');
-      }
-      this.setFlipX(false);
+        break;
+    }
+    
+    // Espelhar sprite baseado na direção apenas quando em movimento
+    if (isCurrentlyMoving) {
+      this.setFlipX(directionX > 0);
     }
   }
   
@@ -342,6 +396,9 @@ export default class BossTypeB extends Boss {
     
     console.log(`Boss Type B destruído! Pontuação: ${this.points}`);
     
+    // Fazer o sprite do boss desaparecer imediatamente
+    this.setVisible(false);
+    
     // Criar 7 animações de destruição: centro + 6 ao redor
     const centerX = this.x;
     const centerY = this.y;
@@ -380,8 +437,8 @@ export default class BossTypeB extends Boss {
   }
   
   tick(dt: number) {
-    // Chamar tick da classe pai
-    super.tick(dt);
+    // Chamar apenas a atualização base do AbstractEntity, sem o comportamento de movimento do Enemy
+    this.baseUpdate(dt);
     
     if (this.isDestroyed) return;
     
