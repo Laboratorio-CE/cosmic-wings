@@ -11,7 +11,7 @@ interface GameCanvas extends Phaser.Scene {
 }
 export default class EnemyTypeA extends AbstractEntity {
   // Estados do inimigo
-  public state: 'entering' | 'moving_to_position' | 'shooting' | 'moving_to_next' | 'leaving' = 'entering';
+  public state: 'entering' | 'moving_to_position' | 'shooting' | 'moving_to_next' | 'leaving' | 'outOfScreen' = 'entering';
   
   // Sistema de disparo
   private shotsPerBurst: number = 1;
@@ -175,7 +175,11 @@ export default class EnemyTypeA extends AbstractEntity {
       }
         
       case 'leaving':
-        // Saiu da tela
+        // Saiu da tela, muda para estado de fora da tela
+        this.state = 'outOfScreen';
+        break;
+      case 'outOfScreen':
+        // Remover/destruir sprite sem efeitos visuais/sonoros
         this.destroy();
         break;
     }
@@ -290,6 +294,7 @@ export default class EnemyTypeA extends AbstractEntity {
     
     // Verificar se saiu da tela
     if (this.isOutOfBounds()) {
+      // Se saiu da tela, destrói imediatamente (sem animação de morte)
       this.destroy();
       return;
     }
@@ -384,19 +389,12 @@ export default class EnemyTypeA extends AbstractEntity {
   
   protected onDestroy(): void {
     super.onDestroy();
-    
-    // Marcar como morto pelo jogador se não saiu da tela
-    if (this.state !== 'leaving') {
-      this.isKilledByPlayer = true;
-      
-      // Criar animação de explosão apenas se foi morto pelo jogador
+    // Executa animação de morte e som apenas se foi morto pelo jogador
+    if (this.isKilledByPlayer) {
       this.createDeathAnimation();
-      
-      // Reproduzir som de morte do inimigo
       AudioManager.getInstance().playSoundEffect('enemy-kill');
     }
-    
-    // Lógica específica quando o EnemyTypeC é destruído
+    // Lógica específica quando o EnemyTypeA é destruído
     const gameScene = this.scene as GameCanvas;
     if (gameScene.releasePosition) {
       gameScene.releasePosition(this.x, this.y);
