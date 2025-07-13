@@ -400,14 +400,9 @@ export default class EnemyTypeB extends AbstractEntity {
   protected onDestroy(): void {
     super.onDestroy();
     
-    // Marcar como morto pelo jogador se não saiu da tela
-    if (this.state !== 'leaving') {
-      this.isKilledByPlayer = true;
-      
-      // Criar animação de explosão apenas se foi morto pelo jogador
+    // Executa animação de morte e som apenas se foi morto pelo jogador
+    if (this.isKilledByPlayer) {
       this.createDeathAnimation();
-      
-      // Reproduzir som de morte do inimigo
       AudioManager.getInstance().playSoundEffect('enemy-kill');
     }
     
