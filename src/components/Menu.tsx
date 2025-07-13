@@ -195,7 +195,7 @@ export default class Menu extends Component<Props, State> {
 
           <div className="mt-8 text-center text-cyan-300 text-xs sm:text-sm space-y-1 pb-4 sm:pb-0 px-4 sm:px-0">
             <p className="hidden sm:block">Use W/S ou ↑/↓ para navegar</p>
-            <p className="hidden sm:block">ENTER ou ESPAÇO para selecionar</p>
+            <p className="hidden sm:block">ENTER, F, 5 ou ESPAÇO para selecionar</p>
             <p className="sm:hidden">Toque duas vezes para selecionar</p>
           </div>
         </div>
