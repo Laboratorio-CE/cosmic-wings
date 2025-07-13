@@ -28,11 +28,11 @@ export default class Boss extends Enemy {
     this.setScale(1.5);
     
     // Configurar animação do boss
-    this.setAnimationFrames([
-      'boss-A-frame-1',
-      'boss-A-frame-2', 
-      'boss-A-frame-3'
-    ], 300); // Animação mais lenta para o boss
+    // Determinar o tipo de boss dinamicamente (exemplo: BossTypeA, BossTypeB, BossTypeC)
+    const bossType = this.constructor.name.replace('Boss', 'BossType'); // Exemplo de obtenção do tipo
+    const frame = `${bossType}-frame-1`;
+
+    this.setAnimationFrames([frame], 300); // Usar apenas o frame 1 do boss atual
   }
 
   protected onTakeDamage(damage: number): void {
@@ -40,7 +40,7 @@ export default class Boss extends Enemy {
     
     // Efeito de flash quando o boss toma dano
     this.flashEffect = true;
-    this.setTintFill(0xff0000); // Vermelho
+    this.setTintFill(0xffffff); // Vermelho
     
     // Remover o flash depois de um tempo
     this.setTimer('flash', 100);
