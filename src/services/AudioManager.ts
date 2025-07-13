@@ -440,6 +440,30 @@ class AudioManager {
     this.removeAutoplayListeners();
   }
 
+  // Método para obter track baseada na onda
+  private getTrackForWave(wave: number): MusicTrack {
+    const trackIndex = Math.floor((wave - 1) / 5) % 3;
+    return ['wave-1', 'wave-2', 'wave-3'][trackIndex] as MusicTrack;
+  }
+
+  // Método público para tocar música baseada na onda
+  async playWaveMusic(wave: number): Promise<void> {
+    const track = this.getTrackForWave(wave);
+    await this.playBackgroundMusic(track);
+  }
+
+  // Método para fazer transição suave da música do jogo para menu
+  async transitionToMenuMusic(): Promise<void> {
+    // Pausa imediatamente a música atual para evitar sobreposição
+    this.pauseBackgroundMusic();
+    
+    // Aguarda um breve momento para garantir que a música parou
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Inicia música do menu
+    await this.playBackgroundMusic('menu');
+  }
+
   // Getters para estado atual
   get isMusicMuted(): boolean {
     return this.musicMuted;

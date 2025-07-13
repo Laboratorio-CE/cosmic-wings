@@ -17,7 +17,7 @@ export default class BossTypeC extends Boss {
   
   // Sistema de disparo
   private fireTimer = 0;
-  private fireRate = 300; // 800ms entre tiros
+  private fireRate = 800; // 800ms entre tiros
   private currentShots = 0;
   private shotsPerBurstC = 5; // 5 tiros por rajada
   
@@ -50,10 +50,10 @@ export default class BossTypeC extends Boss {
     
     // Stats específicos do Boss Type C
     this.hp = 70;
-    this.maxHp = 140;
+    this.maxHp = 70;
     this.speed = 180;
     this.maxSpeed = 250;
-    this.shotsPerBurst = 5; // 5 tiros por rajada
+    this.shotsPerBurst = 3; // 3 tiros por rajada
     this.maxShotsPerBurst = 8;
     this.totalShots = 30; // Será ajustado pela onda
     this.maxTotalShots = 100;
