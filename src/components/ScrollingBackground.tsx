@@ -3,13 +3,27 @@ import CanvasBackground from './Background';
 
 interface BackgroundScrollProps {
   speed: number;
-  width: number;
-  height: number;
 }
 
 // Componente Background com scroll para o GameCanvas
-const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, height }) => {
+const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed }) => {
   const [offset, setOffset] = useState(0);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  
+  // Detectar mudanças de tamanho do container
+  useEffect(() => {
+    const updateDimensions = () => {
+      setDimensions({
+        width: window.innerWidth < 640 ? window.innerWidth : 800,
+        height: window.innerWidth < 640 ? window.innerHeight * 0.85 : 600
+      });
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,17 +34,17 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
   }, [speed]);
   
   // Calcular posições das três instâncias para scroll infinito suave
+  const { width, height } = dimensions;
   const firstY = offset % height;
   const secondY = firstY - height;
   const thirdY = firstY + height;
   
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden bg-(--cosmic-dark)/60">
       {/* Três instâncias do background para scroll infinito suave */}
       <div 
-        className="absolute"
+        className="absolute w-full"
         style={{ 
-          width: `${width}px`,
           height: `${height}px`,
           transform: `translateY(${firstY}px)`,
           transition: 'none'
@@ -39,9 +53,8 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
         <CanvasBackground starCount={100} />
       </div>
       <div 
-        className="absolute"
+        className="absolute w-full"
         style={{ 
-          width: `${width}px`,
           height: `${height}px`,
           transform: `translateY(${secondY}px)`,
           transition: 'none'
@@ -50,9 +63,8 @@ const ScrollingBackground: React.FC<BackgroundScrollProps> = ({ speed, width, he
         <CanvasBackground starCount={100} />
       </div>
       <div 
-        className="absolute"
+        className="absolute w-full"
         style={{ 
-          width: `${width}px`,
           height: `${height}px`,
           transform: `translateY(${thirdY}px)`,
           transition: 'none'
