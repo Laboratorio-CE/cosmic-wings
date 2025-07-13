@@ -143,7 +143,7 @@ export default class Menu extends Component<Props, State> {
 
     return (
       <div className="flex justify-center items-center h-full w-full min-h-0 p-0 sm:p-4">
-        <div className="w-full h-full sm:w-auto sm:max-w-md sm:h-auto p-0 sm:p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-0 sm:border-2 border-cyan-400 rounded-none sm:rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col justify-center overflow-hidden">
+        <div className="w-full h-full sm:w-auto sm:max-w-md sm:h-auto p-0 sm:p-8 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col justify-center overflow-hidden">
           <h1 className="text-center text-cyan-400 text-2xl sm:text-4xl mb-8 font-bold tracking-widest pt-12 sm:pt-0 px-4 sm:px-0">
             COSMIC WINGS
           </h1>
@@ -181,12 +181,12 @@ export default class Menu extends Component<Props, State> {
                   <img 
                     src={imagemPlayer} 
                     alt="Nave selecionada" 
-                    className="absolute left-2 sm:left-0 w-6 h-6 sm:w-8 sm:h-8 rotate-90"
+                    className="absolute left-8 sm:left-0 w-6 h-6 sm:w-8 sm:h-8 rotate-90 top-1/2 transform -translate-y-1/2"
                   />
                 )}
                 
                 
-                <span className="w-full py-3 pl-10 sm:pl-12 text-center sm:text-left">
+                <span className="w-full py-3 pl-5 pr-4 sm:pl-6 text-center sm:text-center">
                   {option.label}
                 </span>
               </button>
