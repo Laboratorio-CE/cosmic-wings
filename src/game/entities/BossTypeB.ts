@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Boss from './Boss';
+import AudioManager from '../../services/AudioManager';
 
 // Interface para GameScene com as propriedades necessárias
 interface GameScene extends Phaser.Scene {
@@ -186,7 +187,7 @@ export default class BossTypeB extends Boss {
   
   shoot() {
     // Reproduzir som do tiro do boss (volume maior para diferenciá-lo dos inimigos)
-    this.scene.sound.play('enemy-shoot', { volume: 0.4 });
+    AudioManager.getInstance().playSoundEffect('enemy-fire');
     
     // Obter referência ao grupo de projéteis inimigos da scene
     const gameScene = this.scene as GameScene;
@@ -392,7 +393,7 @@ export default class BossTypeB extends Boss {
     this.isKilledByPlayer = true;
     
     // Reproduzir som de morte do boss
-    this.scene.sound.play('boss-kill', { volume: 0.5 });
+    AudioManager.getInstance().playSoundEffect('boss-kill');
     
     console.log(`Boss Type B destruído! Pontuação: ${this.points}`);
     
