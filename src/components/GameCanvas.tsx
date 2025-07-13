@@ -1514,14 +1514,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         // Trocar música a cada 5 ondas
         if (this.currentWave % 5 === 0) {
           this.audioManager.stopBackgroundMusic();
-          this.audioManager.playWaveMusic(this.currentWave);
+          // Aguardar um momento para garantir que a música parou antes de iniciar a nova
+          this.time.delayedCall(200, () => {
+            this.audioManager.playWaveMusic(this.currentWave);
+          });
         }
         
-
-
-
-        // Atualizar onda no estado React (comentado temporariamente para debug)
-        // setWave(this.currentWave);
+        setWave(this.currentWave);
 
         // Mostrar mensagem da nova onda
         window.dispatchEvent(
@@ -1558,10 +1557,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.resetWaveData();
 
 
-        // Trocar música a cada 5 ondas
-        if ((this.currentWave - 1) % 5 === 0) {
-          this.audioManager.playWaveMusic(this.currentWave);
-        }
+
 
         // Começar nova onda - definir sub-onda 1 e spawnar
         this.currentSubWave = 1;
