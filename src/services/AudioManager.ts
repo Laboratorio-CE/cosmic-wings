@@ -167,22 +167,7 @@ class AudioManager {
   }
 
   // Método para tentar autoplay com diferentes estratégias
-  private async attemptAutoplay(): Promise<void> {
-    if (!this.backgroundMusic || this.musicMuted) return;
-
-    // Estratégia 1: Tentar reproduzir diretamente
-    try {
-      await this.backgroundMusic.play();
-      this.userInteracted = true;
-
-      return;
-    } catch (error) {
-      console.warn('Erro ao tentar autoplay da música:', error);
-    }
-
-    // Estratégia 2: Configurar para tentar novamente em eventos específicos
-    this.setupAutoplayListeners();
-  }
+  // (Removido: attemptAutoplay não utilizado)
 
   // Configura listeners para tentar autoplay em eventos específicos
   private setupAutoplayListeners(): void {
