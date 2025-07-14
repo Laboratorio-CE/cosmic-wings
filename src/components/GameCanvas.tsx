@@ -112,6 +112,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   // Instância do AudioManager
   const audioManager = AudioManager.getInstance();
 
+  // Sistema do Konami Code
+  const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+  const konamiInputRef = useRef<string[]>([]);
+
   // Event listener para pausa global
   useEffect(() => {
     const handleTogglePause = () => {
@@ -147,13 +151,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     };
   }, [gameState, backgroundSpeed]);
 
-  // Listener para tecla ESC
+  // Listener para tecla ESC e Konami Code
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-
         // Dispatchar evento de pausa/retomada
         window.dispatchEvent(new CustomEvent('toggleGamePause'));
+      }
+      
+      // Detectar Konami Code apenas quando pausado
+      if (gameState === 'paused') {
+        konamiInputRef.current = [...konamiInputRef.current, event.code];
+        
+        // Manter apenas os últimos 10 inputs
+        if (konamiInputRef.current.length > 10) {
+          konamiInputRef.current.shift();
+        }
+        
+        // Verificar se a sequência está correta
+        if (konamiInputRef.current.length === 10) {
+          const isKonamiCode = konamiInputRef.current.every((key, index) => key === konamiSequence[index]);
+          
+          if (isKonamiCode) {
+            // Adicionar vida usando o sistema existente
+            if (gameRef.current) {
+              const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+              if (scene) {
+                scene.playerLives++;
+                setLives(scene.playerLives);
+                audioManager.playSoundEffect('powerup');
+              }
+            }
+            
+            // Limpar input
+            konamiInputRef.current = [];
+          }
+        }
       }
     };
 
@@ -162,13 +195,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, []);
+  }, [gameState, audioManager]);
 
   // Sincronizar estado do jogo com outros componentes
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('gameStateChange', { 
       detail: { gameState } 
     }));
+    
+    // Limpar input do Konami Code quando não estiver pausado
+    if (gameState !== 'paused') {
+      konamiInputRef.current = [];
+    }
   }, [gameState]);
   
   // Atualizar ref sempre que hiScore mudar
