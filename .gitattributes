@@ -1,3 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 *.mp3 filter=lfs diff=lfs merge=lfs -text
+src/assets/audios/music/*.mp3 filter=lfs diff=lfs merge=lfs -text
+src/assets/audios/music/*.wav filter=lfs diff=lfs merge=lfs -text
