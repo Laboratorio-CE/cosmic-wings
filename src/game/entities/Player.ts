@@ -37,7 +37,7 @@ export default class Player extends AbstractEntity {
     this.setVelocity(vx * this.speed, vy * this.speed);
   }
   
-  protected onTakeDamage(damage: number): void {
+  protected onTakeDamage(): void {
     // Aplicar efeito visual ou sonoro quando o player toma dano
 
     
