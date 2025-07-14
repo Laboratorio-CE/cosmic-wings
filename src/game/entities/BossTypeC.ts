@@ -313,6 +313,7 @@ export default class BossTypeC extends Boss {
     this.activateFlash();
     
     if (this.hp <= 0) {
+      this.isKilledByPlayer = true;
       this.destroy();
     }
   }
@@ -340,50 +341,64 @@ export default class BossTypeC extends Boss {
     if (this.isDestroyed) return;
     
     this.isDestroyed = true;
-    this.isKilledByPlayer = true;
     
-    // Reproduzir som de morte do boss
-    AudioManager.getInstance().playSoundEffect('boss-kill');
+    // Verificar se o jogo está em game over
+    const gameScene = this.scene as any;
+    const isGameOver = gameScene.isGameOver;
     
-
+    // Se há game over, apenas ocultar o boss sem animações
+    if (isGameOver) {
+      this.setVisible(false);
+      super.destroy();
+      return;
+    }
     
-    // Fazer o sprite do boss desaparecer imediatamente
-    this.setVisible(false);
-    
-    // Criar 9 animações de destruição: centro + 8 ao redor
-    const centerX = this.x;
-    const centerY = this.y;
-    const offset = 60; // Distância maior para boss maior
-    
-    // Animação central
-    this.createDeathAnimation(centerX, centerY);
-    
-    // Animações ao redor (com pequeno delay para efeito visual)
-    this.scene.time.delayedCall(60, () => {
-      this.createDeathAnimation(centerX - offset, centerY - offset); // Superior esquerdo
-      this.createDeathAnimation(centerX, centerY - offset); // Superior centro
-      this.createDeathAnimation(centerX + offset, centerY - offset); // Superior direito
-    });
-    
-    this.scene.time.delayedCall(120, () => {
-      this.createDeathAnimation(centerX - offset, centerY); // Esquerda
-      this.createDeathAnimation(centerX + offset, centerY); // Direita
-    });
-    
-    this.scene.time.delayedCall(180, () => {
-      this.createDeathAnimation(centerX - offset, centerY + offset); // Inferior esquerdo
-      this.createDeathAnimation(centerX, centerY + offset); // Inferior centro
-    });
-    
-    this.scene.time.delayedCall(240, () => {
-      this.createDeathAnimation(centerX + offset, centerY + offset, () => {
-        // Callback final após todas as animações - iniciar transição de onda
-        const gameScene = this.scene as GameScene;
-        if (gameScene.onBossDefeated) {
-          gameScene.onBossDefeated(this.points);
-        }
+    // Se foi morto pelo jogador, executar animação completa
+    if (this.isKilledByPlayer) {
+      // Reproduzir som de morte do boss
+      AudioManager.getInstance().playSoundEffect('boss-kill');
+      
+      // Fazer o sprite do boss desaparecer imediatamente
+      this.setVisible(false);
+      
+      // Criar 9 animações de destruição: centro + 8 ao redor
+      const centerX = this.x;
+      const centerY = this.y;
+      const offset = 60; // Distância maior para boss maior
+      
+      // Animação central
+      this.createDeathAnimation(centerX, centerY);
+      
+      // Animações ao redor (com pequeno delay para efeito visual)
+      this.scene.time.delayedCall(60, () => {
+        this.createDeathAnimation(centerX - offset, centerY - offset); // Superior esquerdo
+        this.createDeathAnimation(centerX, centerY - offset); // Superior centro
+        this.createDeathAnimation(centerX + offset, centerY - offset); // Superior direito
       });
-    });
+      
+      this.scene.time.delayedCall(120, () => {
+        this.createDeathAnimation(centerX - offset, centerY); // Esquerda
+        this.createDeathAnimation(centerX + offset, centerY); // Direita
+      });
+      
+      this.scene.time.delayedCall(180, () => {
+        this.createDeathAnimation(centerX - offset, centerY + offset); // Inferior esquerdo
+        this.createDeathAnimation(centerX, centerY + offset); // Inferior centro
+      });
+      
+      this.scene.time.delayedCall(240, () => {
+        this.createDeathAnimation(centerX + offset, centerY + offset, () => {
+          // Callback final após todas as animações - iniciar transição de onda
+          const gameScene = this.scene as GameScene;
+          if (gameScene.onBossDefeated) {
+            gameScene.onBossDefeated(this.points);
+          }
+        });
+      });
+    } else {
+      // Se não foi morto pelo jogador, apenas ocultar
+      this.setVisible(false);
+    }
     
     // Chamar método destroy da classe pai
     super.destroy();
@@ -442,6 +457,34 @@ export default class BossTypeC extends Boss {
     this.setNextPosition();
     this.state = 'moving';
     this.movementCountC = 0;
+  }
+  
+  // Método para criar animação de destruição
+  protected createDeathAnimation(x: number, y: number, onComplete?: () => void): void {
+    // Criar sprite da animação de destruição
+    const deathSprite = this.scene.add.sprite(x, y, 'death-frame-1');
+    deathSprite.setScale(0.8);
+    
+    // Executar animação sequencial
+    let currentFrame = 1;
+    
+    const nextFrame = () => {
+      if (currentFrame <= 9) {
+        deathSprite.setTexture(`death-frame-${currentFrame}`);
+        currentFrame++;
+        
+        // Próximo frame após 80ms
+        this.scene.time.delayedCall(80, nextFrame);
+      } else {
+        // Animação concluída
+        deathSprite.destroy();
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    };
+    
+    nextFrame();
   }
   
   // Método update para compatibilidade com GameCanvas
