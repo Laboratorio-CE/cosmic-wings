@@ -11,6 +11,7 @@ import imagemPlayer from "../assets/images/player/player-frame-1.png";
 interface GameUIProps {
   lives: number;
   score: number;
+  hiScore: number;
   wave: number;
   gameState: 'preparing' | 'playing' | 'paused' | 'gameOver';
   showWaveMessage?: boolean;
@@ -26,6 +27,7 @@ interface GameUIProps {
 const GameUI: React.FC<GameUIProps> = ({ 
   lives,
   score,
+  hiScore,
   wave,
   gameState,
   showWaveMessage = false,
@@ -128,7 +130,8 @@ const GameUI: React.FC<GameUIProps> = ({
   };
   // Formata a pontuação com 7 dígitos, preenchendo com zeros à esquerda
   const formatScore = (currentScore: number): string => {
-    return currentScore.toString().padStart(7, '0');
+    const displayScore = currentScore % 10000000;
+    return displayScore.toString().padStart(7, '0');
   };
 
   // Renderiza as vidas como uma imagem + "x" + número
@@ -187,7 +190,7 @@ const GameUI: React.FC<GameUIProps> = ({
                 PONTUAÇÃO FINAL
               </p>
               <p className="text-white font-mono text-3xl font-bold mb-6">
-                {formatScore(score)}
+                {hiScore}
               </p>
               <p className="text-cyan-400 font-mono text-sm animate-pulse">
                 Aguarde...
