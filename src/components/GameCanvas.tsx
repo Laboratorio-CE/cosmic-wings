@@ -115,6 +115,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   // Sistema do Konami Code
   const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
   const konamiInputRef = useRef<string[]>([]);
+  
+  // Sistema de invencibilidade permanente
+  const invincibleSequence = ['KeyI', 'KeyA', 'KeyM', 'KeyI', 'KeyN', 'KeyV', 'KeyI', 'KeyN', 'KeyC', 'KeyI', 'KeyB', 'KeyL', 'KeyE'];
+  const invincibleInputRef = useRef<string[]>([]);
 
   // Event listener para pausa global
   useEffect(() => {
@@ -159,21 +163,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         window.dispatchEvent(new CustomEvent('toggleGamePause'));
       }
       
-      // Detectar Konami Code apenas quando pausado
+      // Detectar códigos apenas quando pausado
       if (gameState === 'paused') {
+        // Konami Code
         konamiInputRef.current = [...konamiInputRef.current, event.code];
-        
-        // Manter apenas os últimos 10 inputs
         if (konamiInputRef.current.length > 10) {
           konamiInputRef.current.shift();
         }
-        
-        // Verificar se a sequência está correta
         if (konamiInputRef.current.length === 10) {
           const isKonamiCode = konamiInputRef.current.every((key, index) => key === konamiSequence[index]);
-          
           if (isKonamiCode) {
-            // Adicionar vida usando o sistema existente
             if (gameRef.current) {
               const scene = gameRef.current.scene.getScene('MainGameScene') as any;
               if (scene) {
@@ -182,9 +181,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
                 audioManager.playSoundEffect('powerup');
               }
             }
-            
-            // Limpar input
             konamiInputRef.current = [];
+          }
+        }
+        
+        // Código de invencibilidade
+        invincibleInputRef.current = [...invincibleInputRef.current, event.code];
+        if (invincibleInputRef.current.length > 13) {
+          invincibleInputRef.current.shift();
+        }
+        if (invincibleInputRef.current.length === 13) {
+          const isInvincibleCode = invincibleInputRef.current.every((key, index) => key === invincibleSequence[index]);
+          if (isInvincibleCode) {
+            if (gameRef.current) {
+              const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+              if (scene) {
+                scene.isPermanentlyInvulnerable = !scene.isPermanentlyInvulnerable;
+                audioManager.playSoundEffect('boost');
+              }
+            }
+            invincibleInputRef.current = [];
           }
         }
       }
@@ -203,9 +219,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       detail: { gameState } 
     }));
     
-    // Limpar input do Konami Code quando não estiver pausado
+    // Limpar inputs dos códigos quando não estiver pausado
     if (gameState !== 'paused') {
       konamiInputRef.current = [];
+      invincibleInputRef.current = [];
     }
   }, [gameState]);
   
@@ -347,6 +364,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       playerLives = 3;
       isPlayerDead = false;
       isPlayerInvulnerable = false;
+      isPermanentlyInvulnerable = false; // Invencibilidade permanente via código
       invulnerabilityDuration = 5000; // 5 segundos de invencibilidade
       invulnerabilityStartTime = 0;
       respawnDelay = 2000; // 2 segundos para respawn
@@ -1262,7 +1280,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         });
 
         // Colisão projéteis dos inimigos vs jogador
-        if (!this.isPlayerDead && !this.isPlayerInvulnerable) {
+        if (!this.isPlayerDead && !this.isPlayerInvulnerable && !this.isPermanentlyInvulnerable) {
           this.enemyBullets.children.entries.forEach((bullet) => {
             const bulletSprite = bullet as Phaser.GameObjects.Sprite;
             if (!bulletSprite.active) return;
@@ -1330,7 +1348,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       // Sistema de vidas do jogador
       playerTakeDamage() {
-        if (this.isPlayerDead || this.isPlayerInvulnerable) return;
+        if (this.isPlayerDead || this.isPlayerInvulnerable || this.isPermanentlyInvulnerable) return;
 
 
         this.playerDie();
