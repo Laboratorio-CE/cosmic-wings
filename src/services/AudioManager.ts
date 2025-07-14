@@ -160,7 +160,7 @@ class AudioManager {
       // Tentar reproduzir imediatamente
       await this.backgroundMusic.play();
     } catch (error) {
-      console.error(`Erro ao reproduzir música ${track}:`, error);
+      // console.error(`Erro ao reproduzir música ${track}:`, error);
       // Tentar novamente após interação do usuário
       this.setupAutoplayListeners();
     }
