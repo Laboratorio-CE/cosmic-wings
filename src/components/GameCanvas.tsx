@@ -975,6 +975,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           const previousMax = wave === 4 ? 25 : this.maxEnemiesInWave;
           const increment = Phaser.Math.Between(5, 10);
           this.maxEnemiesInWave = previousMax + increment;
+          if (this.maxEnemiesInWave > 42) {
+            this.maxEnemiesInWave = 42; // Limite máximo de inimigos por onda
+          }
         }
 
       }
