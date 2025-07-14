@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+:root {
+  --primary-dark: #1a1a2e;
+  --cosmic-darkest: #0a0011;
+  --cosmic-dark: #150025;
+  --cosmic-medium: #2d0052;
+  --cosmic-light: #5a1ca7;
+}
+
+.cosmic-gradient {
+  background: linear-gradient(to right top, var(--cosmic-dark), var(--cosmic-darkest));
+}
+
+
 @keyframes randomMove {
   0%, 100% { transform: translate(0px, 0px); }
   25% { transform: translate(10px, -8px); }
   50% { transform: translate(-6px, 10px); }
   75% { transform: translate(8px, 5px); }
+}
+
+/* Ocultar scrollbar */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari e Chrome */
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
