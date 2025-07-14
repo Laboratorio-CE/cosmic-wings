@@ -109,7 +109,7 @@ class AudioManager {
     return AudioManager.instance;
   }
 
-  // Pré-carrega todos os efeitos sonoros com logs para depuração
+  
   private preloadSoundEffects(): void {
 
 
@@ -137,12 +137,12 @@ class AudioManager {
     }
 
     // Parar música atual se existir
-    if (this.backgroundMusic) {
+    if (this.backgroundMusic && this.currentTrack !== track) {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
       this.backgroundMusic = null;
     }
-
+    
     // Definir a track atual
     this.currentTrack = track;
 
@@ -159,7 +159,6 @@ class AudioManager {
 
       // Tentar reproduzir imediatamente
       await this.backgroundMusic.play();
-      console.log(`Música ${track} iniciada com sucesso`);
     } catch (error) {
       console.error(`Erro ao reproduzir música ${track}:`, error);
       // Tentar novamente após interação do usuário
@@ -316,7 +315,7 @@ class AudioManager {
     }
   }
 
-  // Reproduz efeito sonoro com logs para depuração
+  
   playSoundEffect(effect: SoundEffect): void {
     // Proteção extra: se o Map estiver vazio, tenta re-preload
     if (this.soundEffects.size === 0) {
@@ -432,16 +431,21 @@ class AudioManager {
 
   // Método para obter track baseada na onda
   private getTrackForWave(wave: number): MusicTrack {
-    // Ondas 1-5: wave-1, Ondas 6-10: wave-2, Ondas 11-15: wave-3, depois repete
-    const trackIndex = ((Math.floor((wave - 1) / 5) % 3));
-    return ['wave-1', 'wave-2', 'wave-3'][trackIndex] as MusicTrack;
+    // Música 1 para ondas 1, música 2 para ondas 2-3, música 3 para ondas 4-5, etc.
+    const musicList: MusicTrack[] = ['wave-1', 'wave-2', 'wave-3'];
+    if (wave === 1) return musicList[0];
+    // Troca a cada onda par (2, 4, 6, ...)
+    const trackIndex = Math.floor((wave - 2) / 5) + 1;
+    return musicList[trackIndex % musicList.length];
   }
 
   // Método público para tocar música baseada na onda
   async playWaveMusic(wave: number): Promise<void> {
     const track = this.getTrackForWave(wave);
-    console.log(`Tocando música da onda ${wave}: ${track}`);
-    await this.playBackgroundMusic(track);
+    // Só troca se a música realmente mudou
+    if (this.currentTrack !== track) {
+      await this.playBackgroundMusic(track);
+    }
   }
 
   // Método para fazer transição suave da música do jogo para menu
