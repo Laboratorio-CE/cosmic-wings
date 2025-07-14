@@ -112,12 +112,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
   // Instância do AudioManager
   const audioManager = AudioManager.getInstance();
 
-  // Sistema do Konami Code
-  const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+  // Cheat code Konami Code
+  const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
   const konamiInputRef = useRef<string[]>([]);
   
-  // Sistema de invencibilidade permanente
-  const invincibleSequence = ['KeyI', 'KeyA', 'KeyM', 'KeyI', 'KeyN', 'KeyV', 'KeyI', 'KeyN', 'KeyC', 'KeyI', 'KeyB', 'KeyL', 'KeyE'];
+  // Cheat code de invulnerabilidade
+  const invulnCode = ['KeyI', 'KeyA', 'KeyM', 'KeyI', 'KeyN', 'KeyV', 'KeyI', 'KeyN', 'KeyC', 'KeyI', 'KeyB', 'KeyL', 'KeyE'];
   const invincibleInputRef = useRef<string[]>([]);
 
   // Event listener para pausa global
@@ -171,7 +171,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           konamiInputRef.current.shift();
         }
         if (konamiInputRef.current.length === 10) {
-          const isKonamiCode = konamiInputRef.current.every((key, index) => key === konamiSequence[index]);
+          const isKonamiCode = konamiInputRef.current.every((key, index) => key === konamiCode[index]);
           if (isKonamiCode) {
             if (gameRef.current) {
               const scene = gameRef.current.scene.getScene('MainGameScene') as any;
@@ -191,7 +191,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           invincibleInputRef.current.shift();
         }
         if (invincibleInputRef.current.length === 13) {
-          const isInvincibleCode = invincibleInputRef.current.every((key, index) => key === invincibleSequence[index]);
+          const isInvincibleCode = invincibleInputRef.current.every((key, index) => key === invulnCode[index]);
           if (isInvincibleCode) {
             if (gameRef.current) {
               const scene = gameRef.current.scene.getScene('MainGameScene') as any;
@@ -993,6 +993,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             // Onda 1: 1 inimigo tipo A
             case 1:
               this.spawnMultipleEnemiesTypeA(1);
+              console.log("Boa tentativa, mas não há console.log para te ajudar aqui.")
               break;
             // Onda 2: 1 inimigo tipo B
             case 2:
@@ -1371,11 +1372,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         if (this.playerLives <= 0) {
           // Game Over
+          console.log("Fim de jogo. Mais sorte na próxima. ;)");
 
 
           // Fazer transição imediata da música para evitar sobreposição
           this.audioManager.transitionToMenuMusic();
-
           setGameState("gameOver");
 
           // Criar animação de morte na posição atual do jogador (última vida)
@@ -1722,6 +1723,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
     // Criar o jogo Phaser
     gameRef.current = new Phaser.Game(config);
+    
 
     // Aplicar estilo ao canvas criado pelo Phaser
     setTimeout(() => {
@@ -1834,6 +1836,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             <GameUI
               lives={lives}
               score={hiScore}
+              hiScore={hiScore}
               wave={wave}
               gameState={gameState}
               showWaveMessage={showWaveMessage}
