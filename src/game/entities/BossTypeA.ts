@@ -437,7 +437,7 @@ export default class BossTypeA extends Boss {
   }
   
   // Método para criar animação de destruição
-  private createDeathAnimation(x: number, y: number, onComplete?: () => void): void {
+  protected createDeathAnimation(x: number, y: number, onComplete?: () => void): void {
     // Criar sprite da animação de destruição
     const deathSprite = this.scene.add.sprite(x, y, 'death-frame-1');
     deathSprite.setScale(0.8);
