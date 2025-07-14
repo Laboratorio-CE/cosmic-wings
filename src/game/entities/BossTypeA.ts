@@ -285,6 +285,7 @@ export default class BossTypeA extends Boss {
     this.activateFlash();
     
     if (this.hp <= 0) {
+      this.isKilledByPlayer = true;
       this.destroy();
     }
   }
@@ -312,46 +313,59 @@ export default class BossTypeA extends Boss {
     if (this.isDestroyed) return;
     
     this.isDestroyed = true;
-    this.isKilledByPlayer = true;
     
-    // Reproduzir som de morte do boss
-    AudioManager.getInstance().playSoundEffect('boss-kill');
+    // Verificar se o jogo está em game over
+    const gameScene = this.scene as any;
+    const isGameOver = gameScene.isGameOver;
     
-
+    // Se há game over, apenas ocultar o boss sem animações
+    if (isGameOver) {
+      this.setVisible(false);
+      super.destroy();
+      return;
+    }
     
-    // Fazer o sprite do boss desaparecer imediatamente
-    this.setVisible(false);
-    
-    // Criar 5 animações de destruição: centro + 4 cantos
-    const centerX = this.x;
-    const centerY = this.y;
-    const offset = 40; // Distância dos cantos em relação ao centro
-    
-    // Criar animações de destruição usando a funcionalidade do AbstractEntity
-    this.createDeathAnimation(centerX, centerY);
-    
-    // Animações nos cantos (com pequeno delay para efeito visual)
-    this.scene.time.delayedCall(100, () => {
-      this.createDeathAnimation(centerX - offset, centerY - offset); // Superior esquerdo
-    });
-    
-    this.scene.time.delayedCall(200, () => {
-      this.createDeathAnimation(centerX + offset, centerY - offset); // Superior direito
-    });
-    
-    this.scene.time.delayedCall(300, () => {
-      this.createDeathAnimation(centerX - offset, centerY + offset); // Inferior esquerdo
-    });
-    
-    this.scene.time.delayedCall(400, () => {
-      this.createDeathAnimation(centerX + offset, centerY + offset); // Última animação
+    // Se foi morto pelo jogador, executar animação completa
+    if (this.isKilledByPlayer) {
+      // Reproduzir som de morte do boss
+      AudioManager.getInstance().playSoundEffect('boss-kill');
       
-      // Callback final após todas as animações - iniciar transição de onda
-      const gameScene = this.scene as GameScene;
-      if (gameScene.onBossDefeated) {
-        gameScene.onBossDefeated(this.points);
-      }
-    });
+      // Fazer o sprite do boss desaparecer imediatamente
+      this.setVisible(false);
+      
+      // Criar 5 animações de destruição: centro + 4 cantos
+      const centerX = this.x;
+      const centerY = this.y;
+      const offset = 40; // Distância dos cantos em relação ao centro
+      
+      // Criar animações de destruição usando a funcionalidade do AbstractEntity
+      this.createDeathAnimation(centerX, centerY);
+      
+      // Animações nos cantos (com pequeno delay para efeito visual)
+      this.scene.time.delayedCall(100, () => {
+        this.createDeathAnimation(centerX - offset, centerY - offset); // Superior esquerdo
+      });
+      
+      this.scene.time.delayedCall(200, () => {
+        this.createDeathAnimation(centerX + offset, centerY - offset); // Superior direito
+      });
+      
+      this.scene.time.delayedCall(300, () => {
+        this.createDeathAnimation(centerX - offset, centerY + offset); // Inferior esquerdo
+      });
+      
+      this.scene.time.delayedCall(400, () => {
+        this.createDeathAnimation(centerX + offset, centerY + offset); // Última animação
+        
+        // Callback final após todas as animações - iniciar transição de onda
+        if (gameScene.onBossDefeated) {
+          gameScene.onBossDefeated(this.points);
+        }
+      });
+    } else {
+      // Se não foi morto pelo jogador, apenas ocultar
+      this.setVisible(false);
+    }
     
     // Chamar método destroy da classe pai
     super.destroy();
@@ -420,6 +434,34 @@ export default class BossTypeA extends Boss {
     this.setRandomTarget();
     this.state = 'moving';
 
+  }
+  
+  // Método para criar animação de destruição
+  private createDeathAnimation(x: number, y: number, onComplete?: () => void): void {
+    // Criar sprite da animação de destruição
+    const deathSprite = this.scene.add.sprite(x, y, 'death-frame-1');
+    deathSprite.setScale(0.8);
+    
+    // Executar animação sequencial
+    let currentFrame = 1;
+    
+    const nextFrame = () => {
+      if (currentFrame <= 9) {
+        deathSprite.setTexture(`death-frame-${currentFrame}`);
+        currentFrame++;
+        
+        // Próximo frame após 80ms
+        this.scene.time.delayedCall(80, nextFrame);
+      } else {
+        // Animação concluída
+        deathSprite.destroy();
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    };
+    
+    nextFrame();
   }
   
   // Método update para compatibilidade com GameCanvas
