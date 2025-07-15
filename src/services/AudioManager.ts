@@ -14,10 +14,11 @@ import menuNavigateSfx from '../assets/audios/sfx/menu-navigate.wav';
 import playerFireSfx from '../assets/audios/sfx/player-fire.wav';
 import playerKillSfx from '../assets/audios/sfx/player-kill.wav';
 import powerupSfx from '../assets/audios/sfx/powerup.wav';
+import invulnerability from '../assets/audios/sfx/invulnerability.mp3';
 
 // Tipos para o sistema de áudio
 export type MusicTrack = 'menu' | 'wave-1' | 'wave-2' | 'wave-3';
-export type SoundEffect = 'boost' | 'boss-kill' | 'enemy-fire' | 'enemy-kill' | 'engine' | 'menu-confirm' | 'menu-navigate' | 'player-fire' | 'player-kill' | 'powerup';
+export type SoundEffect = 'boost' | 'boss-kill' | 'enemy-fire' | 'enemy-kill' | 'engine' | 'menu-confirm' | 'menu-navigate' | 'player-fire' | 'player-kill' | 'powerup' | 'invulnerability';
 
 export interface AudioState {
   musicMuted: boolean;
@@ -89,6 +90,7 @@ class AudioManager {
     'player-fire': playerFireSfx,
     'player-kill': playerKillSfx,
     'powerup': powerupSfx,
+    'invulnerability': invulnerability, // Corrigido para usar a importação
   };
 
   // Construtor privado para implementar Singleton
@@ -160,7 +162,7 @@ class AudioManager {
       // Tentar reproduzir imediatamente
       await this.backgroundMusic.play();
     } catch (error) {
-      // console.error(`Erro ao reproduzir música ${track}:`, error);
+      console.error(`Erro ao reproduzir música ${track}:`, error);
       // Tentar novamente após interação do usuário
       this.setupAutoplayListeners();
     }
@@ -332,9 +334,6 @@ class AudioManager {
       } catch (error) {
         console.warn(`Erro ao reproduzir efeito ${effect}:`, error);
       }
-    } else {
-
-
     }
   }
 
