@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import GameUI from "./GameUI";
@@ -78,8 +79,9 @@ import bossKill from "../assets/audios/sfx/boss-kill.wav";
 import boost from '../assets/audios/sfx/boost.wav';
 import engine from '../assets/audios/sfx/engine.wav';
 
-// Importar o audio de vida extra
+// Importar os audios de power-up
 import powerup from '../assets/audios/sfx/powerup.wav';
+import invulnerability from "../assets/audios/sfx/invulnerability.mp3";
 
 // Importar as músicas de fundo
 import ostWave1 from '../assets/audios/music/ost-wave-1.mp3';
@@ -197,7 +199,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
               const scene = gameRef.current.scene.getScene('MainGameScene') as any;
               if (scene) {
                 scene.isPermanentlyInvulnerable = !scene.isPermanentlyInvulnerable;
-                audioManager.playSoundEffect('boost');
+                audioManager.playSoundEffect('invulnerability');
               }
             }
             invincibleInputRef.current = [];
@@ -530,6 +532,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.load.audio("boost", boost);
         this.load.audio("engine", engine);
         this.load.audio("powerup", powerup);
+        this.load.audio("invulnerability", invulnerability);
 
         // Carregar músicas de fundo
         this.load.audio("ost-wave-1", ostWave1);
@@ -896,7 +899,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
       updateEnemies() {
         // Atualizar todos os inimigos e remover os destruídos
-        const previousEnemyCount = this.enemies.length;
         let enemiesKilledByPlayer = 0;
 
         this.enemies = this.enemies.filter((enemy) => {
@@ -930,14 +932,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           this.enemiesDefeated += enemiesKilledByPlayer;
           this.lastEnemyKilledTime = this.time.now;
         }
-
-        // Log de inimigos que saíram da tela
-        const enemiesThatLeft =
-          previousEnemyCount - this.enemies.length - enemiesKilledByPlayer;
-        if (enemiesThatLeft > 0) {
-
-        }
-
         // Verificar se deve spawnar boss (apenas se não estivermos em transição de onda)
         if (
           this.enemiesDefeated >= this.maxEnemiesInWave &&
@@ -1153,7 +1147,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
 
         if (this.currentWave === 1) {
           // Boss tipo A fixo para onda 1
-          this.currentBoss = new BossTypeA(this, bossX, bossY);
+          this.currentBoss = new BossTypeA(this);
           this.currentBoss.adjustForWave(this.currentWave);
           // Configurar callback para pontuação quando morto pelo jogador
           this.currentBoss.setOnKilledByPlayerCallback((entity) => {
@@ -1189,7 +1183,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           const randomBossType = Phaser.Math.Between(1, 3);
 
           if (randomBossType === 1) {
-            this.currentBoss = new BossTypeA(this, bossX, bossY);
+            this.currentBoss = new BossTypeA(this);
             this.currentBoss.adjustForWave(this.currentWave);
             // Configurar callback para pontuação quando morto pelo jogador
             this.currentBoss.setOnKilledByPlayerCallback((entity) => {

@@ -392,7 +392,7 @@ export default class BossTypeB extends Boss {
     this.isDestroyed = true;
     
     // Verificar se o jogo está em game over
-    const gameScene = this.scene as any;
+    const gameScene = this.scene as GameScene & { isGameOver?: boolean };
     const isGameOver = gameScene.isGameOver;
     
     // Se há game over, apenas ocultar o boss sem animações

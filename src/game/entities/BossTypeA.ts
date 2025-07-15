@@ -37,7 +37,7 @@ export default class BossTypeA extends Boss {
   private animationState: 'idle' | 'starting' | 'moving' | 'stopping' = 'idle';
   private animationTimer = 0;
   
-  constructor(scene: Phaser.Scene, _x: number, _y: number) {
+  constructor(scene: Phaser.Scene) {
     // Criar um target dummy para o Enemy, mas o boss não precisa usar
     const dummyTarget = scene.add.sprite(400, 550, 'player-frame-1');
     dummyTarget.setVisible(false); // Invisible target
@@ -315,7 +315,7 @@ export default class BossTypeA extends Boss {
     this.isDestroyed = true;
     
     // Verificar se o jogo está em game over
-    const gameScene = this.scene as any;
+    const gameScene = this.scene as GameScene & { isGameOver?: boolean };
     const isGameOver = gameScene.isGameOver;
     
     // Se há game over, apenas ocultar o boss sem animações
@@ -381,7 +381,7 @@ export default class BossTypeA extends Boss {
     
     // Máquina de estados
     switch (this.state) {
-      case 'entering':
+      case 'entering': {
         // Boss entra descendo pelo centro da tela
         this.y += this.moveSpeed * (dt / 1000);
         
@@ -392,6 +392,7 @@ export default class BossTypeA extends Boss {
   
         }
         break;
+      }
         
       case 'moving_to_position':
       case 'moving':
