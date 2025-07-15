@@ -14,7 +14,7 @@ import menuNavigateSfx from '../assets/audios/sfx/menu-navigate.wav';
 import playerFireSfx from '../assets/audios/sfx/player-fire.wav';
 import playerKillSfx from '../assets/audios/sfx/player-kill.wav';
 import powerupSfx from '../assets/audios/sfx/powerup.wav';
-import invulnerability from '../assets/audios/sfx/invulnerability.mp3';
+import invulnerability from '../assets/audios/sfx/invulnerability.wav';
 
 // Tipos para o sistema de áudio
 export type MusicTrack = 'menu' | 'wave-1' | 'wave-2' | 'wave-3';

@@ -81,7 +81,7 @@ import engine from '../assets/audios/sfx/engine.wav';
 
 // Importar os audios de power-up
 import powerup from '../assets/audios/sfx/powerup.wav';
-import invulnerability from "../assets/audios/sfx/invulnerability.mp3";
+import invulnerability from "../assets/audios/sfx/invulnerability.wav";
 
 // Importar as músicas de fundo
 import ostWave1 from '../assets/audios/music/ost-wave-1.mp3';
