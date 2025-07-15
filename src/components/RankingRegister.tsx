@@ -142,22 +142,22 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
   };
 
   return (
-    <div>
-      <div className="w-[800px] h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center px-16 py-10">
-        <h2 className="text-cyan-400 font-mono text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
+    <div className="flex justify-center items-center w-full max-w-[800px] h-screen max-h-[600px] p-0 sm:p-4">
+      <div className="w-full h-full sm:w-[800px] sm:h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center px-4 sm:px-16 py-6 sm:py-10">
+        <h2 className="text-cyan-400 font-mono text-3xl sm:text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
           FIM DE JOGO
         </h2>
         <div className="text-center">
-          <p className="text-cyan-400 font-mono text-xl mb-2">
+          <p className="text-cyan-400 font-mono text-lg sm:text-xl mb-2">
             PONTUAÇÃO FINAL
           </p>
-          <p className="text-white font-mono text-3xl font-bold mb-6">
+          <p className="text-white font-mono text-2xl sm:text-3xl font-bold mb-6">
             {formatScore(score)}
           </p>
         </div>
 
         {/* Formulário para inserir nome */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md px-4 sm:px-0">
           <div className="mb-6">
             <input
               type="text"
@@ -167,18 +167,18 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
               maxLength={20}
-              className="w-full px-4 py-3 bg-black/80 border-2 border-cyan-400 rounded-lg 
-                        text-cyan-400 font-mono text-lg placeholder-cyan-400/60 
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-black/80 border-2 border-cyan-400 rounded-lg 
+                        text-cyan-400 font-mono text-base sm:text-lg placeholder-cyan-400/60 
                         focus:outline-none focus:border-cyan-300 focus:shadow-lg focus:shadow-cyan-400/30"
             />
             {playerName.trim().length > 0 && playerName.trim().length < 2 && (
-              <p className="text-red-400 font-mono text-sm mt-2">
+              <p className="text-red-400 font-mono text-xs sm:text-sm mt-2">
                 Mínimo de 2 caracteres
               </p>
             )}
           </div>
 
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             {/* Botão Voltar */}
             <button
               onClick={() => {
@@ -192,7 +192,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 setSelectedButton(0);
               }}
               disabled={isSubmitting}
-              className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
+              className={`relative flex items-center justify-center w-full sm:w-40 p-2 sm:p-3 font-bold text-sm sm:text-base 
                         transition-all duration-200 cursor-pointer
                         ${
                           selectedButton === 0
@@ -205,10 +205,10 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-0 w-6 h-6 rotate-90"
+                  className="absolute left-0 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
                 />
               )}
-              <span className="text-left w-full pl-8">VOLTAR</span>
+              <span className="text-center sm:text-left w-full pl-6 sm:pl-8">VOLTAR</span>
             </button>
 
             {/* Botão Enviar */}
@@ -224,7 +224,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 setSelectedButton(1);
               }}
               disabled={!isValidPlayerName(playerName) || isSubmitting}
-              className={`relative flex items-center justify-center w-40 p-3 font-bold text-base 
+              className={`relative flex items-center justify-center w-full sm:w-40 p-2 sm:p-3 font-bold text-sm sm:text-base 
                         transition-all duration-200 cursor-pointer
                         ${
                           selectedButton === 1
@@ -237,20 +237,21 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-0 w-6 h-6 rotate-90"
+                  className="absolute left-0 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
                 />
               )}
-              <span className="text-left w-full pl-8">
+              <span className="text-center sm:text-left w-full pl-6 sm:pl-8">
                 {isSubmitting ? "ENVIANDO..." : "ENVIAR"}
               </span>
             </button>
           </div>
 
           {/* Instruções de navegação */}
-          <div className="mt-4 text-center text-cyan-400 text-xs space-y-1">
-            <p>Use W/A/S/D ou setas para navegar entre botões</p>
-            <p>ENTER, ESPAÇO ou F para selecionar</p>
-            <p>Digite normalmente quando o campo estiver em foco</p>
+          <div className="mt-4 text-center text-cyan-400 text-xs space-y-1 px-2">
+            <p className="hidden sm:block">Use W/A/S/D ou setas para navegar entre botões</p>
+            <p className="hidden sm:block">ENTER, ESPAÇO ou F para selecionar</p>
+            <p className="hidden sm:block">Digite normalmente quando o campo estiver em foco</p>
+            <p className="sm:hidden">Toque nos botões para navegar</p>
           </div>
         </div>
       </div>
