@@ -32,13 +32,11 @@ O jogo conta com uma variedade de inimigos normais, cada um com padrões de movi
 
 ## Responsividade
 
-Cosmic Wings foi projetado para funcionar perfeitamente tanto em desktop quanto em dispositivos móveis. Os controles se adaptam automaticamente à plataforma, garantindo uma experiência fluida independente de onde você esteja jogando.
+Cosmic Wings foi projetado para funcionar em desktop e também pode ser jogador em dispositivos móveis. Os controles se adaptam automaticamente à plataforma, garantindo uma experiência fluida independente de onde você esteja jogando. <br>
+Mas atenção: para uma experiência ideal, jogue pelo notebook/pc ou com um teclado físico.
 
-<img width="401" height="838" alt="image" src="https://github.com/user-attachments/assets/5d69f8e8-2541-47dd-b3b7-8b4429405c6d" />  
-
-<img width="398" height="839" alt="image" src="https://github.com/user-attachments/assets/1fe827df-32ef-43f5-815b-d85ab9b3708b" />
-
-
+<img width="401" height="838" alt="image" src="https://github.com/user-attachments/assets/5d69f8e8-2541-47dd-b3b7-8b4429405c6d" /> &nbsp;&nbsp;&nbsp;
+<img width="350" height="838" alt="image" src="https://github.com/user-attachments/assets/a0bffda4-ae98-4290-abbb-a6e67daa5479" />
 
 ## Assets Utilizados
 
