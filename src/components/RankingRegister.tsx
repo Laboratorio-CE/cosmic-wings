@@ -205,7 +205,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
+                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 sm:left-0 rotate-90"
                 />
               )}
               <span className="text-center sm:text-left w-full pl-6 sm:pl-8">VOLTAR</span>
@@ -237,7 +237,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
+                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 sm:left-0 rotate-90"
                 />
               )}
               <span className="text-center sm:text-left w-full pl-6 sm:pl-8">

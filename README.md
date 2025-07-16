@@ -6,7 +6,6 @@ Forjado na poeira espacial da gambiarra, Cosmic Wings ganhou vida como projeto i
 
 ![Imagem do WhatsApp de 2025-07-14 à(s) 23 35 12_19a35507](https://github.com/user-attachments/assets/d91745ee-f418-4bf1-834e-772874bce69e)
 
-
 ## Tecnologia
 
 O jogo foi desenvolvido em **TypeScript** utilizando a biblioteca **Phaser** como engine principal para renderização gráfica e controle de física, além de usar o Supabase como backend e base de dados para gerenciar o placar global. Escolhas que provaram ser tanto eficientes quanto divertidas de trabalhar. <br> <br>
@@ -17,18 +16,18 @@ O jogo foi desenvolvido em **TypeScript** utilizando a biblioteca **Phaser** com
 ## Sistema de Jogo
 
 ### Ondas e Progressão
+
 Cosmic Wings utiliza um sistema de ondas progressivas onde cada nível traz novos desafios. A dificuldade aumenta gradualmente, testando suas habilidades de pilotagem espacial conforme você avança pelos estágios.
 
 ![Imagem do WhatsApp de 2025-07-14 à(s) 23 35 12_f34f6ed9](https://github.com/user-attachments/assets/9de2ef37-4727-4f27-bc7f-c9d29cfee793)
 
+### Inimigos e Chefes
 
-### Inimigos e Bosses
 O jogo conta com uma variedade de inimigos normais, cada um com padrões de movimento únicos, além de bosses épicos que aparecem em momentos estratégicos para testar suas habilidades ao máximo.
 
 ![Imagem do WhatsApp de 2025-07-14 à(s) 23 35 12_58c2d625](https://github.com/user-attachments/assets/8476e691-b3ff-4f36-b722-f584cf1db012) <br>
 
 ![Imagem do WhatsApp de 2025-07-14 à(s) 23 35 12_25d0bda6](https://github.com/user-attachments/assets/605f3781-c584-441b-89ab-33a1fe33c44d)
-
 
 ## Responsividade
 
@@ -41,28 +40,27 @@ Mas atenção: para uma experiência ideal, jogue pelo notebook/pc ou com um tec
 ## Assets Utilizados
 
 ### Imagens
+
 - *[Sprites - Space Shooter Assets](https://ravenmore.itch.io/pixel-space-shooter-assets)*
 
 ### Efeitos Sonoros
+
 - *[Efeitos Sonoros - Arcade Sound FX Previews](https://ci.itch.io/arcade-sound-effects-pack)*
 
 ### Músicas
-*Na ordem em que aparecem no jogo:*
 
-- [Menu - Neil & Eva (To the Moon Series) - Lofi MedleyNeil & Eva (To the Moon Series) - Lofi Medley](https://youtu.be/OW_5-whgCy8?si=0DeE_oi15MUsLzqR)
-- [Ost 1 - FFVI Terra's Theme](https://youtu.be/2WmO1C6VORQ?si=X4ER6aBhzt7StNSS)
-- [OST 2 - FFXIV Weight of the World／Prelude Version ](https://youtu.be/gPSOaSwdEaE?si=WCUeFKIchJzFLDoF)
-- [OST 3 - Chrono Trigger Main Theme](https://youtu.be/Fi_D97cHcbQ?si=UwNL-asswiS3YN-m) 
+- *[Music by Eric Matyas - https://soundimage.org/](https://soundimage.org/)*
 
 ---
 
-### Aviso Legal e Créditos de Uso
+### Licenciamento e Uso de Assets
 
-Todos os assets utilizados neste projeto (sprites, efeitos sonoros e trilhas musicais) são de terceiros e estão incluídos exclusivamente para fins educacionais, experimentais e não comerciais.
+Todos os assets utilizados neste projeto (sprites, efeitos sonoros e músicas) foram obtidos de fontes com licenças claras que **permitem uso em projetos públicos e não comerciais**, desde que atribuídos corretamente.
 
-Os devidos créditos foram listados acima com links diretos para suas fontes originais. Nenhum desses materiais é de minha autoria, exceto onde explicitamente indicado.
+Os créditos e links para os autores estão listados nas seções correspondentes.
 
-Este projeto não deve ser distribuído comercialmente nem utilizado para fins lucrativos enquanto contiver esses conteúdos. Caso deseje usá-lo em outro contexto, certifique-se de substituir os assets por versões próprias ou licenciadas adequadamente.
+Este projeto é distribuído **sem fins lucrativos** e em conformidade com as licenças de cada asset utilizado. Para uso comercial, verifique individualmente os termos de cada recurso ou substitua por alternativas compatíveis.
+
 
 ---
 

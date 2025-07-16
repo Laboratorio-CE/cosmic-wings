@@ -106,7 +106,7 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
               href="https://github.com/Laboratorio-CE/cosmic-wings"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30 break-words hover:text-yellow-200 hover:border-cyan-300 transition-colors duration-200 cursor-pointer"
+              className="inline-block text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30 break-words hover:text-yellow-200 hover:border-cyan-300 transition-colors duration-200 cursor-pointer"
             >
               https://github.com/Laboratorio-CE/cosmic-wings
             </a>
@@ -114,16 +114,50 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
         </div>
 
         {/* Disclaimer */}
-        <div className="text-center mb-4 sm:mb-6 px-2">
+        <div className="flex flex-col gap-3 mb-4 sm:mb-6 px-2">
           <div className="bg-black/40 border border-cyan-400/30 rounded-lg p-3 sm:p-4 max-w-lg mx-auto">
+            <strong className="text-yellow-300 text-center">Disclaimer:</strong>
             <p className="text-cyan-300 text-xs leading-relaxed">
-              <strong className="text-yellow-300">Disclaimer:</strong> Este jogo
-              é totalmente gratuito e foi desenvolvido para fins educativos.
-              Todos os assets (imagens, sons e sprites) foram utilizados
-              exclusivamente para aprender a desenvolver jogos e não possuem
-              fins comerciais. Os links para todos os assets utilizados podem
-              ser encontrados no repositório do jogo. Agradecemos a todos os
-              criadores dos assets que tornaram este projeto possível.
+              Este jogo é totalmente gratuito e foi desenvolvido para fins
+              educativos. Todos os assets (imagens, sons e sprites) foram
+              utilizados exclusivamente para aprender a desenvolver jogos e não
+              possuem fins comerciais. Os links para todos os assets utilizados
+              podem ser encontrados tanto aqui quanto no repositório do jogo.
+              Agradecemos a todos os criadores dos assets que tornaram este projeto possível.
+            </p>
+            <br></br>
+            <strong className="text-yellow-300">Sprites utilizados:</strong>
+            <p className="text-cyan-300 text-xs leading-relaxed">
+              Pixel Space Shooter by Ravenmore <br></br>
+              <a
+                href="https://ravenmore.itch.io/pixel-space-shooter-assets"
+                className="hover:underline"
+              >
+                https://ravenmore.itch.io/pixel-space-shooter-assets
+              </a>
+            </p>
+            <br></br>
+            <strong className="text-yellow-300">
+              Efeitos sonoros utilizados:
+            </strong>
+            <p className="text-cyan-300 text-xs leading-relaxed">
+              Arcade Sound FX by Chequered Ink <br></br>
+              <a
+                href="https://ci.itch.io/arcade-sound-effects-pack"
+                className="hover:underline"
+              >
+                https://ci.itch.io/arcade-sound-effects-pack
+              </a>
+            </p>
+            <br></br>
+            <strong className="text-yellow-300">Musicas utilizadas:</strong>
+            <p className="text-cyan-300 text-xs leading-relaxed">
+              Music by Eric Matyas <br></br>
+              <a href="https://soundimage.org/"
+                className="hover:underline"
+              >
+                https://soundimage.org/
+              </a>
             </p>
           </div>
         </div>
