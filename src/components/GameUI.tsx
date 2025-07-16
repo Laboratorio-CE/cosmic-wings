@@ -1,6 +1,6 @@
 // Ícones removidos - usando analógico virtual
 import { FaCircle } from "react-icons/fa";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import imagemPlayer from "../assets/images/player/player-frame-1.png";
 
 interface GameUIProps {
@@ -43,15 +43,12 @@ const GameUI: React.FC<GameUIProps> = ({
   const [knobPosition, setKnobPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [activeDirections, setActiveDirections] = useState({ up: false, down: false, left: false, right: false });
-
-  // Funções para controles móveis diretos
-  // const handleMobileStart = (direction: 'up' | 'down' | 'left' | 'right') => {
-  //   onMobileControl?.(direction);
-  // };
-
-  // const handleMobileStop = (direction: 'up' | 'down' | 'left' | 'right') => {
-  //   onMobileControlStop?.(direction);
-  // };
+  const activeDirectionsRef = useRef(activeDirections);
+  
+  // Atualizar ref sempre que activeDirections mudar
+  useEffect(() => {
+    activeDirectionsRef.current = activeDirections;
+  }, [activeDirections]);
 
   const handleActionStart = (event?: React.TouchEvent | React.MouseEvent) => {
     event?.preventDefault();
@@ -63,118 +60,80 @@ const GameUI: React.FC<GameUIProps> = ({
   };
 
   // Funções para o analógico virtual
-  const handleAnalogStart = (event: React.TouchEvent | React.MouseEvent) => {
-    event.preventDefault();
+  const handleAnalogStart = () => {
     setIsDragging(true);
   };
 
-  const handleAnalogEnd = () => {
-    setIsDragging(false);
-    setKnobPosition({ x: 0, y: 0 });
+  const handleAnalogMove = (event: React.PointerEvent) => {
+    if (!isDragging) return;
     
-    // Parar todas as direções
-    Object.keys(activeDirections).forEach(dir => {
-      if (activeDirections[dir as keyof typeof activeDirections]) {
+    const currentTarget = event.currentTarget as HTMLElement;
+    const rect = currentTarget.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const clientX = event.clientX;
+    const clientY = event.clientY;
+    
+    const x = clientX - rect.left - centerX;
+    const y = clientY - rect.top - centerY;
+    
+    // Limitar movimento dentro do círculo (raio 32px)
+    const distance = Math.sqrt(x * x + y * y);
+    const maxDistance = 32;
+    
+    let finalX = x;
+    let finalY = y;
+    
+    if (distance > maxDistance) {
+      finalX = (x / distance) * maxDistance;
+      finalY = (y / distance) * maxDistance;
+    }
+    
+    setKnobPosition({ x: finalX, y: finalY });
+    
+    // Converter para direções (threshold de 15px)
+    const threshold = 15;
+    const newDirections = {
+      up: finalY < -threshold,
+      down: finalY > threshold,
+      left: finalX < -threshold,
+      right: finalX > threshold
+    };
+    
+    // Atualizar apenas se mudou usando a ref atual
+    const currentDirections = activeDirectionsRef.current;
+    if (JSON.stringify(newDirections) !== JSON.stringify(currentDirections)) {
+      // Parar direções que não estão mais ativas
+      Object.keys(currentDirections).forEach(dir => {
+        if (currentDirections[dir as keyof typeof currentDirections] && !newDirections[dir as keyof typeof newDirections]) {
+          onMobileControlStop?.(dir as 'up' | 'down' | 'left' | 'right');
+        }
+      });
+      
+      // Iniciar novas direções
+      Object.keys(newDirections).forEach(dir => {
+        if (!currentDirections[dir as keyof typeof currentDirections] && newDirections[dir as keyof typeof newDirections]) {
+          onMobileControl?.(dir as 'up' | 'down' | 'left' | 'right');
+        }
+      });
+      
+      setActiveDirections(newDirections);
+    }
+  };
+
+  const handleAnalogEnd = () => {
+    // Parar todas as direções ativas usando a ref atual
+    Object.keys(activeDirectionsRef.current).forEach(dir => {
+      if (activeDirectionsRef.current[dir as keyof typeof activeDirectionsRef.current]) {
         onMobileControlStop?.(dir as 'up' | 'down' | 'left' | 'right');
       }
     });
     
+    setIsDragging(false);
+    setKnobPosition({ x: 0, y: 0 });
     setActiveDirections({ up: false, down: false, left: false, right: false });
   };
-
-  // Event listeners globais para o analógico
-  useEffect(() => {
-    const handleGlobalMove = (event: TouchEvent | MouseEvent) => {
-      if (!isDragging) return;
-      
-      // Prevenir scroll em dispositivos touch
-      if ('touches' in event) {
-        event.preventDefault();
-      }
-      
-      // Encontrar o elemento do analógico
-      const analogElement = document.querySelector('[data-analog="true"]') as HTMLElement;
-      if (!analogElement) return;
-      
-      const rect = analogElement.getBoundingClientRect();
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      let clientX, clientY;
-      if ('touches' in event && event.touches.length > 0) {
-        clientX = event.touches[0].clientX;
-        clientY = event.touches[0].clientY;
-      } else {
-        clientX = (event as MouseEvent).clientX;
-        clientY = (event as MouseEvent).clientY;
-      }
-      
-      const x = clientX - rect.left - centerX;
-      const y = clientY - rect.top - centerY;
-      
-      // Limitar movimento dentro do círculo (raio 32px)
-      const distance = Math.sqrt(x * x + y * y);
-      const maxDistance = 32;
-      
-      let finalX = x;
-      let finalY = y;
-      
-      if (distance > maxDistance) {
-        finalX = (x / distance) * maxDistance;
-        finalY = (y / distance) * maxDistance;
-      }
-      
-      setKnobPosition({ x: finalX, y: finalY });
-      
-      // Converter para direções (threshold de 15px)
-      const threshold = 15;
-      const newDirections = {
-        up: finalY < -threshold,
-        down: finalY > threshold,
-        left: finalX < -threshold,
-        right: finalX > threshold
-      };
-      
-      // Atualizar apenas se mudou
-      if (JSON.stringify(newDirections) !== JSON.stringify(activeDirections)) {
-        // Parar direções que não estão mais ativas
-        Object.keys(activeDirections).forEach(dir => {
-          if (activeDirections[dir as keyof typeof activeDirections] && !newDirections[dir as keyof typeof newDirections]) {
-            onMobileControlStop?.(dir as 'up' | 'down' | 'left' | 'right');
-          }
-        });
-        
-        // Iniciar novas direções
-        Object.keys(newDirections).forEach(dir => {
-          if (!activeDirections[dir as keyof typeof activeDirections] && newDirections[dir as keyof typeof newDirections]) {
-            onMobileControl?.(dir as 'up' | 'down' | 'left' | 'right');
-          }
-        });
-        
-        setActiveDirections(newDirections);
-      }
-    };
-    
-    const handleGlobalEnd = () => {
-      if (isDragging) {
-        handleAnalogEnd();
-      }
-    };
-    
-    if (isDragging) {
-      document.addEventListener('touchmove', handleGlobalMove, { passive: false });
-      document.addEventListener('touchend', handleGlobalEnd);
-      document.addEventListener('mousemove', handleGlobalMove);
-      document.addEventListener('mouseup', handleGlobalEnd);
-    }
-    
-    return () => {
-      document.removeEventListener('touchmove', handleGlobalMove);
-      document.removeEventListener('touchend', handleGlobalEnd);
-      document.removeEventListener('mousemove', handleGlobalMove);
-      document.removeEventListener('mouseup', handleGlobalEnd);
-    };
-  }, [isDragging, activeDirections, onMobileControl, onMobileControlStop]);
 
   // Efeito para controlar as mensagens de preparação e onda
   useEffect(() => {
@@ -316,8 +275,10 @@ const GameUI: React.FC<GameUIProps> = ({
             <div 
               className="relative w-20 h-20 bg-cyan-400/10 border-2 border-cyan-400/30 rounded-full flex items-center justify-center"
               data-analog="true"
-              onTouchStart={handleAnalogStart}
-              onMouseDown={handleAnalogStart}
+              onPointerDown={handleAnalogStart}
+              onPointerMove={handleAnalogMove}
+              onPointerUp={handleAnalogEnd}
+              onPointerLeave={handleAnalogEnd}
               style={{ touchAction: 'none' }}
             >
               {/* Knob do analógico */}
@@ -342,6 +303,7 @@ const GameUI: React.FC<GameUIProps> = ({
               className="bg-red-500/20 hover:bg-red-500/40 border-2 border-red-500 
                         rounded-full w-12 h-12 flex items-center justify-center
                         transition-all duration-150 active:scale-95"
+              style={{ touchAction: 'manipulation' }}
             >
               <FaCircle className="text-red-500 text-lg" />
             </button>

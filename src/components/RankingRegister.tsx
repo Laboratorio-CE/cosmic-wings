@@ -29,7 +29,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
     try {
       audioManager.playSoundEffect('menu-navigate');
     } catch (error) {
-      // Erro ao reproduzir som de navegação
+      console.error("Erro ao reproduzir som de navegação:", error);
     }
   };
 
@@ -38,7 +38,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
     try {
       audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      // Erro ao reproduzir som de confirmação
+      console.error("Erro ao reproduzir som de confirmação:", error);
     }
   };
 
@@ -143,7 +143,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
 
   return (
     <div className="flex justify-center items-center w-full max-w-[800px] h-screen max-h-[600px] p-0 sm:p-4">
-      <div className="w-full h-full sm:w-[800px] sm:h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center px-4 sm:px-16 py-6 sm:py-10">
+      <div className="w-full h-screen sm:w-[800px] sm:h-[600px] bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 flex flex-col items-center justify-center gap-18 px-4 sm:px-16 py-6 sm:py-10">
         <h2 className="text-cyan-400 font-mono text-3xl sm:text-5xl font-bold tracking-wider text-center mb-4 animate-pulse">
           FIM DE JOGO
         </h2>
@@ -205,7 +205,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-0 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
+                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
                 />
               )}
               <span className="text-center sm:text-left w-full pl-6 sm:pl-8">VOLTAR</span>
@@ -237,7 +237,7 @@ const RankingRegister: React.FC<RankingRegisterProps> = ({
                 <img
                   src={imagemPlayer}
                   alt="Nave selecionada"
-                  className="absolute left-0 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
+                  className="absolute left-14 w-5 sm:w-6 h-5 sm:h-6 rotate-90"
                 />
               )}
               <span className="text-center sm:text-left w-full pl-6 sm:pl-8">

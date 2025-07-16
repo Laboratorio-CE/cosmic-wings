@@ -17,7 +17,7 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
     try {
       audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      // Erro ao reproduzir som de confirmação
+      console.error("Erro ao reproduzir som de confirmação:", error);
     }
   };
 
@@ -74,13 +74,13 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
           </div>
         </div>
 
-        {/* Links dos desenvolvedores */}
+        {/* Links do desenvolvedor */}
         <div className="text-center mb-4 sm:mb-6 space-y-2 px-2">
           <div className="text-cyan-300 text-xs sm:text-sm">
             <p className="mb-1">GitHub Pessoal:</p>
-            <a 
-              href="https://github.com/ven-del" 
-              target="_blank" 
+            <a
+              href="https://github.com/ven-del"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30 break-words hover:text-yellow-200 hover:border-cyan-300 transition-colors duration-200 cursor-pointer"
             >
@@ -90,13 +90,25 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
 
           <div className="text-cyan-300 text-xs sm:text-sm">
             <p className="mb-1">GitHub Laboratório CE:</p>
-            <a 
-              href="https://github.com/Laboratorio-CE" 
-              target="_blank" 
+            <a
+              href="https://github.com/Laboratorio-CE"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30 break-words hover:text-yellow-200 hover:border-cyan-300 transition-colors duration-200 cursor-pointer"
             >
               https://github.com/Laboratorio-CE
+            </a>
+          </div>
+
+          <div className="text-cyan-300 text-xs sm:text-sm">
+            <p className="mb-1">Repositório Cosmic Wings:</p>
+            <a
+              href="https://github.com/Laboratorio-CE/cosmic-wings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-yellow-300 font-mono text-xs bg-black/40 px-3 py-1 rounded border border-cyan-400/30 break-words hover:text-yellow-200 hover:border-cyan-300 transition-colors duration-200 cursor-pointer"
+            >
+              https://github.com/Laboratorio-CE/cosmic-wings
             </a>
           </div>
         </div>
@@ -109,7 +121,9 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
               é totalmente gratuito e foi desenvolvido para fins educativos.
               Todos os assets (imagens, sons e sprites) foram utilizados
               exclusivamente para aprender a desenvolver jogos e não possuem
-              fins comerciais.
+              fins comerciais. Os links para todos os assets utilizados podem
+              ser encontrados no repositório do jogo. Agradecemos a todos os
+              criadores dos assets que tornaram este projeto possível.
             </p>
           </div>
         </div>
