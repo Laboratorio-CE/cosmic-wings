@@ -1023,14 +1023,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           this.maxEnemiesInWave = 15 + 5 * (wave - 1);
         } else {
           // A partir da onda 4, incremento aleatório entre 5 e 10
-          const previousMax = wave === 4 ? 25 : this.maxEnemiesInWave;
+          // Usar um valor fixo para previousMax se wave for muito grande
+          let previousMax;
+          if (wave === 4) {
+            previousMax = 25;
+          } else if (wave > 1000) {
+            // Para ondas muito altas, usar o valor máximo diretamente
+            previousMax = 42;
+          } else {
+            previousMax = this.maxEnemiesInWave;
+          }
+          
           const increment = Phaser.Math.Between(5, 10);
           this.maxEnemiesInWave = previousMax + increment;
           if (this.maxEnemiesInWave > 42) {
             this.maxEnemiesInWave = 42; // Limite máximo de inimigos por onda
           }
         }
-
       }
 
       spawnMultipleEnemiesTypeA(count: number) {

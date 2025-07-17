@@ -30,7 +30,7 @@ export default class Instructions extends Component<Props, State> {
     try {
       this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      // Erro ao reproduzir som de confirmação
+      console.error('Erro ao reproduzir som de confirmação:', error);
     }
   }
 
@@ -78,7 +78,7 @@ export default class Instructions extends Component<Props, State> {
 
   render() {
     return (
-      <div className="max-w-lg mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 h-screen md:h-[600px] overflow-y-auto scrollbar-hide">
+      <div className="max-w-lg mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 h-screen md:h-[600px] overflow-y-auto scrollbar-styled">
         <h2 className="text-center text-cyan-400 text-xl mb-4 font-bold tracking-widest cursor-default">
           COMO JOGAR
         </h2>
@@ -153,7 +153,7 @@ export default class Instructions extends Component<Props, State> {
             <strong className="text-green-400 px-1 py-0.5 bg-green-400/10 rounded">
               5
             </strong>{" "}
-            do teclado alfanumérico
+            do teclado numérico
           </p>
         </div>
 

@@ -8,7 +8,7 @@ Forjado na poeira espacial da gambiarra, Cosmic Wings ganhou vida como projeto i
 
 ## Tecnologia
 
-O jogo foi desenvolvido em **TypeScript** utilizando a biblioteca **Phaser** como engine principal para renderização gráfica e controle de física, além de usar o Supabase como backend e base de dados para gerenciar o placar global. Escolhas que provaram ser tanto eficientes quanto divertidas de trabalhar. <br> <br>
+O jogo foi desenvolvido em **React** com **Tailwind** e **TypeScript**, utilizando a biblioteca **Phaser** como engine principal para renderização gráfica e controle de física, além de usar o Supabase como backend e base de dados para gerenciar o placar global. Escolhas que provaram ser tanto eficientes quanto divertidas de trabalhar. <br> <br>
 <img height="40" src="https://skillicons.dev/icons?i=ts">
 <img height="40" src="https://skillicons.dev/icons?i=react">
 <img height="40" src="https://skillicons.dev/icons?i=supabase">
@@ -55,12 +55,11 @@ Mas atenção: para uma experiência ideal, jogue pelo notebook/pc ou com um tec
 
 ### Licenciamento e Uso de Assets
 
-Todos os assets utilizados neste projeto (sprites, efeitos sonoros e músicas) foram obtidos de fontes com licenças claras que **permitem uso em projetos públicos e não comerciais**, desde que atribuídos corretamente.
+Todos os assets utilizados neste projeto (sprites, efeitos sonoros e músicas) foram obtidos de fontes com licenças claras que **permitem uso em projetos públicos e comerciais**, desde que atribuídos corretamente.
 
 Os créditos e links para os autores estão listados nas seções correspondentes.
 
 Este projeto é distribuído **sem fins lucrativos** e em conformidade com as licenças de cada asset utilizado. Para uso comercial, verifique individualmente os termos de cada recurso ou substitua por alternativas compatíveis.
-
 
 ---
 

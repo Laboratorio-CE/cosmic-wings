@@ -39,7 +39,7 @@ export default class Leaderboards extends Component<Props, State> {
     try {
       this.audioManager.playSoundEffect('menu-confirm');
     } catch (error) {
-      // Erro ao reproduzir som de confirmação
+      console.error('Erro ao reproduzir som de confirmação:', error);
     }
   }
 
@@ -125,7 +125,7 @@ export default class Leaderboards extends Component<Props, State> {
 
   render() {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 h-screen md:h-[600px] overflow-y-auto scrollbar-hide">
+      <div className="w-full max-w-4xl mx-auto p-4 bg-gradient-to-br from-black/80 to-blue-900/90 border-2 border-cyan-400 rounded-2xl text-white font-mono shadow-2xl shadow-cyan-400/20 h-screen md:h-[600px] overflow-y-auto scrollbar-styled">
         <div className="h-full flex flex-col">
           {/* Título - 10% da altura */}
           <div className="flex-shrink-0 flex items-center justify-center border-b border-cyan-400/30 px-4 py-4">
@@ -135,7 +135,7 @@ export default class Leaderboards extends Component<Props, State> {
           </div>
 
           {/* Lista - conteúdo flexível */}
-          <div className="flex-1 p-4 overflow-y-auto scrollbar-hide cursor-default min-h-0">
+          <div className="flex-1 p-4 overflow-y-auto scrollbar-styled cursor-default min-h-0">
             <div className="overflow-hidden rounded-lg border border-cyan-400/20">
               {/* Cabeçalho da tabela */}
               <div className="bg-cyan-400/10 border-b border-cyan-400/30 p-2 sm:p-2 grid grid-cols-4 gap-2 sm:gap-4 text-cyan-400 font-bold text-xs sm:text-sm">
@@ -190,7 +190,7 @@ export default class Leaderboards extends Component<Props, State> {
                         {entry.position === 3 && '🥉'}
                         {entry.position > 3 && entry.position}
                       </div>
-                      <div className="text-left truncate font-mono text-xs sm:text-sm" title={entry.player}>
+                      <div className="text-left overflow-x-auto font-mono text-xs sm:text-sm" title={entry.player}>
                         {entry.player}
                       </div>
                       <div className="text-center font-bold">
