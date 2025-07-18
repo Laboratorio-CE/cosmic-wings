@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import GameUI from "./GameUI";
 import ScoreSystem from "../game/systems/ScoreSystem";
 import PositionManager from "../game/systems/PositionManager";
+import VirtualControlSystem from "../game/systems/VirtualControlSystem";
 import AudioManager from "../services/AudioManager";
 import EnemyTypeA from "../game/entities/EnemyTypeA";
 import EnemyTypeB from "../game/entities/EnemyTypeB";
@@ -416,6 +417,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       scoreSystem: ScoreSystem | null = null;
       fadeInDuration = 1000; // 1 segundo para fade in
 
+      // Sistema de controle virtual no canvas
+      virtualControl: VirtualControlSystem | null = null;
+
       // Controles móveis - estado das "teclas virtuais"
       mobileControls = {
         up: false,
@@ -541,6 +545,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
 
       create() {
+        // Ativar multitouch: adicionar ponteiros extras
+        this.input.addPointer(2); // Permite até 3 toques simultâneos (1 padrão + 2 extras)
         // Sinalizar que o preload foi concluído
         window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
 
@@ -548,6 +554,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         const canvasWidth = this.cameras.main.width;
         const canvasHeight = this.cameras.main.height;
         this.positionManager = new PositionManager(canvasWidth, canvasHeight);
+        
+        // Inicializar o sistema de controle virtual (só será criado em telas pequenas)
+        this.virtualControl = new VirtualControlSystem(this);
 
         // Instanciar o sistema de pontuação
         this.scoreSystem = new ScoreSystem((score, hiScore) => {
@@ -1027,7 +1036,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           let previousMax;
           if (wave === 4) {
             previousMax = 25;
-          } else if (wave > 1000) {
+          } else if (wave > 40) {
             // Para ondas muito altas, usar o valor máximo diretamente
             previousMax = 42;
           } else {
@@ -1664,7 +1673,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         this.player.setData("minY", this.player.height * 0.4);
         this.player.setData("maxY", actualHeight - this.player.height * 0.4);
         
-
+        // Atualizar posições do controle virtual se existir
+        if (this.virtualControl) {
+          this.virtualControl.updatePositions();
+        }
       }
 
       // Método para iniciar o jogo após a sequência de mensagens
@@ -1678,6 +1690,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         const actualWidth = this.cameras.main.width;
         const actualHeight = this.cameras.main.height;
         this.positionManager.updateScreenDimensions(actualWidth, actualHeight);
+        
+        // Reinicializar o controle virtual para garantir que esteja na posição correta
+        if (this.virtualControl) {
+          this.virtualControl.destroy();
+        }
+        this.virtualControl = new VirtualControlSystem(this);
         
         setGameState("playing");
         this.scene.resume();
@@ -1744,6 +1762,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
     // Cleanup ao desmontar o componente
     return () => {
       if (gameRef.current) {
+        // Destruir o controle virtual se existir
+        const scene = gameRef.current.scene.getScene('MainGameScene') as any;
+        if (scene && scene.virtualControl) {
+          scene.virtualControl.destroy();
+        }
+        
         gameRef.current.destroy(true);
         gameRef.current = null;
       }
@@ -1836,6 +1860,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
         {/* Game UI overlay - restrita ao canvas */}
         {showUI && !isLoading && (
           <div className="absolute inset-0 z-20 pointer-events-none">
+            {/* Controle virtual agora é renderizado diretamente no canvas do Phaser */}
             <GameUI
               lives={lives}
               score={hiScore}
