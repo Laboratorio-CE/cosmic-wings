@@ -233,56 +233,60 @@ setupInputEvents() {
   
   updateDirections(newDirections: {up: boolean, down: boolean, left: boolean, right: boolean}) {
     // Obter referência para a cena do jogo
-    const gameScene = this.scene as any;
-    
+    const gameScene = this.scene as Phaser.Scene & {
+      setMobileControl?: (dir: 'up' | 'down' | 'left' | 'right', active: boolean) => void;
+    };
     // Para cada direção, verificar se o estado mudou
     Object.keys(newDirections).forEach(dir => {
       const typedDir = dir as 'up' | 'down' | 'left' | 'right';
       if (this.directions[typedDir] !== newDirections[typedDir]) {
         // Atualizar a direção na cena do jogo
-        gameScene.setMobileControl(typedDir, newDirections[typedDir]);
+        if (gameScene.setMobileControl) {
+          gameScene.setMobileControl(typedDir, newDirections[typedDir]);
+        }
         // Atualizar nosso estado local
         this.directions[typedDir] = newDirections[typedDir];
       }
     });
   }
-  
+
   handleActionStart(pointer: Phaser.Input.Pointer) {
     this.actionPointerId = pointer.id;
     this.isActionActive = true;
-    
     // Atualizar visual do botão
     this.actionButton.clear();
     this.actionButton.fillStyle(0xEF4444, 0.4); // Mais escuro quando pressionado
     this.actionButton.lineStyle(2, 0xEF4444, 1);
     this.actionButton.fillCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
     this.actionButton.strokeCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
-    
     // Acionar ação na cena do jogo
-    const gameScene = this.scene as any;
-    gameScene.setMobileAction(true);
-    
+    const gameScene = this.scene as Phaser.Scene & {
+      setMobileAction?: (active: boolean) => void;
+    };
+    if (gameScene.setMobileAction) {
+      gameScene.setMobileAction(true);
+    }
     // Evitar propagação do evento para não interferir com o analógico
     if (pointer.event) pointer.event.stopPropagation();
   }
-  
+
   handleActionEnd(pointer?: Phaser.Input.Pointer) {
     if (!this.isActionActive) return;
-    
     this.isActionActive = false;
     this.actionPointerId = -1;
-    
     // Resetar visual do botão
     this.actionButton.clear();
     this.actionButton.fillStyle(0xEF4444, 0.2); // Voltar à opacidade normal
     this.actionButton.lineStyle(2, 0xEF4444, 1);
     this.actionButton.fillCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
     this.actionButton.strokeCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
-    
     // Parar ação na cena do jogo
-    const gameScene = this.scene as any;
-    gameScene.setMobileAction(false);
-    
+    const gameScene = this.scene as Phaser.Scene & {
+      setMobileAction?: (active: boolean) => void;
+    };
+    if (gameScene.setMobileAction) {
+      gameScene.setMobileAction(false);
+    }
     // Evitar propagação do evento para não interferir com o analógico
     if (pointer && pointer.event) pointer.event.stopPropagation();
   }
@@ -327,7 +331,9 @@ setupInputEvents() {
     this.analogBase.strokeCircle(this.analogCenterX, this.analogCenterY, 40);
     
     // Atualizar área interativa
-    this.analogBase.input.hitArea = new Phaser.Geom.Circle(this.analogCenterX, this.analogCenterY, 40);
+    if (this.analogBase.input) {
+      this.analogBase.input.hitArea = new Phaser.Geom.Circle(this.analogCenterX, this.analogCenterY, 40);
+    }
     
     // Redesenhar thumb
     this.updateThumbPosition();
@@ -344,7 +350,9 @@ setupInputEvents() {
     this.actionButton.strokeCircle(actionX, actionY, 24);
     
     // Atualizar área interativa
-    this.actionButton.input.hitArea = new Phaser.Geom.Circle(actionX, actionY, 24);
+    if (this.actionButton.input) {
+      this.actionButton.input.hitArea = new Phaser.Geom.Circle(actionX, actionY, 24);
+    }
     
     // Redesenhar ícone do botão
     this.actionButtonIcon.clear();

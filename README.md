@@ -10,6 +10,7 @@ Forjado na poeira espacial da gambiarra, Cosmic Wings ganhou vida como projeto i
 
 O jogo foi desenvolvido em **React** com **Tailwind** e **TypeScript**, utilizando a biblioteca **Phaser** como engine principal para renderização gráfica e controle de física, além de usar o Supabase como backend e base de dados para gerenciar o placar global. Escolhas que provaram ser tanto eficientes quanto divertidas de trabalhar. <br> <br>
 <img height="40" src="https://skillicons.dev/icons?i=ts">
+<img height="40" src="https://skillicons.dev/icons?i=tailwind">
 <img height="40" src="https://skillicons.dev/icons?i=react">
 <img height="40" src="https://skillicons.dev/icons?i=supabase">
 
@@ -31,8 +32,7 @@ O jogo conta com uma variedade de inimigos normais, cada um com padrões de movi
 
 ## Responsividade
 
-Cosmic Wings foi projetado para funcionar em desktop e também pode ser jogador em dispositivos móveis. Os controles se adaptam automaticamente à plataforma, garantindo uma experiência fluida independente de onde você esteja jogando. <br>
-Mas atenção: para uma experiência ideal, jogue pelo notebook/pc ou com um teclado físico.
+Cosmic Wings foi projetado para funcionar de forma consistente tanto em desktop quanto em dispositivos móveis. Os controles se adaptam automaticamente à plataforma, garantindo uma experiência fluida independente de onde você esteja jogando. <br>
 
 <img width="401" height="838" alt="image" src="https://github.com/user-attachments/assets/5d69f8e8-2541-47dd-b3b7-8b4429405c6d" /> &nbsp;&nbsp;&nbsp;
 <img width="350" height="838" alt="image" src="https://github.com/user-attachments/assets/a0bffda4-ae98-4290-abbb-a6e67daa5479" />
