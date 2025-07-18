@@ -98,103 +98,81 @@ export default class VirtualControlSystem {
   }
   
   setupInputEvents() {
-    // Eventos do controle analógico - agora na metade esquerda da tela
-    this.scene.input.on('pointerdown', this.handleInputDown, this);
-    this.scene.input.on('pointermove', this.handleAnalogMove, this);
-    this.scene.input.on('pointerup', this.handleInputEnd, this);
-    this.scene.input.on('pointerout', this.handleInputEnd, this);
+    // Eventos globais para analógico (multitouch e metade esquerda)
+    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Verificar se o toque está na área do analógico
+      if (Phaser.Math.Distance.Between(pointer.x, pointer.y, this.analogCenterX, this.analogCenterY) <= 40 && this.pointerId === -1) {
+        this.pointerId = pointer.id;
+        this.isAnalogActive = true;
+        this.updateThumbPosition();
+      }
+      // Verificar se o toque está na metade esquerda da tela (para controle analógico flutuante)
+      else if (pointer.x < this.scene.cameras.main.width / 2 && this.pointerId === -1) {
+        this.pointerId = pointer.id;
+        this.isAnalogActive = true;
+        this.thumbX = pointer.x;
+        this.thumbY = pointer.y;
+        this.updateThumbPosition();
+      }
+    });
+        
+    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.pointerId && this.isAnalogActive) {
+        const dx = pointer.x - this.analogCenterX;
+        const dy = pointer.y - this.analogCenterY;
+        const dist = Math.min(Math.sqrt(dx * dx + dy * dy), this.maxDistance);
+        const angle = Math.atan2(dy, dx);
+
+        this.thumbX = this.analogCenterX + Math.cos(angle) * dist;
+        this.thumbY = this.analogCenterY + Math.sin(angle) * dist;
+
+        // Atualizar direções e posição visual
+        this.updateThumbPosition();
+        const newDirections = {
+          up: dy < -this.threshold,
+          down: dy > this.threshold,
+          left: dx < -this.threshold,
+          right: dx > this.threshold
+        };
+        this.updateDirections(newDirections);
+      }
+    });
     
-    // Eventos do botão de ação
+    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.pointerId) {
+        this.pointerId = -1;
+        this.isAnalogActive = false;
+        this.thumbX = this.analogCenterX;
+        this.thumbY = this.analogCenterY;
+        this.updateThumbPosition();
+        const resetDirections = { up: false, down: false, left: false, right: false };
+        this.updateDirections(resetDirections);
+      }
+
+      if (pointer.id === this.actionPointerId) {
+        this.actionPointerId = -1;
+        this.isActionActive = false;
+        
+        // Resetar visual do botão
+        this.actionButton.clear();
+        this.actionButton.fillStyle(0xEF4444, 0.2); // Voltar à opacidade normal
+        this.actionButton.lineStyle(2, 0xEF4444, 1);
+        this.actionButton.fillCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
+        this.actionButton.strokeCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
+        
+        // Parar ação na cena do jogo
+        const gameScene = this.scene as any;
+        gameScene.setMobileAction(false);
+      }
+    });
+    
+    // Eventos do botão de ação: apenas na área do botão
     this.actionButton.on('pointerdown', this.handleActionStart, this);
     this.actionButton.on('pointerup', this.handleActionEnd, this);
     this.actionButton.on('pointerout', this.handleActionEnd, this);
   }
   
-  handleInputDown(pointer: Phaser.Input.Pointer) {
-    // Ativar o analógico se o toque for na metade esquerda da tela
-    // Removida a verificação de pointerId === -1 para permitir reativação
-    if (pointer.x < this.scene.cameras.main.width / 2) {
-      this.pointerId = pointer.id;
-      this.isAnalogActive = true;
-      
-      // Atualizar posição do thumb para onde o usuário tocou
-      this.thumbX = pointer.x;
-      this.thumbY = pointer.y;
-      this.updateThumbPosition();
-      
-      // Iniciar cálculo de direção imediatamente
-      this.handleAnalogMove(pointer);
-    }
-  }
-  
-  handleAnalogMove(pointer: Phaser.Input.Pointer) {
-    // Verificar se este é o mesmo ponteiro que iniciou o toque no analógico
-    if (!this.isAnalogActive || pointer.id !== this.pointerId) return;
-    
-    // Calcular distância do centro do analógico
-    const dx = pointer.x - this.analogCenterX;
-    const dy = pointer.y - this.analogCenterY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Limitar o thumb ao círculo do analógico
-    if (distance > this.maxDistance) {
-      const angle = Math.atan2(dy, dx);
-      this.thumbX = this.analogCenterX + Math.cos(angle) * this.maxDistance;
-      this.thumbY = this.analogCenterY + Math.sin(angle) * this.maxDistance;
-    } else {
-      this.thumbX = pointer.x;
-      this.thumbY = pointer.y;
-    }
-    
-    // Atualizar posição do thumb
-    this.updateThumbPosition();
-    
-    // Calcular direção com base na posição do thumb
-    const deltaX = this.thumbX - this.analogCenterX;
-    const deltaY = this.thumbY - this.analogCenterY;
-    
-    // Determinar direções ativas com base no threshold
-    const newDirections = {
-      up: deltaY < -this.threshold,
-      down: deltaY > this.threshold,
-      left: deltaX < -this.threshold,
-      right: deltaX > this.threshold
-    };
-    
-    // Atualizar direções na cena do jogo se mudaram
-    this.updateDirections(newDirections);
-  }
-  
-  handleInputEnd(pointer: Phaser.Input.Pointer) {
-    // Verificar qual controle este ponteiro estava controlando
-    if (pointer.id === this.pointerId) {
-      this.handleAnalogEnd();
-    }
-    if (pointer.id === this.actionPointerId) {
-      this.handleActionEnd();
-    }
-  }
-  
-  handleAnalogEnd() {
-    if (!this.isAnalogActive) return;
-    
-    this.isAnalogActive = false;
-    this.pointerId = -1;
-    
-    // Resetar posição do thumb
-    this.thumbX = this.analogCenterX;
-    this.thumbY = this.analogCenterY;
-    this.updateThumbPosition();
-    
-    // Resetar todas as direções
-    const resetDirections = {
-      up: false,
-      down: false,
-      left: false,
-      right: false
-    };
-    this.updateDirections(resetDirections);
-  }
+  // Estes métodos não são mais necessários, pois a lógica foi incorporada diretamente nos event listeners
   
   updateThumbPosition() {
     // Limpar e redesenhar o thumb na nova posição
@@ -222,26 +200,30 @@ export default class VirtualControlSystem {
   }
   
   handleActionStart(pointer: Phaser.Input.Pointer) {
-    this.actionPointerId = pointer.id;
-    this.isActionActive = true;
-    
-    // Atualizar visual do botão
-    this.actionButton.clear();
-    this.actionButton.fillStyle(0xEF4444, 0.4); // Mais escuro quando pressionado
-    this.actionButton.lineStyle(2, 0xEF4444, 1);
-    this.actionButton.fillCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
-    this.actionButton.strokeCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
-    
-    // Acionar ação na cena do jogo
-    const gameScene = this.scene as any;
-    gameScene.setMobileAction(true);
-    
-    // Evitar propagação do evento para não interferir com o analógico
-    if (pointer.event) pointer.event.stopPropagation();
+    // Só ativa se não houver outro toque ativo no botão de ação
+    if (this.actionPointerId === -1) {
+      this.actionPointerId = pointer.id;
+      this.isActionActive = true;
+      
+      // Atualizar visual do botão
+      this.actionButton.clear();
+      this.actionButton.fillStyle(0xEF4444, 0.4); // Mais escuro quando pressionado
+      this.actionButton.lineStyle(2, 0xEF4444, 1);
+      this.actionButton.fillCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
+      this.actionButton.strokeCircle(this.scene.cameras.main.width - 80, this.scene.cameras.main.height - 80, 24);
+      
+      // Acionar ação na cena do jogo
+      const gameScene = this.scene as any;
+      gameScene.setMobileAction(true);
+      
+      // Evitar propagação do evento para não interferir com o analógico
+      if (pointer.event) pointer.event.stopPropagation();
+    }
   }
   
   handleActionEnd(pointer?: Phaser.Input.Pointer) {
-    if (!this.isActionActive) return;
+    // Verificar se é o mesmo ponteiro que ativou o botão
+    if (!this.isActionActive || (pointer && pointer.id !== this.actionPointerId)) return;
     
     this.isActionActive = false;
     this.actionPointerId = -1;
@@ -267,12 +249,14 @@ export default class VirtualControlSystem {
     if (this.analogThumb) this.analogThumb.destroy();
     if (this.actionButton) this.actionButton.destroy();
     if (this.actionButtonIcon) this.actionButtonIcon.destroy();
-    
-    // Remover event listeners
-    this.scene.input.off('pointerdown', this.handleInputDown, this);
-    this.scene.input.off('pointermove', this.handleAnalogMove, this);
-    this.scene.input.off('pointerup', this.handleInputEnd, this);
-    this.scene.input.off('pointerout', this.handleInputEnd, this);
+    // Remover event listeners globais
+    this.scene.input.off('pointerdown');
+    this.scene.input.off('pointermove');
+    this.scene.input.off('pointerup');
+    // Remover event listeners do botão de ação
+    this.actionButton.off('pointerdown', this.handleActionStart, this);
+    this.actionButton.off('pointerup', this.handleActionEnd, this);
+    this.actionButton.off('pointerout', this.handleActionEnd, this);
   }
   
   // Método para atualizar posições dos controles se o tamanho da tela mudar
