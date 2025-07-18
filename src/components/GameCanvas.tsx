@@ -545,6 +545,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       }
 
       create() {
+        // Ativar multitouch: adicionar ponteiros extras
+        this.input.addPointer(2); // Permite até 3 toques simultâneos (1 padrão + 2 extras)
         // Sinalizar que o preload foi concluído
         window.dispatchEvent(new CustomEvent("phaserPreloadComplete"));
 
