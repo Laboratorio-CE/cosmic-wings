@@ -295,16 +295,24 @@ setupInputEvents() {
   destroy() {
     if (this.analogBase) this.analogBase.destroy();
     if (this.analogThumb) this.analogThumb.destroy();
-    if (this.actionButton) this.actionButton.destroy();
+    if (this.actionButton) {
+      this.actionButton.destroy();
+      // Remover event listeners do botão de ação
+      if (typeof this.actionButton.off === 'function') {
+        this.actionButton.off('pointerdown', this.handleActionStart, this);
+        this.actionButton.off('pointerup', this.handleActionEnd, this);
+        this.actionButton.off('pointerout', this.handleActionEnd, this);
+      }
+    }
     if (this.actionButtonIcon) this.actionButtonIcon.destroy();
     // Remover event listeners globais do analógico
-    this.scene.input.off('pointerdown', this.handleAnalogGlobalDown, this);
-    this.scene.input.off('pointermove', this.handleAnalogGlobalMove, this);
-    this.scene.input.off('pointerup', this.handleAnalogGlobalUp, this);
-    // Remover event listeners do botão de ação
-    this.actionButton.off('pointerdown', this.handleActionStart, this);
-    this.actionButton.off('pointerup', this.handleActionEnd, this);
-    this.actionButton.off('pointerout', this.handleActionEnd, this);
+    if (this.scene && this.scene.input) {
+      if (typeof this.scene.input.off === 'function') {
+        this.scene.input.off('pointerdown', this.handleAnalogGlobalDown, this);
+        this.scene.input.off('pointermove', this.handleAnalogGlobalMove, this);
+        this.scene.input.off('pointerup', this.handleAnalogGlobalUp, this);
+      }
+    }
   }
   
   // Método para atualizar posições dos controles se o tamanho da tela mudar
@@ -313,50 +321,62 @@ setupInputEvents() {
       this.destroy();
       return;
     }
-    
+
+    // Proteção extra: garantir que todos os elementos gráficos existem
+    if (!this.analogBase || !this.analogThumb || !this.actionButton || !this.actionButtonIcon) {
+      // Não há controles para atualizar
+      return;
+    }
+
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
-    
+
     // Atualizar posição do analógico
     this.analogCenterX = 80;
     this.analogCenterY = height - 80;
     this.thumbX = this.analogCenterX;
     this.thumbY = this.analogCenterY;
-    
+
     // Redesenhar base do analógico
-    this.analogBase.clear();
-    this.analogBase.fillStyle(0x22D3EE, 0.1);
-    this.analogBase.lineStyle(2, 0x22D3EE, 0.3);
-    this.analogBase.fillCircle(this.analogCenterX, this.analogCenterY, 40);
-    this.analogBase.strokeCircle(this.analogCenterX, this.analogCenterY, 40);
-    
-    // Atualizar área interativa
-    if (this.analogBase.input) {
-      this.analogBase.input.hitArea = new Phaser.Geom.Circle(this.analogCenterX, this.analogCenterY, 40);
+    if (this.analogBase) {
+      this.analogBase.clear();
+      this.analogBase.fillStyle(0x22D3EE, 0.1);
+      this.analogBase.lineStyle(2, 0x22D3EE, 0.3);
+      this.analogBase.fillCircle(this.analogCenterX, this.analogCenterY, 40);
+      this.analogBase.strokeCircle(this.analogCenterX, this.analogCenterY, 40);
+      // Atualizar área interativa
+      if (this.analogBase.input) {
+        this.analogBase.input.hitArea = new Phaser.Geom.Circle(this.analogCenterX, this.analogCenterY, 40);
+      }
     }
-    
+
     // Redesenhar thumb
-    this.updateThumbPosition();
-    
+    if (this.analogThumb) {
+      this.updateThumbPosition();
+    }
+
     // Atualizar posição do botão de ação
     const actionX = width - 80;
     const actionY = height - 80;
-    
+
     // Redesenhar botão de ação
-    this.actionButton.clear();
-    this.actionButton.fillStyle(0xEF4444, 0.2);
-    this.actionButton.lineStyle(2, 0xEF4444, 1);
-    this.actionButton.fillCircle(actionX, actionY, 24);
-    this.actionButton.strokeCircle(actionX, actionY, 24);
-    
-    // Atualizar área interativa
-    if (this.actionButton.input) {
-      this.actionButton.input.hitArea = new Phaser.Geom.Circle(actionX, actionY, 24);
+    if (this.actionButton) {
+      this.actionButton.clear();
+      this.actionButton.fillStyle(0xEF4444, 0.2);
+      this.actionButton.lineStyle(2, 0xEF4444, 1);
+      this.actionButton.fillCircle(actionX, actionY, 24);
+      this.actionButton.strokeCircle(actionX, actionY, 24);
+      // Atualizar área interativa
+      if (this.actionButton.input) {
+        this.actionButton.input.hitArea = new Phaser.Geom.Circle(actionX, actionY, 24);
+      }
     }
-    
+
     // Redesenhar ícone do botão
-    this.actionButtonIcon.clear();
-    this.actionButtonIcon.fillStyle(0xEF4444, 1);
-    this.actionButtonIcon.fillCircle(actionX, actionY, 9);
+    if (this.actionButtonIcon) {
+      this.actionButtonIcon.clear();
+      this.actionButtonIcon.fillStyle(0xEF4444, 1);
+      this.actionButtonIcon.fillCircle(actionX, actionY, 9);
+    }
   }
 }
