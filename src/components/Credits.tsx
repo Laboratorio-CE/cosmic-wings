@@ -22,6 +22,9 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
   };
 
   useEffect(() => {
+    let gamepadIndex: number | null = null;
+    let lastButtonState = false;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
         case 'Enter':
@@ -41,8 +44,50 @@ const Credits: React.FC<CreditsProps> = ({ onNavigateToMenu }) => {
       }
     };
 
+    // Setup gamepad
+    const handleGamepadConnected = (e: GamepadEvent) => {
+      gamepadIndex = e.gamepad.index;
+    };
+
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        gamepadIndex = i;
+        break;
+      }
+    }
+
+    const pollGamepad = () => {
+      if (gamepadIndex === null) return;
+
+      const gamepads = navigator.getGamepads();
+      const gamepad = gamepads[gamepadIndex];
+      if (!gamepad) return;
+
+      const anyButton = gamepad.buttons[0]?.pressed || 
+                        gamepad.buttons[1]?.pressed || 
+                        gamepad.buttons[2]?.pressed || 
+                        gamepad.buttons[3]?.pressed ||
+                        gamepad.buttons[9]?.pressed;
+
+      if (anyButton && !lastButtonState) {
+        playConfirmSound();
+        onNavigateToMenu();
+      }
+
+      lastButtonState = anyButton;
+    };
+
+    const gamepadInterval = setInterval(pollGamepad, 100);
+
+    window.addEventListener('gamepadconnected', handleGamepadConnected);
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      clearInterval(gamepadInterval);
+      window.removeEventListener('gamepadconnected', handleGamepadConnected);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [onNavigateToMenu]);
 
   return (

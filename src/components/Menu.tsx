@@ -27,6 +27,10 @@ export default class Menu extends Component<Props, State> {
   ];
 
   private audioManager: AudioManager;
+  private gamepadIndex: number | null = null;
+  private lastGamepadState = { up: false, down: false, buttons: [false, false, false, false] };
+  private gamepadInterval: number | null = null;
+  
   state: State = {
     selectedIndex: 0,
     isPressed: false,
@@ -68,12 +72,95 @@ export default class Menu extends Component<Props, State> {
 
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyDown);
+    this.setupGamepad();
   }
 
   componentWillUnmount() {
     document.removeEventListener('keydown', this.handleKeyDown);
+    if (this.gamepadInterval !== null) {
+      clearInterval(this.gamepadInterval);
+    }
     // Não pausar a música aqui - deixar tocando para outras telas
     // A música só será pausada quando navegar especificamente para "/play"
+  }
+
+  setupGamepad = () => {
+    // Verificar suporte a gamepad
+    window.addEventListener('gamepadconnected', (e: GamepadEvent) => {
+      console.log('Gamepad conectado no menu:', e.gamepad.id);
+      this.gamepadIndex = e.gamepad.index;
+    });
+
+    window.addEventListener('gamepaddisconnected', () => {
+      console.log('Gamepad desconectado');
+      this.gamepadIndex = null;
+    });
+
+    // Verificar se já existe um gamepad conectado
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        this.gamepadIndex = i;
+        break;
+      }
+    }
+
+    // Poll gamepad state
+    this.gamepadInterval = window.setInterval(this.pollGamepad, 100);
+  }
+
+  pollGamepad = () => {
+    if (this.gamepadIndex === null) return;
+
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[this.gamepadIndex];
+    if (!gamepad) return;
+
+    const { selectedIndex } = this.state;
+    const maxIndex = this.menuOptions.length - 1;
+
+    // Direcional D-Pad ou analógico esquerdo
+    const dpadUp = gamepad.buttons[12]?.pressed || gamepad.axes[1] < -0.5;
+    const dpadDown = gamepad.buttons[13]?.pressed || gamepad.axes[1] > 0.5;
+    
+    // Botões de ação (A, B, X, Y para Xbox / X, Circle, Square, Triangle para PS)
+    const buttonA = gamepad.buttons[0]?.pressed; // Xbox A / PS X
+    const buttonB = gamepad.buttons[1]?.pressed; // Xbox B / PS Circle
+    const buttonX = gamepad.buttons[2]?.pressed; // Xbox X / PS Square
+    const buttonY = gamepad.buttons[3]?.pressed; // Xbox Y / PS Triangle
+
+    // Navegar para cima (edge detection)
+    if (dpadUp && !this.lastGamepadState.up) {
+      this.handleFirstInteraction();
+      this.playNavigateSound();
+      this.setState({
+        selectedIndex: selectedIndex > 0 ? selectedIndex - 1 : maxIndex
+      });
+    }
+
+    // Navegar para baixo (edge detection)
+    if (dpadDown && !this.lastGamepadState.down) {
+      this.handleFirstInteraction();
+      this.playNavigateSound();
+      this.setState({
+        selectedIndex: selectedIndex < maxIndex ? selectedIndex + 1 : 0
+      });
+    }
+
+    // Selecionar opção (edge detection)
+    if ((buttonA || buttonB || buttonX || buttonY) && 
+        !this.lastGamepadState.buttons.some(btn => btn)) {
+      this.handleFirstInteraction();
+      this.playConfirmSound();
+      this.animatePress();
+    }
+
+    // Atualizar estado anterior
+    this.lastGamepadState = {
+      up: dpadUp,
+      down: dpadDown,
+      buttons: [buttonA, buttonB, buttonX, buttonY]
+    };
   }
 
   handleKeyDown = (event: KeyboardEvent) => {

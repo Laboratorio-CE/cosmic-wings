@@ -351,6 +351,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
       player: Phaser.GameObjects.Sprite | null = null;
       cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
       wasd: { [key: string]: Phaser.Input.Keyboard.Key } | null = null;
+      gamepad: Phaser.Input.Gamepad.Gamepad | null = null;
       playerSpeed = 300;
       lastMoveDirection = { x: 0, y: 0 };
 
@@ -620,6 +621,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             [key: string]: Phaser.Input.Keyboard.Key;
           }) || null;
 
+        // Inicializar suporte a gamepad
+        if (this.input.gamepad) {
+          this.input.gamepad.once('connected', (pad: Phaser.Input.Gamepad.Gamepad) => {
+            this.gamepad = pad;
+            console.log('Gamepad conectado no jogo:', pad.id);
+          });
+          
+          // Verificar se já existe um gamepad conectado
+          if (this.input.gamepad.total > 0) {
+            this.gamepad = this.input.gamepad.getPad(0);
+          }
+        }
+
         // Definir os limites do player dentro do canvas
         if (this.player) {
           const boundsWidth = this.cameras.main.width;
@@ -667,14 +681,45 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
             velocityY = 1;
           }
 
-          // Verificar input de disparo - teclado ou controles móveis
+          // Adicionar controle de gamepad para movimento
+          if (this.gamepad) {
+            // Direcional D-Pad
+            if (this.gamepad.left) velocityX = -1;
+            if (this.gamepad.right) velocityX = 1;
+            if (this.gamepad.up) velocityY = -1;
+            if (this.gamepad.down) velocityY = 1;
+            
+            // Analógico esquerdo (com deadzone)
+            const deadzone = 0.2;
+            const leftStickX = this.gamepad.leftStick.x;
+            const leftStickY = this.gamepad.leftStick.y;
+            
+            if (Math.abs(leftStickX) > deadzone) {
+              velocityX = leftStickX;
+            }
+            if (Math.abs(leftStickY) > deadzone) {
+              velocityY = leftStickY;
+            }
+          }
+
+          // Verificar input de disparo - teclado, controles móveis ou gamepad
           const currentTime = this.time.now;
+          const gamepadFire = this.gamepad && (
+            this.gamepad.A || // Xbox A / PS X
+            this.gamepad.B || // Xbox B / PS Circle
+            this.gamepad.X || // Xbox X / PS Square
+            this.gamepad.Y || // Xbox Y / PS Triangle
+            this.gamepad.R1 || // Gatilho direito superior
+            this.gamepad.R2 > 0.5 // Gatilho direito analógico
+          );
+          
           if (
             this.fireKeys &&
             (this.fireKeys.SPACE?.isDown ||
               this.fireKeys.F?.isDown ||
               this.fireKeys.NUMPAD_FIVE?.isDown ||
-              this.mobileControls.fire)
+              this.mobileControls.fire ||
+              gamepadFire)
           ) {
             if (currentTime - this.lastFireTime > this.fireRate) {
               this.fireBullet();
@@ -1738,6 +1783,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ backgroundSpeed = .75, onNaviga
           gravity: { x: 0, y: 0 },
           debug: false,
         },
+      },
+      input: {
+        gamepad: true, // Habilitar suporte a gamepad
       },
       scene: GameScene,
     };

@@ -15,6 +15,9 @@ type State = {
 
 export default class Instructions extends Component<Props, State> {
   private audioManager: AudioManager;
+  private gamepadIndex: number | null = null;
+  private gamepadInterval: number | null = null;
+  private lastButtonState = false;
 
   state: State = {
     isPressed: true 
@@ -37,13 +40,53 @@ export default class Instructions extends Component<Props, State> {
   componentDidMount() {
     if (this.props.onNavigate) {
       document.addEventListener('keydown', this.handleKeyDown);
+      this.setupGamepad();
     }
   }
 
   componentWillUnmount() {
     if (this.props.onNavigate) {
       document.removeEventListener('keydown', this.handleKeyDown);
+      if (this.gamepadInterval !== null) {
+        clearInterval(this.gamepadInterval);
+      }
     }
+  }
+
+  setupGamepad = () => {
+    window.addEventListener('gamepadconnected', (e: GamepadEvent) => {
+      this.gamepadIndex = e.gamepad.index;
+    });
+
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        this.gamepadIndex = i;
+        break;
+      }
+    }
+
+    this.gamepadInterval = window.setInterval(this.pollGamepad, 100);
+  }
+
+  pollGamepad = () => {
+    if (this.gamepadIndex === null) return;
+
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[this.gamepadIndex];
+    if (!gamepad) return;
+
+    const anyButton = gamepad.buttons[0]?.pressed || 
+                      gamepad.buttons[1]?.pressed || 
+                      gamepad.buttons[2]?.pressed || 
+                      gamepad.buttons[3]?.pressed ||
+                      gamepad.buttons[9]?.pressed; // Start button
+
+    if (anyButton && !this.lastButtonState) {
+      this.animatePress();
+    }
+
+    this.lastButtonState = anyButton;
   }
 
   handleKeyDown = (event: KeyboardEvent) => {
